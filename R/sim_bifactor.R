@@ -142,9 +142,11 @@ sim_bifactor <- function(n_generals, specifics_per_general, items_per_specific,
 
     warning("At least a communality greater than 1 found \n Resampling...")
 
-    sim <- sim_bifactor(n_generals, n_specifics, items_per_specific,
-                        loadings, generals_rho, specifics_rho,
-                        crossloadings, pure)
+    sim <- sim_bifactor(n_generals, specifics_per_general, 
+                        items_per_specific,
+                        loadings_g, loadings_s,
+                        crossloadings, pure,
+                        generals_rho, specifics_rho)
 
     A = sim$A; R = sim$R; Phi = sim$Phi; uniquenesses = sim$uniquenesses
 
