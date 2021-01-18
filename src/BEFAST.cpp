@@ -1,8 +1,13 @@
 #define ARMA_DONT_USE_OPENMP
+// #define ARMA_NO_DEBUG
+// #define ARMA_DONT_OPTIMISE_BAND
 // #define ARMA_OPENMP_THREADS 10
 // #define ARMA_DONT_OPTIMISE_SYMPD
-// #define ARMA_NO_DEBUG
+// #define ARMA_DONT_USE_SUPERLU
+// #define ARMA_DONT_USE_BLAS
 // #define ARMA_OPENMP_THRESHOLD 240
+// #define ARMA_64BIT_WORD
+// #define ARMA_MAT_PREALLOC 4
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(openmp)]]
@@ -10,14 +15,6 @@
 #include <RcppArmadillo.h>
 #include <omp.h>
 #include "BEFA.h"
-
-// [[Rcpp::export]]
-Rcpp::List NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
-                       double w = 1, double eps = 1e-05, int max_iter = 1e4);
-
-// [[Rcpp::export]]
-Rcpp::List GPF_xtarget(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
-                       double w = 1, double eps = 1e-05, int max_iter = 10000);
 
 // [[Rcpp::export]]
 arma::mat random_orthogonal(int p, int q);

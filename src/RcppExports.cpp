@@ -6,44 +6,6 @@
 
 using namespace Rcpp;
 
-// NPF_xtarget
-Rcpp::List NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, double w, double eps, int max_iter);
-RcppExport SEXP _bifactor_NPF_xtarget(SEXP TSEXP, SEXP ASEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP Phi_TargetSEXP, SEXP Phi_WeightSEXP, SEXP wSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type T(TSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Target(TargetSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Weight(WeightSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Phi_Target(Phi_TargetSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Phi_Weight(Phi_WeightSEXP);
-    Rcpp::traits::input_parameter< double >::type w(wSEXP);
-    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(NPF_xtarget(T, A, Target, Weight, Phi_Target, Phi_Weight, w, eps, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GPF_xtarget
-Rcpp::List GPF_xtarget(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, double w, double eps, int max_iter);
-RcppExport SEXP _bifactor_GPF_xtarget(SEXP TSEXP, SEXP UnrotatedSEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP Phi_TargetSEXP, SEXP Phi_WeightSEXP, SEXP wSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type T(TSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Unrotated(UnrotatedSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Target(TargetSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Weight(WeightSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Phi_Target(Phi_TargetSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Phi_Weight(Phi_WeightSEXP);
-    Rcpp::traits::input_parameter< double >::type w(wSEXP);
-    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(GPF_xtarget(T, Unrotated, Target, Weight, Phi_Target, Phi_Weight, w, eps, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
 // random_orthogonal
 arma::mat random_orthogonal(int p, int q);
 RcppExport SEXP _bifactor_random_orthogonal(SEXP pSEXP, SEXP qSEXP) {
@@ -171,8 +133,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bifactor_NPF_xtarget", (DL_FUNC) &_bifactor_NPF_xtarget, 9},
-    {"_bifactor_GPF_xtarget", (DL_FUNC) &_bifactor_GPF_xtarget, 9},
     {"_bifactor_random_orthogonal", (DL_FUNC) &_bifactor_random_orthogonal, 2},
     {"_bifactor_multiple_rotations", (DL_FUNC) &_bifactor_multiple_rotations, 14},
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 21},

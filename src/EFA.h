@@ -2,6 +2,7 @@
 
 #include <RcppArmadillo.h>
 
+#include "multiple_rotations.h"
 #include "EFA_fit.h"
 
 Rcpp::List efa(arma::vec psy, arma::mat R, int n_factors, std::string method, 

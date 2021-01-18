@@ -2,8 +2,6 @@
 
 #include <RcppArmadillo.h>
 
-#include "GPF.h"
-
 arma::vec sdp_cpp(arma::mat Cov) {
   
   Rcpp::Environment Rcsdp("package:Rcsdp");

@@ -2,19 +2,6 @@
 
 #include <RcppArmadillo.h>
 
-#include "NPF.h"
-
-arma::mat random_orthogonal(int p, int q) {
-  
-  arma::mat X(p, q, arma::fill::randn);
-  arma::mat Q;
-  arma::mat R;
-  qr_econ(Q, R, X);
-  
-  return Q;
-  
-}
-
 double objective_cf(double k, arma::mat L2, arma::mat L2N, arma::mat ML2) {
   
   double f1 = trace(L2.t() * L2N) / 4;
@@ -167,7 +154,7 @@ arma::mat gradient_geominT(arma::mat unrotated, arma::mat A, arma::mat A2, arma:
   return gradient;
 }
 
-Rcpp::List GPF_cfT(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_cfT(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -228,28 +215,22 @@ Rcpp::List GPF_cfT(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-0
     
   } while (s > eps && iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
   arma::mat Phi(n_factors, n_factors, arma::fill::eye);
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
-  bool convergence = true;
-  if(iteration == max_iter) {
+ 
+ bool convergence = true;
+ if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_cfQ(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_cfQ(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -310,27 +291,20 @@ Rcpp::List GPF_cfQ(arma::mat T, arma::mat Unrotated, double k, double eps = 1e-0
   
   arma::mat Phi = T.t() * T;
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_varimax(arma::mat T, arma::mat Unrotated, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_varimax(arma::mat T, arma::mat Unrotated, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -390,28 +364,22 @@ Rcpp::List GPF_varimax(arma::mat T, arma::mat Unrotated, double eps = 1e-05, int
     
   } while (s > eps && iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
   arma::mat Phi(n_factors, n_factors, arma::fill::eye);
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
   
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_varimax_2(arma::mat T, arma::mat Unrotated, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_varimax_2(arma::mat T, arma::mat Unrotated, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   double step_size = 1;
@@ -466,28 +434,22 @@ Rcpp::List GPF_varimax_2(arma::mat T, arma::mat Unrotated, double eps = 1e-05, i
     
   } while (s > eps && iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
   arma::mat Phi(n_factors, n_factors, arma::fill::eye);
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
   
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_target(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_target(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   double step_size = 1;
@@ -535,28 +497,22 @@ Rcpp::List GPF_target(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::
     
   } while (s > eps && iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
   arma::mat Phi(n_factors, n_factors, arma::fill::eye);
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
   
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_xtarget(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_xtarget(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
                        double w, double eps, int max_iter) {
   
   int n_factors = T.n_cols;
@@ -602,27 +558,21 @@ Rcpp::List GPF_xtarget(arma::mat T, arma::mat Unrotated, arma::mat Target, arma:
     
   } while (s > eps && iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
+  
   
   return result;
   
 }
 
-Rcpp::List GPF_targetQ(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_targetQ(arma::mat T, arma::mat Unrotated, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   double step_size = 1;
@@ -666,27 +616,20 @@ Rcpp::List GPF_targetQ(arma::mat T, arma::mat Unrotated, arma::mat Target, arma:
   
   arma::mat Phi = T.t() * T;
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_oblimin(arma::mat T, arma::mat Unrotated, double gamma = 0, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_oblimin(arma::mat T, arma::mat Unrotated, double gamma = 0, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -744,28 +687,20 @@ Rcpp::List GPF_oblimin(arma::mat T, arma::mat Unrotated, double gamma = 0, doubl
   
   arma::mat Phi = T.t() * T;
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["fg"] = fg;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_geominT(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_geominT(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -827,27 +762,21 @@ Rcpp::List GPF_geominT(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02,
   } while (s > eps && iteration < max_iter);
   
   arma::mat Phi(n_factors, n_factors, arma::fill::eye);
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
   
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
 }
 
-Rcpp::List GPF_geominQ(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> GPF_geominQ(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
   
   int n_factors = T.n_cols;
   int p = Unrotated.n_rows;
@@ -912,97 +841,15 @@ Rcpp::List GPF_geominQ(arma::mat T, arma::mat Unrotated, double epsilon = 1e-02,
   
   arma::mat Phi = T.t() * T;
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
-  
-}
-
-Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight,
-                              double gamma, double epsilon, double k, double w, int random_starts, int cores,
-                              double eps, int max_iter) {
-  
-  int n_factors = loadings.n_cols;
-  Rcpp::List x1(random_starts);
-  arma::vec xf(random_starts);
-  
-  // int cores = omp_get_max_threads();
-//   omp_set_num_threads(cores);
-// #pragma omp parallel for
-  for (int i=0; i < random_starts; ++i) {
-    
-    arma::mat T = random_orthogonal(n_factors, n_factors);
-    
-    if (rotation == "xtarget") {
-      Rcpp::List x2 = NPF_xtarget(T, loadings, Target, Weight, Phi_Target, Phi_Weight, w, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "target") {
-      Rcpp::List x2 = GPF_target(T, loadings, Target, Weight, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } if (rotation == "targetQ") {
-      Rcpp::List x2 = NPF_targetQ(T, loadings, Target, Weight, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "cfT") {
-      Rcpp::List x2 = GPF_cfT(T, loadings, k, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "cfQ") {
-      Rcpp::List x2 = GPF_cfQ(T, loadings, k, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "varimax") {
-      Rcpp::List x2 = GPF_varimax_2(T, loadings, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "oblimin") {
-      Rcpp::List x2 = NPF_oblimin(T, loadings, gamma, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "geominQ") {
-      Rcpp::List x2 = NPF_geominQ(T, loadings, epsilon, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    } else if (rotation == "geominT") {
-      Rcpp::List x2 = GPF_geominT(T, loadings, epsilon, eps, max_iter);
-      x1(i) = x2;
-      xf(i) = x2["f"];
-    }
-    
-  }
-  
-  arma::uword index_minimum = index_min(xf);
-  Rcpp::List x = x1(index_minimum);
-  arma::mat L = x["loadings"];
-  arma::mat Phi = x["Phi"];
-  
-  for (int j=0; j < n_factors; ++j) {
-    if (sum(L.col(j)) < 0) {
-      L.col(j)   *= -1;
-      Phi.col(j) *= -1;
-      Phi.row(j) *= -1;
-    }
-  }
-  
-  x["loadings"] = L;
-  x["Phi"] = Phi;
-  
-  return x;
   
 }

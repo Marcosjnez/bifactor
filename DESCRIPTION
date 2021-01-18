@@ -13,4 +13,4 @@ LinkingTo: Rcpp, RcppArmadillo
 Imports: Rcpp
 Depends: Rcsdp
 NeedsCompilation: yes
-Packaged: 2021-01-14 19:29:21 UTC; marcos
+Packaged: 2021-01-18 03:51:30 UTC; marcos

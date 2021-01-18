@@ -117,7 +117,7 @@ void tcg_xtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
   
 }
 
-Rcpp::List NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, 
                  double w, double eps, int max_iter) {
   
   arma::mat W2, PW2, Inv_T, L, Phi, f1, f2, g, gr, dg, Hd;
@@ -239,21 +239,14 @@ Rcpp::List NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Wei
     
   } while (iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
@@ -366,7 +359,7 @@ void tcg_oblimin(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
   
 }
 
-Rcpp::List NPF_oblimin(arma::mat T, arma::mat A, double gamma = 0, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_oblimin(arma::mat T, arma::mat A, double gamma = 0, double eps = 1e-05, int max_iter = 10000) {
   
   arma::mat Inv_T, L, L2, Phi, IgCL2N, g, gr, dg, Hd;
   double f, ng, preddiff;
@@ -491,21 +484,14 @@ Rcpp::List NPF_oblimin(arma::mat T, arma::mat A, double gamma = 0, double eps = 
     
   } while (iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
@@ -629,7 +615,7 @@ void tcg_geominQ(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
   
 }
 
-Rcpp::List NPF_geominQ(arma::mat T, arma::mat A, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_geominQ(arma::mat T, arma::mat A, double epsilon = 1e-02, double eps = 1e-05, int max_iter = 10000) {
   
   arma::mat Inv_T, L, L2, LoL2, Phi, g, gr, dg, Hd;
   arma::vec term, new_term;
@@ -751,21 +737,14 @@ Rcpp::List NPF_geominQ(arma::mat T, arma::mat A, double epsilon = 1e-02, double 
     
   } while (iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
@@ -880,7 +859,7 @@ void tcg_targetQ(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
   
 }
 
-Rcpp::List NPF_targetQ(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 1e4) {
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_targetQ(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, double eps = 1e-05, int max_iter = 1e4) {
   
   arma::mat W2, Inv_T, L, Phi, f1, g, gr, dg, Hd;
   double f, ng, preddiff;
@@ -999,21 +978,15 @@ Rcpp::List NPF_targetQ(arma::mat T, arma::mat A, arma::mat Target, arma::mat Wei
     
   } while (iteration < max_iter);
   
-  Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
-  result["T"] = T;
-  result["f"] = f;
-  result["iterations"] = iteration;
-  
+
   bool convergence = true;
   if(iteration == max_iter) {
     
     convergence = false;
-    Rcpp::Rcout << "Failed rotation convergence" << std::endl;
     
   }
-  result["convergence"] = convergence;
+  
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
   
   return result;
   
