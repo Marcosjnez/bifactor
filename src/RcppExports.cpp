@@ -6,6 +6,19 @@
 
 using namespace Rcpp;
 
+// is_duplicate
+bool is_duplicate(arma::cube Targets, arma::mat Target, int length);
+RcppExport SEXP _bifactor_is_duplicate(SEXP TargetsSEXP, SEXP TargetSEXP, SEXP lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::cube >::type Targets(TargetsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Target(TargetSEXP);
+    Rcpp::traits::input_parameter< int >::type length(lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_duplicate(Targets, Target, length));
+    return rcpp_result_gen;
+END_RCPP
+}
 // random_orthogonal
 arma::mat random_orthogonal(int p, int q);
 RcppExport SEXP _bifactor_random_orthogonal(SEXP pSEXP, SEXP qSEXP) {
@@ -133,6 +146,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_bifactor_is_duplicate", (DL_FUNC) &_bifactor_is_duplicate, 3},
     {"_bifactor_random_orthogonal", (DL_FUNC) &_bifactor_random_orthogonal, 2},
     {"_bifactor_multiple_rotations", (DL_FUNC) &_bifactor_multiple_rotations, 14},
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 21},

@@ -1,5 +1,5 @@
 #define ARMA_DONT_USE_OPENMP
-// #define ARMA_NO_DEBUG
+#define ARMA_NO_DEBUG
 // #define ARMA_DONT_OPTIMISE_BAND
 // #define ARMA_OPENMP_THREADS 10
 // #define ARMA_DONT_OPTIMISE_SYMPD
@@ -15,6 +15,9 @@
 #include <RcppArmadillo.h>
 #include <omp.h>
 #include "BEFA.h"
+
+// [[Rcpp::export]]
+bool is_duplicate(arma::cube Targets, arma::mat Target, int length);
 
 // [[Rcpp::export]]
 arma::mat random_orthogonal(int p, int q);

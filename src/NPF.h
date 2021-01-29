@@ -183,7 +183,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma:
     new_T = T + dir;
 
     // Projection onto the oblique manifold
-    new_T = new_T * diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
+    new_T *= diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
     
     // Differential of g
     dg = dg_xtarget(dir, T, Inv_T, L, W2, f2, PW2, g, w);
@@ -428,7 +428,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_oblimin(arma:
     new_T = T + dir;
     
     // Projection onto the oblique manifold
-    new_T = new_T * diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
+    new_T *= diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
     
     // Differential of g
     dg = dg_oblimin(dir, Inv_T, L, I_gamma_C, IgCL2N, N, g);
@@ -677,7 +677,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_geominQ(arma:
     new_T = T + dir;
 
     // Projection onto the oblique manifold
-    new_T = new_T * diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
+    new_T *= diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
     
     // Differential of g
     dg = dg_geominQ(dir, Inv_T, L, L2, LoL2, term, p2, g, epsilon);
@@ -922,7 +922,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_targetQ(arma:
     new_T = T + dir;
     
     // Projection onto the oblique manifold
-    new_T = new_T * diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
+    new_T *= diagmat(1 / sqrt(diagvec(new_T.t() * new_T)));
     
     // Differential of g
     dg = dg_targetQ(dir, T, Inv_T, L, W2, g);

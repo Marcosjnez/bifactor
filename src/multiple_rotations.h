@@ -20,8 +20,23 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
                               double gamma, double epsilon, double k, double w, int random_starts, int cores,
                               double eps, int max_iter) {
   
-  
   int n_factors = loadings.n_cols;
+  
+  arma::mat Phi(n_factors, n_factors);
+  
+  if(rotation == "xtarget" || rotation == "target" || rotation == "targetQ") {
+    
+    if(arma::size(Target) != arma::size(loadings) || 
+       arma::size(Weight) != arma::size(loadings) ||
+       arma::size(Phi_Target) != arma::size(Phi) ||
+       arma::size(Phi_Weight) != arma::size(Phi)) {
+      
+      Rcpp::stop("Incompatible Target dimensions");
+      
+    }
+    
+  }
+  
   arma::vec xf(random_starts);
   std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> x;
   std::vector<std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool>> x2(random_starts);
@@ -52,7 +67,7 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
       x2[i] = GPF_geominT(T, loadings, epsilon, eps, max_iter);
     }
     
-    // #pragma omp critical
+
     xf[i] = std::get<3>(x2[i]);
     
   }
@@ -61,7 +76,7 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
   x = x2[index_minimum];
   
   arma::mat L = std::get<0>(x);
-  arma::mat Phi = std::get<1>(x);
+  Phi = std::get<1>(x);
   arma::mat T = std::get<2>(x);
   double f = std::get<3>(x);
   int iterations = std::get<4>(x);
@@ -77,6 +92,7 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
   
   if(!convergence) {
     
+    Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Failed rotation convergence");
     
   }

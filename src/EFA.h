@@ -100,6 +100,7 @@ Rcpp::List efa(arma::vec psy, arma::mat R, int n_factors, std::string method,
   
   bool heywood = arma::any( uniquenesses < 0 );
   if( heywood ) {
+    Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
     
   }// Rcpp::Rcout << "Heywood case detected" << std::endl;
