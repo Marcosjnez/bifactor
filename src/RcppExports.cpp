@@ -6,19 +6,6 @@
 
 using namespace Rcpp;
 
-// is_duplicate
-bool is_duplicate(arma::cube Targets, arma::mat Target, int length);
-RcppExport SEXP _bifactor_is_duplicate(SEXP TargetsSEXP, SEXP TargetSEXP, SEXP lengthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::cube >::type Targets(TargetsSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Target(TargetSEXP);
-    Rcpp::traits::input_parameter< int >::type length(lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(is_duplicate(Targets, Target, length));
-    return rcpp_result_gen;
-END_RCPP
-}
 // random_orthogonal
 arma::mat random_orthogonal(int p, int q);
 RcppExport SEXP _bifactor_random_orthogonal(SEXP pSEXP, SEXP qSEXP) {
@@ -111,8 +98,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // bifactor
-Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method, std::string rotation, Rcpp::Nullable<Rcpp::NumericVector> init, bool normalize, double gamma, double epsilon, double k, double w, std::string bifactor_method, int SLiD_max_iter, double cutoff, Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget, Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight, int random_starts, int cores, int efa_max_iter, double efa_factr, int m, int rot_max_iter, double rot_eps, bool verbose);
-RcppExport SEXP _bifactor_bifactor(SEXP RSEXP, SEXP n_generalsSEXP, SEXP n_specificsSEXP, SEXP methodSEXP, SEXP rotationSEXP, SEXP initSEXP, SEXP normalizeSEXP, SEXP gammaSEXP, SEXP epsilonSEXP, SEXP kSEXP, SEXP wSEXP, SEXP bifactor_methodSEXP, SEXP SLiD_max_iterSEXP, SEXP cutoffSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP efa_max_iterSEXP, SEXP efa_factrSEXP, SEXP mSEXP, SEXP rot_max_iterSEXP, SEXP rot_epsSEXP, SEXP verboseSEXP) {
+Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method, std::string rotation, Rcpp::Nullable<Rcpp::NumericVector> init, bool normalize, double gamma, double epsilon, double k, double w, std::string bifactor_method, int SLiD_max_iter, double cutoff, Rcpp::Nullable<Rcpp::NumericMatrix> LTarget, Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget, Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight, int random_starts, int cores, int efa_max_iter, double efa_factr, int m, int rot_max_iter, double rot_eps, bool verbose);
+RcppExport SEXP _bifactor_bifactor(SEXP RSEXP, SEXP n_generalsSEXP, SEXP n_specificsSEXP, SEXP methodSEXP, SEXP rotationSEXP, SEXP initSEXP, SEXP normalizeSEXP, SEXP gammaSEXP, SEXP epsilonSEXP, SEXP kSEXP, SEXP wSEXP, SEXP bifactor_methodSEXP, SEXP SLiD_max_iterSEXP, SEXP cutoffSEXP, SEXP LTargetSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP efa_max_iterSEXP, SEXP efa_factrSEXP, SEXP mSEXP, SEXP rot_max_iterSEXP, SEXP rot_epsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -130,6 +117,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type bifactor_method(bifactor_methodSEXP);
     Rcpp::traits::input_parameter< int >::type SLiD_max_iter(SLiD_max_iterSEXP);
     Rcpp::traits::input_parameter< double >::type cutoff(cutoffSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type LTarget(LTargetSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type PhiTarget(PhiTargetSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type PhiWeight(PhiWeightSEXP);
     Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
@@ -140,19 +128,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type rot_max_iter(rot_max_iterSEXP);
     Rcpp::traits::input_parameter< double >::type rot_eps(rot_epsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(bifactor(R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, PhiTarget, PhiWeight, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose));
+    rcpp_result_gen = Rcpp::wrap(bifactor(R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, LTarget, PhiTarget, PhiWeight, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bifactor_is_duplicate", (DL_FUNC) &_bifactor_is_duplicate, 3},
     {"_bifactor_random_orthogonal", (DL_FUNC) &_bifactor_random_orthogonal, 2},
     {"_bifactor_multiple_rotations", (DL_FUNC) &_bifactor_multiple_rotations, 14},
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 21},
     {"_bifactor_get_target", (DL_FUNC) &_bifactor_get_target, 2},
     {"_bifactor_get_target_with_cutoff", (DL_FUNC) &_bifactor_get_target_with_cutoff, 2},
-    {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 24},
+    {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 25},
     {NULL, NULL, 0}
 };
 

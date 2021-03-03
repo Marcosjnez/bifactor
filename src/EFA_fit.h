@@ -1,21 +1,17 @@
-// [[Rcpp::depends(RcppArmadillo)]]
-
-#include <RcppArmadillo.h>
-
 arma::vec sdp_cpp(arma::mat Cov) {
-  
+
   Rcpp::Environment Rcsdp("package:Rcsdp");
   Rcpp::Function csdp = Rcsdp["csdp"];
-  
+
   int p = Cov.n_rows;
   arma::vec LoBounds(p, arma::fill::zeros);
   arma::vec UpBounds(p, arma::fill::ones);
   arma::vec Var = UpBounds;
   arma::vec opt = UpBounds;
-  
+
   arma::mat Cov2 = -Cov;
   Cov2.diag().zeros();
-  
+
   Rcpp::List C = Rcpp::List::create(Cov2, -UpBounds, LoBounds);
   Rcpp::List A(p);
   for (int i=0; i < p; ++i) {
@@ -23,7 +19,7 @@ arma::vec sdp_cpp(arma::mat Cov) {
     b(i) = 1;
     A[i] = Rcpp::List::create(diagmat(b), -b, b);
   }
-  
+
   arma::vec size_K(3, arma::fill::ones);
   size_K *= p;
   Rcpp::CharacterVector type(3);
@@ -31,187 +27,177 @@ arma::vec sdp_cpp(arma::mat Cov) {
   type[1] = "l";
   type[2] = "l";
   Rcpp::List K = Rcpp::List::create(Rcpp::_["type"] = type, Rcpp::_["size"] = size_K);
-  
+
   Rcpp::Function csdp_control = Rcsdp["csdp.control"];
   Rcpp::List control = csdp_control();
   control["printlevel"] = 0;
 
   Rcpp::List result = csdp(C, A, opt, K, control);
   arma::vec item_diag = result["y"];
-  
+
   return item_diag;
 
 }
 
-Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors, 
+Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
                     double rel_tol, int efa_max_iter) {
-  
+
   Rcpp::List result;
-  
+
   double criteria;
   arma::mat w, ww;
   int iteration = 0;
-  
-  // arma::vec init = psy;
-  
+
   do {
-    
+
     iteration = iteration + 1;
-    
+
     arma::mat reduced_R = R - diagmat(psy);
-    
-    // Reparametrización por descomposición eigen:
+
     arma::vec eigval;
     arma::mat eigvec;
     arma::eig_sym(eigval, eigvec, reduced_R);
-    
+
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
-    
+
     arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
     arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
     for(int i=0; i < n_factors; ++i) {
-      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+      if(eigenvalues[i] < 0) eigenvalues[i] = 0;
     }
     arma::mat D = diagmat(sqrt(eigenvalues));
-    
-    // Loadings:
+
     w = A * D;
     ww = w * w.t();
-    
-    // Actualización:
+
     arma::vec new_psy = 1 - diagvec(ww);
-    
-    // for(int i=0; i < n_factors; ++i) {
-    //   if(init(i) < new_psy(i)) new_psy(i) = init(i);
-    // }
-    
-    // criterio de convergencia:
+
     criteria = arma::accu( abs(psy - new_psy) );
     psy = new_psy;
-    
+
   } while (criteria > rel_tol && iteration < efa_max_iter);
-  
+
   arma::mat R_hat = ww;
   R_hat.diag().ones();
-  
+
   result["loadings"] = w;
   result["uniquenesses"] = psy;
   result["R_hat"] = R_hat;
   result["iterations"] = iteration;
-  
+
   return result;
-  
+
 }
 
 double ml_objective(arma::vec psy, arma::mat R, int n_factors, int n_items) {
-  
+
   arma::mat sc = diagmat(1/sqrt(psy));
   arma::mat Sstar = sc * R * sc;
-  
+
   arma::vec eigval;
   eig_sym(eigval, Sstar);
-  
+
   arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
-  
+
   double objective = arma::accu(log(e) - e) - n_factors + n_items;
   return -objective;
-  
+
 }
 
 arma::vec ml_gradient(arma::vec psy, arma::mat R, int n_factors, int n_items) {
-  
+
   arma::vec sqrt_psy = sqrt(psy);
   arma::mat sc = diagmat(1/sqrt_psy);
   arma::mat Sstar = sc * R * sc;
-  
+
   arma::vec eigval;
   arma::mat eigvec;
   eig_sym(eigval, eigvec, Sstar);
-  
+
   arma::vec eigval2 = reverse(eigval);
   arma::mat eigvec2 = reverse(eigvec, 1);
-  
+
   arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
   arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1)) - 1;
   for(int i=0; i < n_factors; ++i) {
-    if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   }
   arma::mat D = diagmat(sqrt(eigenvalues));
-  
+
   arma::mat w = A * D;
   w = diagmat(sqrt_psy) * w;
   arma::mat ww = w * w.t();
   arma::mat residuals = R - ww - diagmat(psy);
-  
+
   arma::mat gradient = -diagvec(residuals) / pow(psy, 2);
-  
+
   return gradient;
 }
 
 double minres_objective(arma::vec psy, arma::mat R, int n_factors) {
-  
+
   arma::mat reduced_R = R - diagmat(psy);
-  
+
   arma::vec eigval;
   arma::mat eigvec;
   eig_sym(eigval, eigvec, reduced_R);
-  
+
   arma::vec eigval2 = reverse(eigval);
   arma::mat eigvec2 = reverse(eigvec, 1);
-  
+
   arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
   arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
   for(int i=0; i < n_factors; ++i) {
-    if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   }
   arma::mat D = diagmat(sqrt(eigenvalues));
-  
+
   arma::mat w = A * D;
   arma::mat ww = w * w.t();
   arma::mat residuals = R - ww - diagmat(psy);
-  
+
   double objective = 0.5*arma::accu(pow(residuals, 2));
   return objective;
-  
+
 }
 
 arma::vec minres_gradient(arma::vec psy, arma::mat R, int n_factors) {
-  
+
   arma::mat reduced_R = R - diagmat(psy);
-  
+
   arma::vec eigval;
   arma::mat eigvec;
   eig_sym(eigval, eigvec, reduced_R);
-  
+
   arma::vec eigval2 = reverse(eigval);
   arma::mat eigvec2 = reverse(eigvec, 1);
-  
+
   arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
   arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
   for(int i=0; i < n_factors; ++i) {
-    if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   }
   arma::mat D = diagmat(sqrt(eigenvalues));
-  
+
   arma::mat w = A * D;
   arma::mat ww = w * w.t();
   arma::mat residuals = R - ww - diagmat(psy);
-  
+
   arma::mat gradient = -diagvec(residuals);
-  
+
   return gradient;
-  
+
 }
 
 Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string method,
                 int efa_max_iter, double efa_factr, int m) {
-  
-  Rcpp::Environment stats("package:stats"); 
+
+  Rcpp::Environment stats("package:stats");
   Rcpp::Function optim = stats["optim"];
-  
+
   int n_items = psy.size();
-  
+
   Rcpp::List results;
   Rcpp::List control;
   control["maxit"] = efa_max_iter;
@@ -220,7 +206,7 @@ Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string met
   arma::vec parscale(n_items, arma::fill::ones);
   parscale *= 0.01;
   control["parscale"] = parscale;
-  
+
   if (method == "minres") {
     results = optim(Rcpp::_["par"] = psy,
                     Rcpp::_["fn"] = Rcpp::InternalFunction(&minres_objective),
@@ -230,9 +216,9 @@ Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string met
                     Rcpp::_["upper"] = 1,
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
-                    Rcpp::_["n_factors"] = n_factors); 
+                    Rcpp::_["n_factors"] = n_factors);
   } else if (method == "ml") {
-    
+
     results = optim(Rcpp::_["par"] = psy,
                     Rcpp::_["fn"] = Rcpp::InternalFunction(&ml_objective),
                     Rcpp::_["gr"] = Rcpp::InternalFunction(&ml_gradient),
@@ -242,154 +228,10 @@ Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string met
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
                     Rcpp::_["n_factors"] = n_factors,
-                    Rcpp::_["n_items"] = n_items); 
-    
-  }
-  
-  return results;
-  
-}
+                    Rcpp::_["n_items"] = n_items);
 
-// Rcpp::List glb(arma::mat C, arma::mat T, double conv) {
-//   
-//   Rcpp::List result;
-//   
-//   int m = C.n_cols;
-//   arma::mat C0 = C;
-//   C0.diag().zeros(); // Poner la diagonal de C a 0
-//   int iter = 0;
-//   arma::mat buff = T * C * T.t();
-//   double f2 = trace(buff); // Traza de buff
-//   double fold = f2 + 2 * conv;
-//   double labda = -10000; // init
-//   arma::vec gamma1(m, arma::fill::zeros);
-//   double neg_conv = -conv * 0.1;
-//   arma::mat TT, C0TTC0;
-//   arma::vec tt, gg;
-//   uarma::vec w;
-//   
-//   do{
-//     
-//     fold = f2;
-//     iter = iter + 1;
-//     
-//     for (int i=0; i < m; ++i) {
-//       
-//       arma::vec yi = T * C0.col(i);
-//       double yiyi = as_scalar( yi.t() * yi );
-//       double delta1 = pow(yiyi, 0.5);
-//       
-//       if (delta1 == 0) {
-//         
-//         T.col(i) = normalise(T.col(i));
-//         
-//       } else if ((delta1 > 0) && (delta1 < C(i, i))) {
-//         
-//         T.col(i) = -yi/delta1;
-//         
-//       } else if (delta1 >= C(i, i)) {
-//         
-//         T.col(i) = -yi/C(i, i);
-//         
-//       }
-//       
-//     }
-//     
-//     buff = T * C * T.t();
-//     f2 = trace(buff);
-//     
-//     if ((fold - f2) <= conv) {
-//       
-//       TT = T.t() * T;
-//       tt = diagvec(TT);
-//       w = find(tt <= 1.0000000001);
-//       gamma1 = diagvec(C);
-//       C0TTC0 = C0 * TT * C0;
-//       gg = diagvec(C0TTC0);
-//       gamma1.elem( w ) = pow(gg.elem( w ), 0.5);
-//       
-//       arma::vec eigval;
-//       arma::mat eigvec;
-//       eig_sym(eigval, eigvec, C0 + diagmat(gamma1));
-//       labda = arma::min(eigval);
-//       
-//     }
-//     
-//   } while ( ((fold - f2) > conv) || (labda < neg_conv) );
-//   
-//   result["iterations"] = iter;
-//   result["gamma1"] = gamma1;
-//   
-//   return result;
-//   
-// }
-// 
-// Rcpp::List mrfa(arma::mat SIGMA, int r, int nstarts, double conv = 1e-05) {
-//   
-//   Rcpp::List result;
-//   arma::vec communalities;
-//   double f = datum::inf, f1;
-//   
-//   int m = SIGMA.n_cols, iterations, iters;
-//   arma::mat SIGMARED = SIGMA;
-//   
-//   for (int i=0; i < nstarts; ++i) {
-//     
-//     arma::vec gam(m, arma::fill::randu); // valores iniciales de las comunalidades
-//     arma::mat buff(m, m, arma::fill::randn); // matriz 12x12 de valores aleatorios de una normal estandar
-//     arma::mat T = normalise(buff, 2, 0); // matriz aleatoria inicial
-//     SIGMARED.diag() = gam; // reemplazar la diagonal de SIGMA por las comunalidades
-//     
-//     arma::mat u;
-//     arma::vec v;
-//     eig_sym(v, u, SIGMARED, "dc");
-//     arma::mat K = u(span::all, arma::span(0, m-r-1)); // autovectores que corresponden a los m - r autovalores más grandes
-//     
-//     f1 = arma::accu(v(arma::span(0, m-r-1))); // seleccionar los más pequeños m-r autovalores de SIGMARED y sumarlos
-//     
-//     for(int i=0; i < 2; ++i) {
-//       
-//       arma::mat buff1 = pow(K, 2); // Seleccionar los primeros m - r autovectores al cuadrado
-//       
-//       arma::vec w = pow(sum(buff1, 1), 0.25); // raíz de la suma de las filas
-//       
-//       arma::mat Sigma1 = w * w.t() % SIGMA;
-//       
-//       Rcpp::List gam_result = glb(Sigma1, T, conv);
-//       arma::vec gam_temp = gam_result["gamma1"];
-//       gam = gam_temp;
-//       gam = gam/pow(w, 2); // comunalidades
-//       iters = gam_result["iterations"];
-//       
-//       SIGMARED = SIGMA;
-//       SIGMARED.diag() = gam;
-//       
-//       eig_sym(v, u, SIGMARED, "dc");
-//       K = u(span::all, arma::span(0, m-r-1));
-//       
-//       if (v(0) < 0) { // Si el autovalor más pequeño < 0 súma su valor absoluto a las comunalidades
-//         
-//         gam -= v(0);
-//         f1 = arma::accu(v(arma::span(0, m-r-1)));
-//         
-//       }
-//       
-//     }
-//     
-//     if(f1 < f) {
-//       
-//       f = f1;
-//       communalities = gam;
-//       iterations = iters;
-//       
-//     }
-//     
-//   }
-//   
-//   result["f"] = f;
-//   result["communalities"] = communalities;
-//   result["iterations"] = iterations;
-//   
-//   return result;
-//   
-// }
+  }
+
+  return results;
+
+}

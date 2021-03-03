@@ -19,6 +19,7 @@ bifactor(
   bifactor_method = "SL",
   SLiD_max_iter = 10L,
   cutoff = 0.2,
+  LTarget = NULL,
   PhiTarget = NULL,
   PhiWeight = NULL,
   random_starts = 1L,

@@ -1,7 +1,4 @@
-// [[Rcpp::depends(RcppArmadillo)]]
-
-#include <RcppArmadillo.h>
-
+#include <Rcpp/Benchmark/Timer.h>
 #include "EFA.h"
 
 arma::vec tucker_congruence(arma::mat X, arma::mat Y) {
@@ -12,7 +9,7 @@ arma::vec tucker_congruence(arma::mat X, arma::mat Y) {
 
   arma::vec congruence = YX / arma::sqrt(YY % XX);
 
-  return congruence;
+  return arma::abs(congruence);
 
 }
 
@@ -322,7 +319,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
   int n_factors = SL_loadings.n_cols;
   int n_indicators = SL_loadings.n_rows;
 
-  arma::mat SL_Phi, SL_Phi_specifics(n_specifics, n_specifics, arma::fill::eye);
+  arma::mat Phi_generals, Phi_specifics(n_specifics, n_specifics, arma::fill::eye);
 
   arma::vec psy = 1/diagvec(inv_sympd(R));
   Rcpp::List efa_result = efa(psy, R, n_factors, method, efa_max_iter, efa_factr, m);
@@ -344,21 +341,21 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
 
     arma::mat SL_specifics = SL_loadings;
     SL_specifics.shed_col(0);
-    new_Target = get_target(SL_specifics, SL_Phi_specifics);
+    new_Target = get_target(SL_specifics, Phi_specifics);
     arma::vec add(n_indicators, arma::fill::ones);
     new_Target.insert_cols(0, add);
 
   } else {
 
     second_order_solution_rotation = second_order_solution["rotation"];
-    arma::mat SL_Phi_temp = second_order_solution_rotation["Phi"];
-    SL_Phi = SL_Phi_temp;
+    arma::mat SL_Phi = second_order_solution_rotation["Phi"];
+    Phi_generals = SL_Phi;
 
     loadings_g = SL_loadings(arma::span::all, arma::span(0, n_generals-1));
     loadings_s = SL_loadings(arma::span::all, arma::span(n_generals, n_factors-1));
 
-    new_Target_g = get_target(loadings_g, SL_Phi);
-    new_Target_s = get_target(loadings_s, SL_Phi_specifics);
+    new_Target_g = get_target(loadings_g, Phi_generals);
+    new_Target_s = get_target(loadings_s, Phi_specifics);
 
     new_Target = join_rows(new_Target_g, new_Target_s);
 
@@ -368,7 +365,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
   arma::vec congruence;
   arma::cube Targets(n_indicators, n_factors, max_iter, arma::fill::zeros);
   Targets.slice(0) = new_Target;
-  arma::mat abs_diffs;
+  arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
 
@@ -385,7 +382,8 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
     arma::mat new_loadings = rotation_result["loadings"];
 
     congruence = tucker_congruence(loadings, new_loadings);
-    abs_diffs = arma::abs(loadings - new_loadings);
+    min_congruences[i] = congruence.min();
+    max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 
     loadings = new_loadings;
 
@@ -393,7 +391,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
 
       arma::mat specifics = loadings;
       specifics.shed_col(0);
-      new_Target = get_target(specifics, SL_Phi_specifics);
+      new_Target = get_target(specifics, Phi_specifics);
       arma::vec add(n_indicators, arma::fill::ones);
       new_Target.insert_cols(0, add);
 
@@ -402,14 +400,14 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
       loadings_g = loadings(arma::span::all, arma::span(0, n_generals-1));
       loadings_s = loadings(arma::span::all, arma::span(n_generals, n_factors-1));
 
-      new_Target_g = get_target(loadings_g, SL_Phi);
-      new_Target_s = get_target(loadings_s, SL_Phi_specifics);
+      arma::mat new_Phi = rotation_result["Phi"];
+      Phi_generals = new_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1));
+      Phi_specifics = new_Phi(arma::span(n_generals, n_factors-1), arma::span(n_generals, n_factors-1));
+
+      new_Target_g = get_target(loadings_g, Phi_generals);
+      new_Target_s = get_target(loadings_s, Phi_specifics);
 
       new_Target = join_rows(new_Target_g, new_Target_s);
-
-      arma::mat new_Phi = rotation_result["Phi"];
-      SL_Phi = new_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1));
-      SL_Phi_specifics = new_Phi(arma::span(n_generals, n_factors-1), arma::span(n_generals, n_factors-1));
 
     }
 
@@ -441,7 +439,14 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
 
   arma::mat Phi = rotation_result["Phi"];
   bool Target_convergence = true;
-  if(i == max_iter || Target_discrepancies != 0) Target_convergence = false;
+  if(i == max_iter && Target_discrepancies != 0) {
+
+    Target_convergence = false;
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Maximum iteration reached without convergence");
+
+  }
 
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
@@ -453,16 +458,16 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
   rotation_result["Weights"] = Weight;
   rotation_result["Target_iterations"] = i;
   rotation_result["Target_convergence"] = Target_convergence;
-  rotation_result["congruence"] = congruence;
-  rotation_result["max_diff"] = abs_diffs.max();
-  rotation_result["mean_abs_diff"] = mean(mean(abs_diffs));
+  rotation_result["min_congruences"] = min_congruences.head(i);
+  rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
   // rotation_result["Targets"] = Targets;
 
   result["efa"] = efa_result;
   result["Schmid_Leiman"] = SL_result;
+
   if( rotation == "xtarget" ) {
-    result["SLiDx"] = rotation_result;
+    result["GSLiD"] = rotation_result;
   } else if( rotation == "target" ) {
     result["SLiD"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -525,7 +530,7 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
   arma::vec congruence;
   arma::cube Targets(n_indicators, n_factors, max_iter, arma::fill::zeros);
   Targets.slice(0) = new_Target;
-  arma::mat abs_diffs;
+  arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
 
@@ -542,7 +547,8 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
     arma::mat new_loadings = rotation_result["loadings"];
 
     congruence = tucker_congruence(loadings, new_loadings);
-    abs_diffs = arma::abs(loadings - new_loadings);
+    min_congruences[i] = congruence.min();
+    max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 
     loadings = new_loadings;
 
@@ -594,7 +600,14 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
 
   arma::mat Phi = rotation_result["Phi"];
   bool Target_convergence = true;
-  if(i == max_iter || Target_discrepancies != 0) Target_convergence = false;
+  if(i == max_iter && Target_discrepancies != 0) {
+
+    Target_convergence = false;
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Maximum iteration reached without convergence");
+
+  }
 
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
@@ -606,16 +619,15 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
   rotation_result["Weights"] = Weight;
   rotation_result["Target_iterations"] = i;
   rotation_result["Target_convergence"] = Target_convergence;
-  rotation_result["congruence"] = congruence;
-  rotation_result["max_diff"] = abs_diffs.max();
-  rotation_result["mean_abs_diff"] = mean(mean(abs_diffs));
+  rotation_result["min_congruences"] = min_congruences.head(i);
+  rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
   // rotation_result["Targets"] = Targets;
 
   result["efa"] = efa_result;
   result["Schmid_Leiman"] = SL_result;
   if( rotation == "xtarget" ) {
-    result["SLix"] = rotation_result;
+    result["GSLi"] = rotation_result;
   } else if( rotation == "target" ) {
     result["SLi"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -626,24 +638,314 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
 
 }
 
-Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method, std::string rotation,
-                    Rcpp::Nullable<Rcpp::NumericVector> init, bool normalize,
-                    double gamma, double epsilon, double k, double w,
+Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
+              std::string rotation, arma::mat Target, arma::mat PhiTarget, arma::mat PhiWeight,
+              double w, int random_starts, int cores,
+              int efa_max_iter, double efa_factr, int m,
+              int rot_max_iter, double rot_eps,
+              int max_iter, bool verbose = true) {
+
+  int n_factors = n_generals + n_specifics;
+  int n_indicators = R.n_rows;
+
+  arma::mat Phi_generals, Phi_specifics(n_specifics, n_specifics, arma::fill::eye);
+
+  arma::vec psy = 1/diagvec(inv_sympd(R));
+  Rcpp::List efa_result = efa(psy, R, n_factors, method, efa_max_iter, efa_factr, m);
+
+  arma::mat unrotated_loadings = efa_result["loadings"];
+
+  Rcpp::List result, rotation_result;
+  rotation_result["unrotated_loadings"] = unrotated_loadings;
+
+  arma::mat old_Target, loadings_g, loadings_s, new_Target_g, new_Target_s, new_Target, Weight;
+  arma::vec add(n_indicators, arma::fill::zeros);
+
+  arma::mat loadings = Target;
+  double gamma = 0;
+  double epsilon = 1e-02;
+  double k = 0;
+
+  new_Target = Target;
+  Weight = 1-new_Target;
+  arma::vec congruence;
+  arma::cube Targets(n_indicators, n_factors, max_iter, arma::fill::zeros);
+  Targets.slice(0) = new_Target;
+  arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
+  int i = 0;
+  int Target_discrepancies;
+
+  if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
+
+  do{
+
+    old_Target = new_Target;
+
+    rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
+                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         random_starts, cores, rot_eps, rot_max_iter);
+
+    arma::mat new_loadings = rotation_result["loadings"];
+
+    congruence = tucker_congruence(loadings, new_loadings);
+    min_congruences[i] = congruence.min();
+    max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
+
+    loadings = new_loadings;
+
+    if(n_generals == 1) {
+
+      arma::mat specifics = loadings;
+      specifics.shed_col(0);
+      new_Target = get_target(specifics, Phi_specifics);
+      arma::vec add(n_indicators, arma::fill::ones);
+      new_Target.insert_cols(0, add);
+
+    } else {
+
+      loadings_g = loadings(arma::span::all, arma::span(0, n_generals-1));
+      loadings_s = loadings(arma::span::all, arma::span(n_generals, n_factors-1));
+
+      arma::mat new_Phi = rotation_result["Phi"];
+      Phi_generals = new_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1));
+      Phi_specifics = new_Phi(arma::span(n_generals, n_factors-1), arma::span(n_generals, n_factors-1));
+
+      new_Target_g = get_target(loadings_g, Phi_generals);
+      new_Target_s = get_target(loadings_s, Phi_specifics);
+
+      new_Target = join_rows(new_Target_g, new_Target_s);
+
+    }
+
+    Weight = 1-new_Target;
+    Target_discrepancies = accu(abs(old_Target - new_Target));
+
+    bool check = is_duplicate(Targets, new_Target, i);
+    Targets.slice(i) = new_Target;
+
+    ++i;
+
+    if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
+      "  Target discrepancies = " << Target_discrepancies << "   \r";
+
+    if(check) {
+
+      if(Target_discrepancies != 0) {
+
+        Rcpp::Rcout << "\n" << std::endl;
+        Rcpp::warning("Recursive Target iterates. The last iteration result is returned");
+
+      }
+
+      break;
+
+    }
+
+  } while (i < max_iter);
+
+  arma::mat Phi = rotation_result["Phi"];
+  bool Target_convergence = true;
+  if(i == max_iter && Target_discrepancies != 0) {
+
+    Target_convergence = false;
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Maximum iteration reached without convergence");
+
+  }
+
+  rotation_result["loadings"] = loadings;
+  rotation_result["Phi"] = Phi;
+  arma::mat R_hat = loadings * Phi * loadings.t();
+  rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
+  R_hat.diag().ones();
+  rotation_result["R_hat"] = R_hat;
+  rotation_result["Target"] = new_Target;
+  rotation_result["Weights"] = Weight;
+  rotation_result["Target_iterations"] = i;
+  rotation_result["Target_convergence"] = Target_convergence;
+  rotation_result["min_congruences"] = min_congruences.head(i);
+  rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
+  // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
+  // rotation_result["Targets"] = Targets;
+
+  result["efa"] = efa_result;
+
+  if( rotation == "xtarget" ) {
+    result["GiD"] = rotation_result;
+  } else if( rotation == "target" ) {
+    result["iD"] = rotation_result;
+  } else if( rotation == "targetQ" ) {
+    result["iDQ"] = rotation_result;
+  }
+
+  return result;
+
+}
+
+Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
+             std::string rotation, arma::mat Target, arma::mat PhiTarget, arma::mat PhiWeight,
+             double w, int random_starts, int cores, double cutoff,
+             int efa_max_iter, double efa_factr, int m,
+             int rot_max_iter, double rot_eps,
+             int max_iter, bool verbose) {
+
+  int n_factors = n_generals + n_specifics;
+  int n_indicators = R.n_rows;
+
+  arma::vec psy = 1/diagvec(inv_sympd(R));
+  Rcpp::List efa_result = efa(psy, R, n_factors, method, efa_max_iter, efa_factr, m);
+
+  arma::mat unrotated_loadings = efa_result["loadings"];
+
+  Rcpp::List result, rotation_result;
+  rotation_result["unrotated_loadings"] = unrotated_loadings;
+
+  arma::mat old_Target, loadings_g, loadings_s, new_Target_g, new_Target_s, new_Target, Weight;
+  arma::vec add(n_indicators, arma::fill::zeros);
+
+  arma::mat loadings = Target;
+  double gamma = 0;
+  double epsilon = 1e-02;
+  double k = 0;
+
+  new_Target = Target;
+  Weight = 1-new_Target;
+  arma::vec congruence;
+  arma::cube Targets(n_indicators, n_factors, max_iter, arma::fill::zeros);
+  Targets.slice(0) = new_Target;
+  arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
+  int i = 0;
+  int Target_discrepancies;
+
+  if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
+
+  do{
+
+    old_Target = new_Target;
+
+    rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
+                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         random_starts, cores, rot_eps, rot_max_iter);
+
+    arma::mat new_loadings = rotation_result["loadings"];
+
+    congruence = tucker_congruence(loadings, new_loadings);
+    min_congruences[i] = congruence.min();
+    max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
+
+    loadings = new_loadings;
+
+    if(n_generals == 1) {
+
+      arma::mat specifics = loadings;
+      specifics.shed_col(0);
+      new_Target = get_target_with_cutoff(specifics, cutoff);
+      arma::vec add(n_indicators, arma::fill::ones);
+      new_Target.insert_cols(0, add);
+
+    } else {
+
+      loadings_g = loadings(arma::span::all, arma::span(0, n_generals-1));
+      loadings_s = loadings(arma::span::all, arma::span(n_generals, n_factors-1));
+
+      new_Target_g = get_target_with_cutoff(loadings_g, cutoff);
+      new_Target_s = get_target_with_cutoff(loadings_s, cutoff);
+
+      new_Target = join_rows(new_Target_g, new_Target_s);
+
+    }
+
+    Weight = 1-new_Target;
+    Target_discrepancies = accu(abs(old_Target - new_Target));
+
+    bool check = is_duplicate(Targets, new_Target, i);
+    Targets.slice(i) = new_Target;
+
+    ++i;
+
+    if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
+      "  Target discrepancies = " << Target_discrepancies << "   \r";
+
+    if(check) {
+
+      if(Target_discrepancies != 0) {
+
+        Rcpp::Rcout << "\n" << std::endl;
+        Rcpp::warning("loop found in Target iterates");
+
+      }
+
+      break;
+
+    }
+
+  } while (i < max_iter);
+
+  arma::mat Phi = rotation_result["Phi"];
+  bool Target_convergence = true;
+  if(i == max_iter && Target_discrepancies != 0) {
+
+    Target_convergence = false;
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Maximum iteration reached without convergence");
+
+  }
+
+  rotation_result["loadings"] = loadings;
+  rotation_result["Phi"] = Phi;
+  arma::mat R_hat = loadings * Phi * loadings.t();
+  rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
+  R_hat.diag().ones();
+  rotation_result["R_hat"] = R_hat;
+  rotation_result["Target"] = new_Target;
+  rotation_result["Weights"] = Weight;
+  rotation_result["Target_iterations"] = i;
+  rotation_result["Target_convergence"] = Target_convergence;
+  rotation_result["min_congruences"] = min_congruences.head(i);
+  rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
+  // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
+  // rotation_result["Targets"] = Targets;
+
+  result["efa"] = efa_result;
+
+  if( rotation == "xtarget" ) {
+    result["Gi"] = rotation_result;
+  } else if( rotation == "target" ) {
+    result["i"] = rotation_result;
+  } else if( rotation == "targetQ" ) {
+    result["iQ"] = rotation_result;
+  }
+
+  return result;
+
+}
+
+Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method,
+                    std::string rotation, Rcpp::Nullable<Rcpp::NumericVector> init,
+                    bool normalize,  double gamma, double epsilon, double k, double w,
                     std::string bifactor_method, int SLiD_max_iter, double cutoff,
+                    Rcpp::Nullable<Rcpp::NumericMatrix> LTarget,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight,
                     int random_starts, int cores,
                     int efa_max_iter, double efa_factr, int m,
                     int rot_max_iter, double rot_eps, bool verbose) {
 
-  Rcpp::List result, SL_result, SLi_result, SLiD_result;
+  Rcpp::Timer timer;
+
+  Rcpp::List result, SL_result, SLi_result, SLiD_result, iDx_result, ix_result;
 
   SL_result = SL(R, n_generals, n_specifics, method, rotation, normalize,
                  random_starts, cores, gamma, epsilon, k, w,
                  efa_max_iter, efa_factr, m, rot_max_iter, rot_eps);
 
-  arma::mat Phi_Target, Phi_Weight;
+  arma::mat Target, Phi_Target, Phi_Weight;
 
+  if (LTarget.isNotNull()) {
+    Target = Rcpp::as<arma::mat>(LTarget);
+  }
   if (PhiTarget.isNotNull()) {
     Phi_Target = Rcpp::as<arma::mat>(PhiTarget);
   }
@@ -651,7 +953,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     Phi_Weight = Rcpp::as<arma::mat>(PhiWeight);
   }
 
-  if (bifactor_method == "SLiDx") {
+  if (bifactor_method == "GSLiD") {
 
     std::string rotation2 = "xtarget";
     SLiD_result = SLiD(SL_result, R, n_generals, n_specifics, method, rotation2,
@@ -660,6 +962,15 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                        rot_max_iter, rot_eps,
                        SLiD_max_iter, verbose);
     result = SLiD_result;
+
+  } else if (bifactor_method == "GSLi") {
+
+    std::string rotation2 = "xtarget";
+    SLi_result = SLi(SL_result, R, n_generals, n_specifics, method, rotation2,
+                     Phi_Target, Phi_Weight, w, random_starts, cores,
+                     cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
+                     SLiD_max_iter, verbose);
+    result = SLi_result;
 
   } else if (bifactor_method == "SLiD") {
 
@@ -670,15 +981,6 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                        rot_max_iter, rot_eps,
                        SLiD_max_iter, verbose);
     result = SLiD_result;
-
-  } else if (bifactor_method == "SLix") {
-
-    std::string rotation2 = "xtarget";
-    SLi_result = SLi(SL_result, R, n_generals, n_specifics, method, rotation2,
-                     Phi_Target, Phi_Weight, w, random_starts, cores,
-                     cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                     SLiD_max_iter, verbose);
-    result = SLi_result;
 
   } else if (bifactor_method == "SLi") {
 
@@ -698,12 +1000,35 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                        SLiD_max_iter, verbose);
     result = SLiD_result;
 
+  } else if (bifactor_method == "GiD") {
+
+    std::string rotation2 = "xtarget";
+    iDx_result = iD(R, n_generals, n_specifics, method, rotation2,
+                    Target, Phi_Target, Phi_Weight, w, random_starts, cores,
+                    efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
+                    SLiD_max_iter, verbose);
+    result = iDx_result;
+
+  } else if (bifactor_method == "Gi") {
+
+    std::string rotation2 = "xtarget";
+    ix_result = i(R, n_generals, n_specifics, method, rotation2,
+                  Target, Phi_Target, Phi_Weight, w, random_starts, cores,
+                  cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
+                  SLiD_max_iter, verbose);
+    result = ix_result;
+
   } else if (bifactor_method == "SL") {
 
     result = SL_result;
 
   }
 
+  timer.step("elapsed");
+
+  result["elapsed"] = timer;
+
+  result.attr("class") = "bifactor";
   return result;
 
 }

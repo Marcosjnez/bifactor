@@ -14,25 +14,22 @@
 
 #include <RcppArmadillo.h>
 #include <omp.h>
-#include "BEFA.h"
-
-// [[Rcpp::export]]
-bool is_duplicate(arma::cube Targets, arma::mat Target, int length);
+#include "fit_indices.h"
 
 // [[Rcpp::export]]
 arma::mat random_orthogonal(int p, int q);
 
 // [[Rcpp::export]]
 Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight,
-                              double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1, int random_starts = 10, 
+                              double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1, int random_starts = 10,
                               int cores = 1, double eps = 1e-05, int max_iter = 1e4);
 
 // [[Rcpp::export]]
-Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres", 
+Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
                  std::string rotation = "oblimin", Rcpp::Nullable<Rcpp::NumericVector> init = R_NilValue,
-                 Rcpp::Nullable<Rcpp::NumericMatrix> Target = R_NilValue, 
+                 Rcpp::Nullable<Rcpp::NumericMatrix> Target = R_NilValue,
                  Rcpp::Nullable<Rcpp::NumericMatrix> Weight = R_NilValue,
-                 Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget = R_NilValue, 
+                 Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget = R_NilValue,
                  Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight = R_NilValue,
                  bool normalize = false, double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1,
                  int random_starts = 1, int cores = 1,
@@ -46,10 +43,12 @@ arma::mat get_target(arma::mat L, arma::mat Phi);
 arma::mat get_target_with_cutoff(arma::mat L, double cutoff = 0.20);
 
 // [[Rcpp::export]]
-Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method, std::string rotation,
-                    Rcpp::Nullable<Rcpp::NumericVector> init = R_NilValue, bool normalize = false,
-                    double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1,
-                    std::string bifactor_method = "SL", int SLiD_max_iter = 10, double cutoff = 0.20,
+Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string method,
+                    std::string rotation, Rcpp::Nullable<Rcpp::NumericVector> init = R_NilValue,
+                    bool normalize = false, double gamma = 0, double epsilon = 1e-02,
+                    double k = 0, double w = 1, std::string bifactor_method = "SL",
+                    int SLiD_max_iter = 10, double cutoff = 0.20,
+                    Rcpp::Nullable<Rcpp::NumericMatrix> LTarget = R_NilValue,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget = R_NilValue,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight = R_NilValue,
                     int random_starts = 1, int cores = 1,

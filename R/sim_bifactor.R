@@ -72,15 +72,16 @@ sim_bifactor <- function(n_generals, specifics_per_general, items_per_specific,
 
   if(pure) {
 
-    m <- sqrt(mean(loadings_g.)^2 + mean(loadings_s.)^2)
     value <- sequen[floor(items_per_specific/2 + 1)]
     row_indexes <- unlist(apply(A, 2, FUN = function(x) which(x == value)))
     column_indexes <- apply(A[row_indexes, ], 1, FUN = function(x) which(x > 0))
     n <- n_specifics * n_generals
     indexes <- which(!is.na(A[row_indexes, 1:n_generals]))
-    A[row_indexes, 1:n_generals][indexes] <- runif(length(indexes), m - 0.1, m + 0.1)
-
+    m <- sqrt(A[row_indexes, 1:n_generals][indexes]^2 +
+                A[row_indexes, ][which(A[row_indexes, ] == value)]^2)
+    A[row_indexes, 1:n_generals][indexes] <- m
     A[row_indexes, ][which(A[row_indexes, ] == value)] <- 0.01
+
   }
 
   # Pesos cruzados

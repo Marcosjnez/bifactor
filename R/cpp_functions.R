@@ -30,7 +30,7 @@ get_target_with_cutoff <- function(L, cutoff = 0.20) {
 
 #' Fit an exploratory bifactor model
 #' @export
-bifactor <- function(R, n_generals, n_specifics, method, rotation, init = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, bifactor_method = "SL", SLiD_max_iter = 10L, cutoff = 0.20, PhiTarget = NULL, PhiWeight = NULL, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, PhiTarget, PhiWeight, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose)
+bifactor <- function(R, n_generals, n_specifics, method, rotation, init = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, bifactor_method = "SL", SLiD_max_iter = 10L, cutoff = 0.20, LTarget = NULL, PhiTarget = NULL, PhiWeight = NULL, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, LTarget, PhiTarget, PhiWeight, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose)
 }
 
