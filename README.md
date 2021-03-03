@@ -1,2 +1,2 @@
 # bifactor
-Fit full exploratory bifactor models with arbitrary general factors
+Fit full exploratory bifactor or two-tier models with arbitrary correlated general factors
