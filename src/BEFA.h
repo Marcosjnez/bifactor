@@ -368,6 +368,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
   arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
+  bool Target_convergence = true;
 
   if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
 
@@ -429,6 +430,8 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
         Rcpp::Rcout << "\n" << std::endl;
         Rcpp::warning("Recursive Target iterates. The last iteration result is returned");
 
+        Target_convergence = false;
+
       }
 
       break;
@@ -438,7 +441,6 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
   } while (i < max_iter);
 
   arma::mat Phi = rotation_result["Phi"];
-  bool Target_convergence = true;
   if(i == max_iter && Target_discrepancies != 0) {
 
     Target_convergence = false;
@@ -533,6 +535,7 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
   arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
+  bool Target_convergence = true;
 
   if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
 
@@ -590,6 +593,8 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
         Rcpp::Rcout << "\n" << std::endl;
         Rcpp::warning("loop found in Target iterates");
 
+        Target_convergence = false;
+
       }
 
       break;
@@ -599,7 +604,6 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
   } while (i < max_iter);
 
   arma::mat Phi = rotation_result["Phi"];
-  bool Target_convergence = true;
   if(i == max_iter && Target_discrepancies != 0) {
 
     Target_convergence = false;
@@ -674,6 +678,7 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
   arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
+  bool Target_convergence = true;
 
   if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
 
@@ -735,6 +740,8 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
         Rcpp::Rcout << "\n" << std::endl;
         Rcpp::warning("Recursive Target iterates. The last iteration result is returned");
 
+        Target_convergence = false;
+
       }
 
       break;
@@ -744,7 +751,7 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
   } while (i < max_iter);
 
   arma::mat Phi = rotation_result["Phi"];
-  bool Target_convergence = true;
+
   if(i == max_iter && Target_discrepancies != 0) {
 
     Target_convergence = false;
@@ -817,6 +824,7 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
   arma::vec max_abs_diffs(max_iter), min_congruences(max_iter);
   int i = 0;
   int Target_discrepancies;
+  bool Target_convergence = true;
 
   if (verbose) Rcpp::Rcout << "Rotating..." << std::endl;
 
@@ -874,6 +882,8 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
         Rcpp::Rcout << "\n" << std::endl;
         Rcpp::warning("loop found in Target iterates");
 
+        Target_convergence = false;
+
       }
 
       break;
@@ -883,7 +893,7 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
   } while (i < max_iter);
 
   arma::mat Phi = rotation_result["Phi"];
-  bool Target_convergence = true;
+
   if(i == max_iter && Target_discrepancies != 0) {
 
     Target_convergence = false;
