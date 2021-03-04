@@ -423,33 +423,27 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
     if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
       "  Target discrepancies = " << Target_discrepancies << "   \r";
 
-    if(check) {
-
-      if(Target_discrepancies != 0) {
-
-        Rcpp::Rcout << "\n" << std::endl;
-        Rcpp::warning("Recursive Target iterates. The last iteration result is returned");
-
-        Target_convergence = false;
-
-      }
-
-      break;
-
-    }
+    if(check) break;
 
   } while (i < max_iter);
 
-  arma::mat Phi = rotation_result["Phi"];
   if(i == max_iter && Target_discrepancies != 0) {
-
-    Target_convergence = false;
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Maximum iteration reached without convergence");
 
+    Target_convergence = false;
+
+  } else if(Target_discrepancies != 0) {
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Recursive Target iterates. The last result of the iteration is returned");
+
+    Target_convergence = false;
+
   }
 
+  arma::mat Phi = rotation_result["Phi"];
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
   arma::mat R_hat = loadings * Phi * loadings.t();
@@ -586,33 +580,27 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
     if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
       "  Target discrepancies = " << Target_discrepancies << "   \r";
 
-    if(check) {
-
-      if(Target_discrepancies != 0) {
-
-        Rcpp::Rcout << "\n" << std::endl;
-        Rcpp::warning("loop found in Target iterates");
-
-        Target_convergence = false;
-
-      }
-
-      break;
-
-    }
+    if(check) break;
 
   } while (i < max_iter);
 
-  arma::mat Phi = rotation_result["Phi"];
   if(i == max_iter && Target_discrepancies != 0) {
-
-    Target_convergence = false;
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Maximum iteration reached without convergence");
 
+    Target_convergence = false;
+
+  } else if(Target_discrepancies != 0) {
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Recursive Target iterates. The last result of the iteration is returned");
+
+    Target_convergence = false;
+
   }
 
+  arma::mat Phi = rotation_result["Phi"];
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
   arma::mat R_hat = loadings * Phi * loadings.t();
@@ -733,34 +721,27 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
     if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
       "  Target discrepancies = " << Target_discrepancies << "   \r";
 
-    if(check) {
-
-      if(Target_discrepancies != 0) {
-
-        Rcpp::Rcout << "\n" << std::endl;
-        Rcpp::warning("Recursive Target iterates. The last iteration result is returned");
-
-        Target_convergence = false;
-
-      }
-
-      break;
-
-    }
+    if(check) break;
 
   } while (i < max_iter);
 
-  arma::mat Phi = rotation_result["Phi"];
-
   if(i == max_iter && Target_discrepancies != 0) {
-
-    Target_convergence = false;
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Maximum iteration reached without convergence");
 
+    Target_convergence = false;
+
+  } else if(Target_discrepancies != 0) {
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Recursive Target iterates. The last result of the iteration is returned");
+
+    Target_convergence = false;
+
   }
 
+  arma::mat Phi = rotation_result["Phi"];
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
   arma::mat R_hat = loadings * Phi * loadings.t();
@@ -875,34 +856,27 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
     if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i << ":  Mean Tucker congruence = " << mean(congruence) <<
       "  Target discrepancies = " << Target_discrepancies << "   \r";
 
-    if(check) {
-
-      if(Target_discrepancies != 0) {
-
-        Rcpp::Rcout << "\n" << std::endl;
-        Rcpp::warning("loop found in Target iterates");
-
-        Target_convergence = false;
-
-      }
-
-      break;
-
-    }
+    if(check) break;
 
   } while (i < max_iter);
 
-  arma::mat Phi = rotation_result["Phi"];
-
   if(i == max_iter && Target_discrepancies != 0) {
-
-    Target_convergence = false;
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Maximum iteration reached without convergence");
 
+    Target_convergence = false;
+
+  } else if(Target_discrepancies != 0) {
+
+    Rcpp::Rcout << "\n" << std::endl;
+    Rcpp::warning("Recursive Target iterates. The last result of the iteration is returned");
+
+    Target_convergence = false;
+
   }
 
+  arma::mat Phi = rotation_result["Phi"];
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
   arma::mat R_hat = loadings * Phi * loadings.t();
