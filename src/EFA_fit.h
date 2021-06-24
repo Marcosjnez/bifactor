@@ -39,7 +39,7 @@ arma::vec sdp_cpp(arma::mat Cov) {
 
 }
 
-Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
+Rcpp::List principal_axis(arma::vec psi, arma::mat R, int n_factors,
                     double rel_tol, int efa_max_iter) {
 
   Rcpp::List result;
@@ -52,7 +52,7 @@ Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
 
     iteration = iteration + 1;
 
-    arma::mat reduced_R = R - diagmat(psy);
+    arma::mat reduced_R = R - diagmat(psi);
 
     arma::vec eigval;
     arma::mat eigvec;
@@ -71,10 +71,10 @@ Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
     w = A * D;
     ww = w * w.t();
 
-    arma::vec new_psy = 1 - diagvec(ww);
+    arma::vec new_psi = 1 - diagvec(ww);
 
-    criteria = arma::accu( abs(psy - new_psy) );
-    psy = new_psy;
+    criteria = arma::accu( abs(psi - new_psi) );
+    psi = new_psi;
 
   } while (criteria > rel_tol && iteration < efa_max_iter);
 
@@ -82,7 +82,7 @@ Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
   R_hat.diag().ones();
 
   result["loadings"] = w;
-  result["uniquenesses"] = psy;
+  result["uniquenesses"] = psi;
   result["R_hat"] = R_hat;
   result["iterations"] = iteration;
 
@@ -90,9 +90,9 @@ Rcpp::List principal_axis(arma::vec psy, arma::mat R, int n_factors,
 
 }
 
-double ml_objective(arma::vec psy, arma::mat R, int n_factors, int n_items) {
+double ml_objective(arma::vec psi, arma::mat R, int n_factors, int n_items) {
 
-  arma::mat sc = diagmat(1/sqrt(psy));
+  arma::mat sc = diagmat(1/sqrt(psi));
   arma::mat Sstar = sc * R * sc;
 
   arma::vec eigval;
@@ -101,14 +101,15 @@ double ml_objective(arma::vec psy, arma::mat R, int n_factors, int n_items) {
   arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
 
   double objective = arma::accu(log(e) - e) - n_factors + n_items;
+
   return -objective;
 
 }
 
-arma::vec ml_gradient(arma::vec psy, arma::mat R, int n_factors, int n_items) {
+arma::vec ml_gradient(arma::vec psi, arma::mat R, int n_factors, int n_items) {
 
-  arma::vec sqrt_psy = sqrt(psy);
-  arma::mat sc = diagmat(1/sqrt_psy);
+  arma::vec sqrt_psi = sqrt(psi);
+  arma::mat sc = diagmat(1/sqrt_psi);
   arma::mat Sstar = sc * R * sc;
 
   arma::vec eigval;
@@ -126,18 +127,18 @@ arma::vec ml_gradient(arma::vec psy, arma::mat R, int n_factors, int n_items) {
   arma::mat D = diagmat(sqrt(eigenvalues));
 
   arma::mat w = A * D;
-  w = diagmat(sqrt_psy) * w;
+  w = diagmat(sqrt_psi) * w;
   arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psy);
+  arma::mat residuals = R - ww - diagmat(psi);
 
-  arma::mat gradient = -diagvec(residuals) / pow(psy, 2);
+  arma::mat gradient = -diagvec(residuals) / (psi % psi);
 
   return gradient;
 }
 
-double minres_objective(arma::vec psy, arma::mat R, int n_factors) {
+double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
 
-  arma::mat reduced_R = R - diagmat(psy);
+  arma::mat reduced_R = R - diagmat(psi);
 
   arma::vec eigval;
   arma::mat eigvec;
@@ -155,16 +156,17 @@ double minres_objective(arma::vec psy, arma::mat R, int n_factors) {
 
   arma::mat w = A * D;
   arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psy);
+  arma::mat residuals = R - ww - diagmat(psi);
 
-  double objective = 0.5*arma::accu(pow(residuals, 2));
+  double objective = 0.5*arma::accu(residuals % residuals);
+
   return objective;
 
 }
 
-arma::vec minres_gradient(arma::vec psy, arma::mat R, int n_factors) {
+arma::vec minres_gradient(arma::vec psi, arma::mat R, int n_factors) {
 
-  arma::mat reduced_R = R - diagmat(psy);
+  arma::mat reduced_R = R - diagmat(psi);
 
   arma::vec eigval;
   arma::mat eigvec;
@@ -182,7 +184,7 @@ arma::vec minres_gradient(arma::vec psy, arma::mat R, int n_factors) {
 
   arma::mat w = A * D;
   arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psy);
+  arma::mat residuals = R - ww - diagmat(psi);
 
   arma::mat gradient = -diagvec(residuals);
 
@@ -190,13 +192,13 @@ arma::vec minres_gradient(arma::vec psy, arma::mat R, int n_factors) {
 
 }
 
-Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string method,
+Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int n_factors, std::string method,
                 int efa_max_iter, double efa_factr, int m) {
 
   Rcpp::Environment stats("package:stats");
   Rcpp::Function optim = stats["optim"];
 
-  int n_items = psy.size();
+  int n_items = psi.size();
 
   Rcpp::List results;
   Rcpp::List control;
@@ -208,7 +210,7 @@ Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string met
   control["parscale"] = parscale;
 
   if (method == "minres") {
-    results = optim(Rcpp::_["par"] = psy,
+    results = optim(Rcpp::_["par"] = psi,
                     Rcpp::_["fn"] = Rcpp::InternalFunction(&minres_objective),
                     Rcpp::_["gr"] = Rcpp::InternalFunction(&minres_gradient),
                     Rcpp::_["method"] = "L-BFGS-B",
@@ -219,7 +221,7 @@ Rcpp::List optim_rcpp(arma::vec psy, arma::mat R, int n_factors, std::string met
                     Rcpp::_["n_factors"] = n_factors);
   } else if (method == "ml") {
 
-    results = optim(Rcpp::_["par"] = psy,
+    results = optim(Rcpp::_["par"] = psi,
                     Rcpp::_["fn"] = Rcpp::InternalFunction(&ml_objective),
                     Rcpp::_["gr"] = Rcpp::InternalFunction(&ml_gradient),
                     Rcpp::_["method"] = "L-BFGS-B",

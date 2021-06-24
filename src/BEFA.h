@@ -31,7 +31,7 @@ Rcpp::List SL(arma::mat R, int n_generals, int n_specifics, std::string method,
               double efa_factr, int m, int rot_max_iter, double rot_eps) {
 
   Rcpp::List first_order_efa = efast(R, n_specifics, method, rotation, R_NilValue,
-                                     R_NilValue, R_NilValue, R_NilValue, R_NilValue,
+                                     R_NilValue, R_NilValue, R_NilValue, R_NilValue, R_NilValue,
                                      normalize, gamma, epsilon, k, w, random_starts, cores,
                                      efa_max_iter, efa_factr, m, rot_max_iter, rot_eps);
 
@@ -45,7 +45,7 @@ Rcpp::List SL(arma::mat R, int n_generals, int n_specifics, std::string method,
 
     arma::vec psy = 1/diagvec(inv_sympd(Phi_1));
     Rcpp::List efa_result = efast(Phi_1, n_generals, method, "none", R_NilValue,
-                                  R_NilValue, R_NilValue, R_NilValue, R_NilValue,
+                                  R_NilValue, R_NilValue, R_NilValue, R_NilValue, R_NilValue,
                                   normalize, gamma, epsilon, k, w, random_starts, cores,
                                   efa_max_iter, efa_factr, m,
                                   rot_max_iter, rot_eps);
@@ -78,7 +78,7 @@ Rcpp::List SL(arma::mat R, int n_generals, int n_specifics, std::string method,
   } else {
 
     Rcpp::List efa_result = efast(Phi_1, n_generals, method, rotation, R_NilValue,
-                                  R_NilValue, R_NilValue, R_NilValue, R_NilValue,
+                                  R_NilValue, R_NilValue, R_NilValue, R_NilValue, R_NilValue,
                                   normalize, gamma, epsilon, k, w, random_starts, cores,
                                   efa_max_iter, efa_factr, m,
                                   rot_max_iter, rot_eps);
@@ -309,7 +309,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
                 double w, int random_starts, int cores,
                 int efa_max_iter, double efa_factr, int m,
                 int rot_max_iter, double rot_eps,
-                int max_iter, bool verbose = true) {
+                int max_iter, bool verbose, std::vector<arma::uvec> indexes) {
 
   Rcpp::List second_order_solution = SL_result["second_order_solution"];
   Rcpp::List second_order_solution_rotation;
@@ -377,7 +377,7 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
     old_Target = new_Target;
 
     rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
-                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         PhiTarget, PhiWeight, indexes, gamma, epsilon, k, w,
                                          random_starts, cores, rot_eps, rot_max_iter);
 
     arma::mat new_loadings = rotation_result["loadings"];
@@ -464,6 +464,8 @@ Rcpp::List SLiD(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specifi
 
   if( rotation == "xtarget" ) {
     result["GSLiD"] = rotation_result;
+  } else if( rotation == "poblq_target" ) {
+    result["GSLiD"] = rotation_result;
   } else if( rotation == "target" ) {
     result["SLiD"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -479,7 +481,7 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
                double w, int random_starts, int cores, double cutoff,
                int efa_max_iter, double efa_factr, int m,
                int rot_max_iter, double rot_eps,
-               int max_iter, bool verbose) {
+               int max_iter, bool verbose, std::vector<arma::uvec> indexes) {
 
   arma::mat SL_loadings = SL_result["loadings"];
 
@@ -538,7 +540,7 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
     old_Target = new_Target;
 
     rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
-                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         PhiTarget, PhiWeight, indexes, gamma, epsilon, k, w,
                                          random_starts, cores, rot_eps, rot_max_iter);
 
     arma::mat new_loadings = rotation_result["loadings"];
@@ -620,6 +622,8 @@ Rcpp::List SLi(Rcpp::List SL_result, arma::mat R, int n_generals, int n_specific
   result["Schmid_Leiman"] = SL_result;
   if( rotation == "xtarget" ) {
     result["GSLi"] = rotation_result;
+  } else if( rotation == "poblq_target" ) {
+    result["GSLi"] = rotation_result;
   } else if( rotation == "target" ) {
     result["SLi"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -635,7 +639,7 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
               double w, int random_starts, int cores,
               int efa_max_iter, double efa_factr, int m,
               int rot_max_iter, double rot_eps,
-              int max_iter, bool verbose = true) {
+              int max_iter, bool verbose, std::vector<arma::uvec> indexes) {
 
   int n_factors = n_generals + n_specifics;
   int n_indicators = R.n_rows;
@@ -675,7 +679,7 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
     old_Target = new_Target;
 
     rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
-                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         PhiTarget, PhiWeight, indexes, gamma, epsilon, k, w,
                                          random_starts, cores, rot_eps, rot_max_iter);
 
     arma::mat new_loadings = rotation_result["loadings"];
@@ -761,6 +765,8 @@ Rcpp::List iD(arma::mat R, int n_generals, int n_specifics, std::string method,
 
   if( rotation == "xtarget" ) {
     result["GiD"] = rotation_result;
+  } else if( rotation == "poblq_target" ) {
+    result["GiD"] = rotation_result;
   } else if( rotation == "target" ) {
     result["iD"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -776,7 +782,7 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
              double w, int random_starts, int cores, double cutoff,
              int efa_max_iter, double efa_factr, int m,
              int rot_max_iter, double rot_eps,
-             int max_iter, bool verbose) {
+             int max_iter, bool verbose, std::vector<arma::uvec> indexes) {
 
   int n_factors = n_generals + n_specifics;
   int n_indicators = R.n_rows;
@@ -814,7 +820,7 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
     old_Target = new_Target;
 
     rotation_result = multiple_rotations(unrotated_loadings, rotation, new_Target, Weight,
-                                         PhiTarget, PhiWeight, gamma, epsilon, k, w,
+                                         PhiTarget, PhiWeight, indexes, gamma, epsilon, k, w,
                                          random_starts, cores, rot_eps, rot_max_iter);
 
     arma::mat new_loadings = rotation_result["loadings"];
@@ -896,6 +902,8 @@ Rcpp::List i(arma::mat R, int n_generals, int n_specifics, std::string method,
 
   if( rotation == "xtarget" ) {
     result["Gi"] = rotation_result;
+  } else if( rotation == "poblq_target" ) {
+    result["Gi"] = rotation_result;
   } else if( rotation == "target" ) {
     result["i"] = rotation_result;
   } else if( rotation == "targetQ" ) {
@@ -913,6 +921,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                     Rcpp::Nullable<Rcpp::NumericMatrix> LTarget,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight,
+                    Rcpp::Nullable<Rcpp::List> oblique_indexes,
                     int random_starts, int cores,
                     int efa_max_iter, double efa_factr, int m,
                     int rot_max_iter, double rot_eps, bool verbose) {
@@ -921,11 +930,14 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
 
   Rcpp::List result, SL_result, SLi_result, SLiD_result, iDx_result, ix_result;
 
+  int n = R.n_rows;
+  int q = n_generals + n_specifics;
+  arma::mat Target(n, q), Phi_Target(q, q), Phi_Weight(q, q);
+  std::vector<arma::uvec> indexes;
+
   SL_result = SL(R, n_generals, n_specifics, method, rotation, normalize,
                  random_starts, cores, gamma, epsilon, k, w,
                  efa_max_iter, efa_factr, m, rot_max_iter, rot_eps);
-
-  arma::mat Target, Phi_Target, Phi_Weight;
 
   if (LTarget.isNotNull()) {
     Target = Rcpp::as<arma::mat>(LTarget);
@@ -936,6 +948,9 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
   if (PhiWeight.isNotNull()) {
     Phi_Weight = Rcpp::as<arma::mat>(PhiWeight);
   }
+  if (oblique_indexes.isNotNull()) {
+    indexes = Rcpp::as<std::vector<arma::uvec>>(oblique_indexes);
+  }
 
   if (bifactor_method == "GSLiD") {
 
@@ -944,7 +959,17 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                        Phi_Target, Phi_Weight, w, random_starts, cores,
                        efa_max_iter, efa_factr, m,
                        rot_max_iter, rot_eps,
-                       SLiD_max_iter, verbose);
+                       SLiD_max_iter, verbose, indexes);
+    result = SLiD_result;
+
+  } else if (bifactor_method == "poblq_GSLiD") {
+
+    std::string rotation2 = "poblq_target";
+    SLiD_result = SLiD(SL_result, R, n_generals, n_specifics, method, rotation2,
+                      Phi_Target, Phi_Weight, w, random_starts, cores,
+                      efa_max_iter, efa_factr, m,
+                      rot_max_iter, rot_eps,
+                      SLiD_max_iter, verbose, indexes);
     result = SLiD_result;
 
   } else if (bifactor_method == "GSLi") {
@@ -953,7 +978,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     SLi_result = SLi(SL_result, R, n_generals, n_specifics, method, rotation2,
                      Phi_Target, Phi_Weight, w, random_starts, cores,
                      cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                     SLiD_max_iter, verbose);
+                     SLiD_max_iter, verbose, indexes);
     result = SLi_result;
 
   } else if (bifactor_method == "SLiD") {
@@ -963,7 +988,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                        Phi_Target, Phi_Weight, w, random_starts, cores,
                        efa_max_iter, efa_factr, m,
                        rot_max_iter, rot_eps,
-                       SLiD_max_iter, verbose);
+                       SLiD_max_iter, verbose, indexes);
     result = SLiD_result;
 
   } else if (bifactor_method == "SLi") {
@@ -972,7 +997,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     SLi_result = SLi(SL_result, R, n_generals, n_specifics, method, rotation2,
                      Phi_Target, Phi_Weight, w, random_starts, cores,
                      cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                     SLiD_max_iter, verbose);
+                     SLiD_max_iter, verbose, indexes);
     result = SLi_result;
 
   } else if (bifactor_method == "SLiDQ") {
@@ -981,7 +1006,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     SLiD_result = SLiD(SL_result, R, n_generals, n_specifics, method, rotation2,
                        Phi_Target, Phi_Weight, w, random_starts, cores,
                        efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                       SLiD_max_iter, verbose);
+                       SLiD_max_iter, verbose, indexes);
     result = SLiD_result;
 
   } else if (bifactor_method == "GiD") {
@@ -990,7 +1015,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     iDx_result = iD(R, n_generals, n_specifics, method, rotation2,
                     Target, Phi_Target, Phi_Weight, w, random_starts, cores,
                     efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                    SLiD_max_iter, verbose);
+                    SLiD_max_iter, verbose, indexes);
     result = iDx_result;
 
   } else if (bifactor_method == "Gi") {
@@ -999,7 +1024,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
     ix_result = i(R, n_generals, n_specifics, method, rotation2,
                   Target, Phi_Target, Phi_Weight, w, random_starts, cores,
                   cutoff, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps,
-                  SLiD_max_iter, verbose);
+                  SLiD_max_iter, verbose, indexes);
     result = ix_result;
 
   } else if (bifactor_method == "SL") {

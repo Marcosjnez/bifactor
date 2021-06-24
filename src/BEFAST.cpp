@@ -20,7 +20,10 @@
 arma::mat random_orthogonal(int p, int q);
 
 // [[Rcpp::export]]
-Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight,
+arma::mat random_poblq(int p, int q, std::vector<arma::uvec> indexes);
+
+// [[Rcpp::export]]
+Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, std::vector<arma::uvec> indexes,
                               double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1, int random_starts = 10,
                               int cores = 1, double eps = 1e-05, int max_iter = 1e4);
 
@@ -31,6 +34,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
                  Rcpp::Nullable<Rcpp::NumericMatrix> Weight = R_NilValue,
                  Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget = R_NilValue,
                  Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight = R_NilValue,
+                 Rcpp::Nullable<Rcpp::List> oblique_indexes = R_NilValue,
                  bool normalize = false, double gamma = 0, double epsilon = 1e-02, double k = 0, double w = 1,
                  int random_starts = 1, int cores = 1,
                  int efa_max_iter = 1e4, double efa_factr = 1e7, int m = 5,
@@ -51,6 +55,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_specifics, std::string me
                     Rcpp::Nullable<Rcpp::NumericMatrix> LTarget = R_NilValue,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget = R_NilValue,
                     Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> oblique_indexes = R_NilValue,
                     int random_starts = 1, int cores = 1,
                     int efa_max_iter = 1e4, double efa_factr = 1e7, int m = 5,
                     int rot_max_iter = 1e4, double rot_eps = 1e-05, bool verbose = true);

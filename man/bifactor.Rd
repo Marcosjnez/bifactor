@@ -22,6 +22,7 @@ bifactor(
   LTarget = NULL,
   PhiTarget = NULL,
   PhiWeight = NULL,
+  oblique_indexes = NULL,
   random_starts = 1L,
   cores = 1L,
   efa_max_iter = 10000L,

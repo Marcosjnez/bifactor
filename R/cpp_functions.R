@@ -4,16 +4,22 @@ random_orthogonal <- function(p, q) {
   .Call(`_bifactor_random_orthogonal`, p, q)
 }
 
+#' Generate random partially oblique matrices
+#' @export
+random_poblq <- function(p, q, indexes) {
+  .Call(`_bifactor_random_poblq`, p, q, indexes)
+}
+
 #' Perform multiple rotations to ensure a global minimum
 #' @export
-multiple_rotations <- function(loadings, rotation, Target, Weight, Phi_Target, Phi_Weight, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 10L, cores = 1L, eps = 1e-05, max_iter = 1e4L) {
-  .Call(`_bifactor_multiple_rotations`, loadings, rotation, Target, Weight, Phi_Target, Phi_Weight, gamma, epsilon, k, w, random_starts, cores, eps, max_iter)
+multiple_rotations <- function(loadings, rotation, Target, Weight, Phi_Target, Phi_Weight, indexes, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 10L, cores = 1L, eps = 1e-05, max_iter = 1e4L) {
+  .Call(`_bifactor_multiple_rotations`, loadings, rotation, Target, Weight, Phi_Target, Phi_Weight, indexes, gamma, epsilon, k, w, random_starts, cores, eps, max_iter)
 }
 
 #' Fast exploratory factor analysis
 #' @export
-efast <- function(R, n_factors, method = "minres", rotation = "oblimin", init = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05) {
-  .Call(`_bifactor_efast`, R, n_factors, method, rotation, init, Target, Weight, PhiTarget, PhiWeight, normalize, gamma, epsilon, k, w, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps)
+efast <- function(R, n_factors, method = "minres", rotation = "oblimin", init = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, oblique_indexes = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05) {
+  .Call(`_bifactor_efast`, R, n_factors, method, rotation, init, Target, Weight, PhiTarget, PhiWeight, oblique_indexes, normalize, gamma, epsilon, k, w, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps)
 }
 
 #' Get an empirical target
@@ -30,7 +36,7 @@ get_target_with_cutoff <- function(L, cutoff = 0.20) {
 
 #' Fit an exploratory bifactor model
 #' @export
-bifactor <- function(R, n_generals, n_specifics, method, rotation, init = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, bifactor_method = "SL", SLiD_max_iter = 10L, cutoff = 0.20, LTarget = NULL, PhiTarget = NULL, PhiWeight = NULL, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, LTarget, PhiTarget, PhiWeight, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose)
+bifactor <- function(R, n_generals, n_specifics, method, rotation, init = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, bifactor_method = "SL", SLiD_max_iter = 10L, cutoff = 0.20, LTarget = NULL, PhiTarget = NULL, PhiWeight = NULL, oblique_indexes = NULL, random_starts = 1L, cores = 1L, efa_max_iter = 1e4L, efa_factr = 1e7, m = 5L, rot_max_iter = 1e4L, rot_eps = 1e-05, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, R, n_generals, n_specifics, method, rotation, init, normalize, gamma, epsilon, k, w, bifactor_method, SLiD_max_iter, cutoff, LTarget, PhiTarget, PhiWeight, oblique_indexes, random_starts, cores, efa_max_iter, efa_factr, m, rot_max_iter, rot_eps, verbose)
 }
 

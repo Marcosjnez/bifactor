@@ -112,6 +112,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method, std::string rot
                  Rcpp::Nullable<Rcpp::NumericMatrix> LWeight,
                  Rcpp::Nullable<Rcpp::NumericMatrix> PhiTarget,
                  Rcpp::Nullable<Rcpp::NumericMatrix> PhiWeight,
+                 Rcpp::Nullable<Rcpp::List> oblique_indexes,
                  bool normalize, double gamma, double epsilon, double k, double w,
                  int random_starts, int cores,
                  int efa_max_iter, double efa_factr, int m,
@@ -125,7 +126,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method, std::string rot
     psy = 1/arma::diagvec(arma::inv_sympd(R));
   }
 
-  arma::mat Target, Weight, Phi_Target, Phi_Weight;
+  int n_items = R.n_rows;
+  arma::mat Target(n_items, n_factors);
+  arma::mat Weight(n_items, n_factors, arma::fill::ones);
+  arma::mat Phi_Target(n_factors, n_factors);
+  arma::mat Phi_Weight(n_factors, n_factors, arma::fill::zeros);
+  std::vector<arma::uvec> indexes;
 
   if (LTarget.isNotNull()) {
     Target = Rcpp::as<arma::mat>(LTarget);
@@ -138,6 +144,9 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method, std::string rot
   }
   if (PhiWeight.isNotNull()) {
     Phi_Weight = Rcpp::as<arma::mat>(PhiWeight);
+  }
+  if (oblique_indexes.isNotNull()) {
+    indexes = Rcpp::as<std::vector<arma::uvec>>(oblique_indexes);
   }
 
   Rcpp::List result;
@@ -155,6 +164,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method, std::string rot
 
   }
 
+  efa_result["Heywood"] = heywood;
   arma::mat loadings = efa_result["loadings"];
 
   Rcpp::List rotation_result;
@@ -173,7 +183,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method, std::string rot
 
   } else {
 
-    rotation_result = multiple_rotations(loadings, rotation, Target, Weight, Phi_Target, Phi_Weight,
+    rotation_result = multiple_rotations(loadings, rotation, Target, Weight, Phi_Target, Phi_Weight, indexes,
                                          gamma, epsilon, k, w, random_starts, cores, rot_eps, rot_max_iter);
 
   }

@@ -14,6 +14,7 @@ efast(
   Weight = NULL,
   PhiTarget = NULL,
   PhiWeight = NULL,
+  oblique_indexes = NULL,
   normalize = FALSE,
   gamma = 0,
   epsilon = 0.01,

@@ -1,3 +1,205 @@
+arma::mat zeros(arma::mat X, std::vector<arma::uvec> indexes) {
+
+  int I = indexes.size();
+  arma::mat X0 = X;
+
+  for(int i=0; i < I; ++i) {
+
+    X0(indexes[i], indexes[i]).zeros();
+
+  }
+
+  X0.diag() = X.diag();
+
+  return X0;
+
+}
+
+arma::mat lyapunov(arma::mat Y, arma::mat Q, arma::uvec indexes) {
+
+  int q = Y.n_rows;
+  arma::mat I(q, q, arma::fill::eye);
+  arma::mat Y1 = arma::kron(I, Y);
+  arma::mat Y2 = arma::kron(Y, I);
+  arma::mat X = Y1 + Y2;
+
+  // arma::uvec indexes = find(trimatl(Q) != 0);
+  Q = Q.elem(indexes);
+  X = X(indexes, indexes);
+  // arma::vec Lambda = arma::solve(X, Q, arma::solve_opts::fast);
+  arma::vec Lambda = arma::solve(X, Q);
+  arma::mat A(q, q, arma::fill::zeros);
+  A(indexes) = Lambda;
+  A = symmatl(A);
+
+  return A;
+
+}
+
+arma::mat lyapunov_2(arma::mat Y, arma::mat Q, arma::uvec indexes) {
+
+  int q = Y.n_rows;
+  arma::mat I(q, q, arma::fill::eye);
+  arma::mat Y1 = arma::kron(I, Y);
+  arma::mat Y2 = arma::kron(Y, I);
+  arma::mat X = Y1 + Y2;
+
+  // arma::uvec indexes = find(Q != 0);
+  Q = Q.elem(indexes);
+  X = X(indexes, indexes);
+  // arma::vec Lambda = arma::solve(X, Q, arma::solve_opts::fast);
+  arma::vec Lambda = arma::solve(X, Q);
+  arma::mat A(q, q, arma::fill::zeros);
+  A(indexes) = Lambda;
+
+  return A;
+
+}
+
+arma::uvec consecutive(int lower, int upper) {
+
+  int size = upper - lower + 1;
+  arma::uvec ivec(size);
+  std::iota(ivec.begin(), ivec.end(), lower);
+
+  return ivec;
+}
+
+std::vector<int> subvector(std::vector<int> v, int lower, int upper) {
+
+  std::vector<int> subv(&v[lower], &v[upper]);
+
+  return subv;
+
+}
+
+std::vector<std::vector<int>> subvectors(std::vector<std::vector<int>> v, int lower, int upper) {
+
+  std::vector<std::vector<int>> subv(&v[lower], &v[upper]);
+
+  return subv;
+
+}
+
+arma::uvec list_to_vector(std::vector<arma::uvec> X) {
+
+  arma::uvec single_vector = std::accumulate(X.begin(), X.end(),
+                                             arma::uvec(), [](arma::uvec a, arma::uvec b) {
+                                               a = arma::join_cols(a, b);
+                                               return a;
+                                             });
+
+  return single_vector;
+
+}
+
+arma::vec orthogonalize(arma::mat orthogonals, arma::vec x, int k) {
+
+  for(int i=0; i < k; ++i) {
+
+    x -= arma::accu(orthogonals.col(i) % x) / arma::accu(orthogonals.col(i) % orthogonals.col(i)) * orthogonals.col(i);
+
+  }
+
+  x /= sqrt(arma::accu(x % x));
+
+  return x;
+
+}
+
+arma::mat gram(arma::mat X) {
+
+  int n = X.n_rows;
+  int k = X.n_cols;
+  X.col(0) /= sqrt(arma::accu(X.col(0) % X.col(0)));
+
+  for(int i=1; i < k; ++i) {
+
+    for(int j=0; j < i; ++j) {
+
+      X.col(i) -= arma::accu(X.col(j) % X.col(i)) / arma::accu(X.col(j) % X.col(j)) * X.col(j);
+
+    }
+
+    X.col(i) /= sqrt(arma::accu(X.col(i) % X.col(i)));
+
+  }
+
+  return X;
+
+}
+
+arma::mat retraction_poblq(arma::mat X, std::vector<arma::uvec> oblq_indexes) {
+
+  X *= diagmat(1 / sqrt(diagvec(X.t() * X)));
+
+  arma::mat Q;
+  arma::mat R;
+  qr_econ(Q, R, X);
+
+  arma::mat X2 = X;
+  X = Q;
+  X.cols(oblq_indexes[0]) = X2.cols(oblq_indexes[0]);
+
+  int J = X.n_cols;
+  int I = oblq_indexes.size()-1;
+
+  // In the following loop, the Gram-Schmidt process is performed between blocks:
+
+    for(int i=0; i < I; ++i) {
+
+      // Select the cumulative indexes of blocks:
+      std::vector<arma::uvec> indexes(&oblq_indexes[0], &oblq_indexes[i+1]);
+      arma::uvec cum_indexes = list_to_vector(indexes);
+
+      arma::mat orthogonals = Q.cols(cum_indexes);
+      int n = orthogonals.n_cols;
+
+      for(int j=0; j < oblq_indexes[i+1].size(); ++j) {
+
+        // orthogonalize every column of the following block:
+        int index = oblq_indexes[i+1][j];
+        X.col(index) = orthogonalize(orthogonals, X2.col(index), n);
+
+      }
+
+  }
+
+  return X;
+
+}
+
+void projection_poblq(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat X, arma::uvec indexes_1, arma::uvec indexes_2) {
+
+  arma::mat X0 = X.t() * g + g.t() * X;
+  X0(indexes_1).zeros();
+  arma::mat Y = X.t() * X;
+  A = lyapunov(Y, X0, indexes_2);
+  // A = lyapunov_2(Y, X0, indexes_2);
+  arma::mat N = X * A;
+  rg = g - N;
+
+}
+
+void proj_poblq_hessian(arma::mat Z, arma::mat g, arma::mat& dH, arma::mat dg, arma::mat X, arma::mat Phi, arma::mat A, arma::uvec indexes_1, arma::uvec indexes_2) {
+
+  int q = X.n_cols;
+  arma::mat c1 = Z.t() * X + X.t() * Z;
+  arma::mat c2 = Z.t() * g + X.t() * dg + dg.t() * X + g.t() * Z;
+  arma::mat c3 = c1 * A;
+  arma::mat c4 = A * c1;
+  c2(indexes_1).zeros();
+  c3(indexes_1).zeros();
+  c4(indexes_1).zeros();
+  arma::mat Q = c2 - c3 - c4;
+  arma::mat dA = lyapunov(Phi, Q, indexes_2);
+  // arma::mat dA = lyapunov_2(Phi, Q, indexes_2);
+  arma::mat hessian = dg - (Z * A + X * dA);
+
+  projection_poblq(dH, A, hessian, X, indexes_1, indexes_2);
+
+}
+
 double root_quad(double a, double b, double c) {
 
   double res = 0.5 * (- b + sqrt(b * b - 4 * a * c) ) / a;
@@ -17,7 +219,7 @@ void f_xtarget(arma::mat& Inv_T, arma::mat& L, arma::mat& Phi, arma::mat& f1, ar
   f1 = Weight % (L - Target);
   f2 = Phi_Weight % (Phi - Phi_Target);
 
-  f = 0.5*arma::accu(pow(f1, 2)) + 0.25*w*arma::accu(pow(f2, 2));
+  f = 0.5*arma::accu(f1 % f1) + 0.25*w*arma::accu(f2 % f2);
 
 }
 
@@ -49,7 +251,7 @@ arma::mat dg_xtarget(arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, ar
 }
 
 void tcg_xtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g, arma::mat gr, arma::mat W2, arma::mat f2, arma::mat PW, arma::mat PW2,
-        double w, double ng, arma::vec c, double rad) {
+                 double w, double ng, arma::vec c, double rad) {
 
   dir.zeros();
   arma::mat dir0, dg, Hd;
@@ -72,7 +274,7 @@ void tcg_xtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
     if(dHd <= 0) {
 
       tau = root_quad(arma::accu(delta % delta), 2 * arma::accu(dir % delta),
-                             arma::accu(dir % dir) - rad * rad);
+                      arma::accu(dir % dir) - rad * rad);
       dir = dir + tau * delta;
       att_bnd = true;
 
@@ -88,7 +290,7 @@ void tcg_xtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
     if (sqrt(arma::accu(pow(dir, 2))) >= rad) {
 
       tau = root_quad(arma::accu(delta % delta), 2 * arma::accu(dir0 % delta),
-                       arma::accu(dir0 % dir0) - rad * rad);
+                      arma::accu(dir0 % dir0) - rad * rad);
       dir = dir0 + tau * delta;
       att_bnd = true;
 
@@ -115,7 +317,7 @@ void tcg_xtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
 }
 
 std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight,
-                 double w, double eps, int max_iter) {
+                                                                           double w, double eps, int max_iter) {
 
   arma::mat W2, PW2, Inv_T, L, Phi, f1, f2, g, gr, dg, Hd;
   double f, ng, preddiff;
@@ -136,8 +338,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma:
   // Riemannian gradient
   gr = g - T * diagmat( T.t() * g );
 
-  ng = sqrt(arma::accu(pow(gr, 2)));
-  // ng = sqrt(trace(gr.t() * gr));
+  ng = sqrt(arma::accu(gr % gr));
 
   double max_rad = 10;
 
@@ -197,15 +398,15 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma:
       goa = (f - new_f) / preddiff;
 
     }
-      if (goa < crit_goa(1)) {
+    if (goa < crit_goa(1)) {
 
-        rad = fac_rad(0) * rad;
+      rad = fac_rad(0) * rad;
 
-      } else if (goa > crit_goa(2) && att_bnd) {
+    } else if (goa > crit_goa(2) && att_bnd) {
 
-          rad = std::min(fac_rad(1) * rad, max_rad);
+      rad = std::min(fac_rad(1) * rad, max_rad);
 
-  }
+    }
 
     // accepted iteration
     if (goa > crit_goa(0)) {
@@ -223,15 +424,14 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_xtarget(arma:
 
       // Riemannian gradient
       gr = g - T * diagmat( T.t() * g );
-      ng = sqrt(arma::accu(pow(gr, 2)));
-      // ng = sqrt(trace(gr.t() * gr));
+      ng = sqrt(arma::accu(gr % gr));
 
     }
 
-  } while (iteration < max_iter);
+  } while (iteration <= max_iter);
 
   bool convergence = true;
-  if(iteration == max_iter) {
+  if(iteration > max_iter) {
 
     convergence = false;
 
@@ -279,7 +479,7 @@ arma::mat dg_oblimin(arma::mat dT, arma::mat Inv_T, arma::mat L, arma::mat I_gam
 }
 
 void tcg_oblimin(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g, arma::mat gr, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N,
-         double ng, arma::vec c, double rad) {
+                 double ng, arma::vec c, double rad) {
 
   dir.zeros();
   arma::mat dir0, dg, Hd;
@@ -346,7 +546,7 @@ void tcg_oblimin(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
     delta = r + beta * delta;
     iter = iter + 1;
 
-  } while (iter < 10);
+  } while (iter < 5);
 
 }
 
@@ -378,7 +578,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_oblimin(arma:
 
   gr = g - T * diagmat( T.t() * g );
 
-  ng = sqrt(arma::accu(pow(gr, 2)));
+  ng = sqrt(arma::accu(gr % gr));
 
   double max_rad = 10;
 
@@ -467,16 +667,16 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_oblimin(arma:
 
       // Riemannian gradient
       gr = g - T * diagmat( T.t() * g );
-      ng = sqrt(arma::accu(pow(gr, 2)));
+      ng = sqrt(arma::accu(gr % gr));
 
     }
 
     iteration = iteration + 1;
 
-  } while (iteration < max_iter);
+  } while (iteration <= max_iter);
 
   bool convergence = true;
-  if(iteration == max_iter) {
+  if(iteration > max_iter) {
 
     convergence = false;
 
@@ -534,8 +734,8 @@ arma::mat dg_geominQ(arma::mat dT, arma::mat Inv_T, arma::mat L, arma::mat L2,
 }
 
 void tcg_geominQ(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, arma::mat L,
-         arma::mat L2, arma::mat LoL2, arma::vec term, arma::mat g, arma::mat gr,
-         int p, double p2, double epsilon, double ng, arma::vec c, double rad) {
+                 arma::mat L2, arma::mat LoL2, arma::vec term, arma::mat g, arma::mat gr,
+                 int p, double p2, double epsilon, double ng, arma::vec c, double rad) {
 
   dir.zeros();
   arma::mat dir0, dg, Hd;
@@ -602,7 +802,7 @@ void tcg_geominQ(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
     delta = r + beta * delta;
     iter = iter + 1;
 
-  } while (iter < 10);
+  } while (iter < 5);
 
 }
 
@@ -627,7 +827,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_geominQ(arma:
 
   gr = g - T * diagmat( T.t() * g );
 
-  ng = sqrt(arma::accu(pow(gr, 2)));
+  ng = sqrt(arma::accu(gr % gr));
 
   double max_rad = 10;
 
@@ -720,16 +920,16 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_geominQ(arma:
 
       // Riemannian gradient
       gr = g - T * diagmat( T.t() * g );
-      ng = sqrt(arma::accu(pow(gr, 2)));
+      ng = sqrt(arma::accu(gr % gr));
 
     }
 
     iteration = iteration + 1;
 
-  } while (iteration < max_iter);
+  } while (iteration <= max_iter);
 
   bool convergence = true;
-  if(iteration == max_iter) {
+  if(iteration > max_iter) {
 
     convergence = false;
 
@@ -846,7 +1046,7 @@ void tcg_targetQ(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, ar
     delta = r + beta * delta;
     iter = iter + 1;
 
-  } while (iter < 10);
+  } while (iter < 5);
 
 }
 
@@ -870,7 +1070,7 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_targetQ(arma:
   // Riemannian gradient
   gr = g - T * diagmat( T.t() * g );
 
-  ng = sqrt(arma::accu(pow(gr, 2)));
+  ng = sqrt(arma::accu(gr % gr));
 
   double max_rad = 10;
 
@@ -961,17 +1161,17 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_targetQ(arma:
 
       // Riemannian gradient
       gr = g - T * diagmat( T.t() * g );
-      ng = sqrt(arma::accu(pow(gr, 2)));
+      ng = sqrt(arma::accu(gr % gr));
 
     }
 
     iteration = iteration + 1;
 
-  } while (iteration < max_iter);
+  } while (iteration <= max_iter);
 
 
   bool convergence = true;
-  if(iteration == max_iter) {
+  if(iteration > max_iter) {
 
     convergence = false;
 
@@ -983,4 +1183,231 @@ std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_targetQ(arma:
 
 }
 
+// partially oblique target
 
+void f_poblqtarget(arma::mat& Inv_T, arma::mat& L, arma::mat& Phi, arma::mat& f1, double& f,
+                  arma::mat A, arma::mat T, arma::mat Target, arma::mat Weight) {
+
+  Phi = T.t() * T;
+  Inv_T = inv(T);
+  L = A * Inv_T.t();
+  f1 = Weight % (L - Target);
+
+  f = 0.5*arma::accu(pow(f1, 2));
+
+}
+
+void g_poblqtarget(arma::mat& g, arma::mat f1, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat Weight) {
+
+  arma::mat df1_dL = Weight % f1;
+  arma::mat df1_dt = - Inv_T.t() * df1_dL.t() * L;
+
+  g = df1_dt;
+
+}
+
+arma::mat dg_poblqtarget(arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat W2, arma::mat g) {
+
+  arma::mat Inv_T_dt = Inv_T * dT;
+  arma::mat dL = - L * Inv_T_dt.t();
+
+  arma::mat dg1L = W2 % dL;
+
+  arma::mat dg1 = - g * (Inv_T * dT).t() - (dT * Inv_T).t() * g - (dg1L * Inv_T).t() * L;
+
+  arma::mat dg = dg1;
+
+  return dg;
+
+}
+
+void tcg_poblqtarget(arma::mat& dir, bool& att_bnd, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat Phi, arma::mat g, arma::mat gr, arma::mat W2, arma::mat AA, arma::uvec indexes_1, arma::uvec indexes_2, double ng, arma::vec c, double rad) {
+
+  dir.zeros();
+  arma::mat dir0, dg, Hd;
+  double alpha, rr0, tau, beta, dHd;
+
+  arma::mat delta = -gr;
+  arma::mat r = delta;
+  double rr = ng * ng;
+  double tol = ng * std::min(pow(ng, c[0]), c[1]);
+
+  int iter = 0;
+
+  do{
+
+    dg = dg_poblqtarget(delta, T, Inv_T, L, W2, g);
+    proj_poblq_hessian(delta, g, Hd, dg, T, Phi, AA, indexes_1, indexes_2);
+
+    dHd = arma::accu(delta % Hd);
+
+    if(dHd <= 0) {
+
+      tau = root_quad(arma::accu(delta % delta), 2 * arma::accu(dir % delta),
+                      arma::accu(dir % dir) - rad * rad);
+      dir = dir + tau * delta;
+      att_bnd = true;
+
+      break;
+
+    }
+
+    rr0 = rr;
+    alpha = rr0 / dHd;
+    dir0 = dir;
+    dir = dir + alpha * delta;
+
+    if (sqrt(arma::accu(pow(dir, 2))) >= rad) {
+
+      tau = root_quad(arma::accu(delta % delta), 2 * arma::accu(dir0 % delta),
+                      arma::accu(dir0 % dir0) - rad * rad);
+      dir = dir0 + tau * delta;
+      att_bnd = true;
+
+      break;
+
+    }
+
+    r = r - alpha * Hd;
+    rr = arma::accu(r % r);
+
+    if (sqrt(rr) < tol) {
+
+      att_bnd = false;
+      break;
+
+    }
+
+    beta = rr / rr0;
+    delta = r + beta * delta;
+    iter = iter + 1;
+
+  } while (iter < 5);
+
+}
+
+std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NPF_poblqtarget(arma::mat T, arma::mat A, arma::mat Target, arma::mat Weight, std::vector<arma::uvec> indexes, arma::uvec indexes_1, arma::uvec indexes_2, double eps = 1e-05, int max_iter = 1e4) {
+
+  arma::mat W2, Inv_T, L, Phi, f1, g, gr, dg, Hd, AA;
+  double f, ng, preddiff;
+
+  arma::mat new_T, new_Inv_T, new_L, new_Phi, new_f1, new_g, new_gr;
+  double new_f, new_ng;
+
+  W2 = pow(Weight, 2);
+
+  // Objective
+  f_poblqtarget(Inv_T, L, Phi, f1, f, A, T, Target, Weight);
+
+  // Gradient
+  g_poblqtarget(g, f1, T, Inv_T, L, Weight);
+
+  // Riemannian gradient
+  projection_poblq(gr, AA, g, T, indexes_1, indexes_2);
+
+  ng = sqrt(arma::accu(gr % gr));
+
+  double max_rad = 10;
+
+  arma::vec fac_rad(2);
+  fac_rad[0] = 0.25;
+  fac_rad[1] = 2;
+
+  arma::vec crit_goa(3);
+  crit_goa[0] = 0.2;
+  crit_goa[1] = 0.25;
+  crit_goa[2] = 0.75;
+
+  arma::vec c(2);
+  c[0] = 1;
+  c[1] = 0.01;
+
+  double rad = 1;
+  bool att_bnd = false;
+  int p = T.n_rows;
+  arma::mat dir(p, p);
+
+  int iteration = 0;
+  double goa;
+
+  do{
+
+    iteration = iteration + 1;
+
+    if (ng < eps) break;
+
+    // subsolver
+    tcg_poblqtarget(dir, att_bnd, T, Inv_T, L, Phi, g, gr, W2, AA, indexes_1, indexes_2, ng, c, rad);
+
+    new_T = T + dir;
+
+    // Projection onto the partially oblique manifold
+    new_T = retraction_poblq(new_T, indexes);
+
+    // Differential of g
+    dg = dg_poblqtarget(dir, T, Inv_T, L, W2, g);
+
+    // Riemannian hessian
+    proj_poblq_hessian(dir, g, Hd, dg, T, Phi, AA, indexes_1, indexes_2);
+
+    preddiff = - arma::accu(dir % ( gr + 0.5 * Hd) );
+
+    // objective
+    f_poblqtarget(new_Inv_T, new_L, new_Phi, new_f1, new_f,
+              A, new_T, Target, Weight);
+
+    if ( std::abs(preddiff) <= arma::datum::eps ) {
+
+      goa = 1;
+
+    } else {
+
+      goa = (f - new_f) / preddiff;
+
+    }
+    if (goa < crit_goa[1]) {
+
+      rad = fac_rad[0] * rad;
+
+    } else if (goa > crit_goa[2] && att_bnd) {
+
+      rad = std::min(fac_rad[1] * rad, max_rad);
+
+    }
+
+    // accepted iteration
+    if (goa > crit_goa[0]) {
+
+      T = new_T;
+      Phi = new_Phi;
+      Inv_T = new_Inv_T;
+      L = new_L;
+      f1 = new_f1;
+      f = new_f;
+
+      // update gradient
+      g_poblqtarget(g, f1, T, Inv_T, L, Weight);
+
+      // Riemannian gradient
+      projection_poblq(gr, AA, g, T, indexes_1, indexes_2);
+      ng = sqrt(arma::accu(gr % gr));
+
+    }
+
+    iteration = iteration + 1;
+
+  } while (iteration <= max_iter);
+
+
+  bool convergence = true;
+  if(iteration > max_iter) {
+
+    convergence = false;
+
+  }
+
+  std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> result = std::make_tuple(L, Phi, T, f, iteration, convergence);
+
+  return result;
+
+}

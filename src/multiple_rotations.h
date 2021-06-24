@@ -12,15 +12,25 @@ arma::mat random_orthogonal(int p, int q) {
 
 }
 
-Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight,
+arma::mat random_poblq(int p, int q, std::vector<arma::uvec> indexes) {
+
+  arma::mat X(p, q, arma::fill::randn);
+  X = retraction_poblq(X, indexes);
+
+  return X;
+
+}
+
+Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::mat Target, arma::mat Weight, arma::mat Phi_Target, arma::mat Phi_Weight, std::vector<arma::uvec> indexes,
                               double gamma, double epsilon, double k, double w, int random_starts, int cores,
                               double eps, int max_iter) {
 
   int n_factors = loadings.n_cols;
 
   arma::mat Phi(n_factors, n_factors);
+  arma::uvec indexes_1, indexes_2;
 
-  if(rotation == "xtarget" || rotation == "target" || rotation == "targetQ") {
+  if(rotation == "xtarget" || rotation == "target" || rotation == "targetQ" || rotation == "poblq_target") {
 
     if(arma::size(Target) != arma::size(loadings) ||
        arma::size(Weight) != arma::size(loadings) ||
@@ -28,6 +38,17 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
        arma::size(Phi_Weight) != arma::size(Phi)) {
 
       Rcpp::stop("Incompatible Target dimensions");
+
+    }
+
+    if(rotation == "poblq_target") {
+
+      for(int i=0; i < indexes.size(); i++) indexes[i] -= 1;
+      arma::mat X(n_factors, n_factors, arma::fill::randu);
+      arma::mat Q = zeros(X, indexes);
+      indexes_1 = arma::find(Q == 0);
+      // indexes_2 = arma::find(Q != 0);
+      indexes_2 = arma::find(arma::trimatl(Q) != 0);
 
     }
 
@@ -45,9 +66,11 @@ Rcpp::List multiple_rotations(arma::mat loadings, std::string rotation, arma::ma
 
     if (rotation == "xtarget") {
       x2[i] = NPF_xtarget(T, loadings, Target, Weight, Phi_Target, Phi_Weight, w, eps, max_iter);
+    } else if (rotation == "poblq_target") {
+      x2[i] = NPF_poblqtarget(T, loadings, Target, Weight, indexes, indexes_1, indexes_2, eps, max_iter);
     } else if (rotation == "target") {
       x2[i] = GPF_target(T, loadings, Target, Weight, eps, max_iter);
-    } if (rotation == "targetQ") {
+    } else if (rotation == "targetQ") {
       x2[i] = NPF_targetQ(T, loadings, Target, Weight, eps, max_iter);
     } else if (rotation == "cfT") {
       x2[i] = GPF_cfT(T, loadings, k, eps, max_iter);
