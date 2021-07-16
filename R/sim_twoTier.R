@@ -38,7 +38,7 @@
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 sim_twoTier <- function(n_generals, groups_per_general, items_per_group,

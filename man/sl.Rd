@@ -30,7 +30,10 @@ Schmid-Leiman transformation into a bi-factor or two-tier pattern.
 \details{
 First, a hierarchical factor model is fitted using a second-order factor analysis on the factor correlation obtained from a first-order factor analysis. Then, the item loadings on the general factors are assumed to be the direct effects of the general factors according to such hierarchical model.
 On the other hand, the item loadings on the group factors become the originally first-order loadings post-multiplied by the diagonal matrix containing the root of the item uniquenesses.
-Obviously, the first-order factor analysis should be oblique. If the second-order solution did not use an orthogonal projection, then the correlation matrix among the general factors for the Schmid-Leiman solution is simply that obtained from such second-order solution.
+
+Obviously, the first-order factor analysis should be oblique to perform a second exploratory factor analysis.
+
+If the second-order solution does not use an orthogonal projection, then the correlation matrix among the general factors for the Schmid-Leiman solution is simply that obtained from such second-order solution.
 }
 \examples{
 
@@ -49,5 +52,5 @@ SL <- sl(sim$R, n_generals = 2, n_groups = 6, first, second)
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }

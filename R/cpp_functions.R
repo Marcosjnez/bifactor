@@ -17,7 +17,7 @@
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 random_orth <- function(p, q) {
@@ -43,7 +43,7 @@ random_orth <- function(p, q) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 random_oblq <- function(p, q) {
@@ -74,7 +74,7 @@ random_oblq <- function(p, q) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 random_poblq <- function(p, q, oblq_blocks) {
@@ -99,7 +99,7 @@ random_poblq <- function(p, q, oblq_blocks) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 retr_orth <- function(X) {
@@ -124,7 +124,7 @@ retr_orth <- function(X) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 retr_oblq <- function(X) {
@@ -150,7 +150,7 @@ retr_oblq <- function(X) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @examples
 #'
@@ -183,7 +183,10 @@ retr_poblq <- function(X, oblq_blocks) {
 #'
 #' @details First, a hierarchical factor model is fitted using a second-order factor analysis on the factor correlation obtained from a first-order factor analysis. Then, the item loadings on the general factors are assumed to be the direct effects of the general factors according to such hierarchical model.
 #' On the other hand, the item loadings on the group factors become the originally first-order loadings post-multiplied by the diagonal matrix containing the root of the item uniquenesses.
-#' Obviously, the first-order factor analysis should be oblique. If the second-order solution did not use an orthogonal projection, then the correlation matrix among the general factors for the Schmid-Leiman solution is simply that obtained from such second-order solution.
+#'
+#' Obviously, the first-order factor analysis should be oblique to perform a second exploratory factor analysis.
+#'
+#' If the second-order solution does not use an orthogonal projection, then the correlation matrix among the general factors for the Schmid-Leiman solution is simply that obtained from such second-order solution.
 #'
 #' @return
 #'
@@ -195,7 +198,7 @@ retr_poblq <- function(X, oblq_blocks) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @examples
 #'
@@ -264,7 +267,7 @@ sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 #'
@@ -312,8 +315,11 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", Target =
 #' @details
 #'
 #' If \code{efa.control = NULL}, then \code{list(maxit = 1e4)} is passed to \code{efa.control}. If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is passed to \code{rot_control}, where \code{eps} is the absolute tolerance. When the objective function does not make a larger improvement than \code{eps}, the algorithm is assumed to converge.
+#'
 #' If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Target} by default, which means a partially specified target rotation is performed. The same applies for \code{PhiTarget} and \code{PhiWeight}.
+#'
 #' If \code{init = NULL}, then the squared multiple correlations of each item with the remaining ones are used as initial values (These are known to be upper bounds).
+#'
 #' If a Heywood case is encountered, then \code{method =} "minrank" is automatically applied to ensure positive uniquenesses.
 #'
 #' @return List of class \code{efast} with the following components:
@@ -336,7 +342,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", Target =
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @examples
 #'
@@ -427,9 +433,13 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @details
 #'
 #' If \code{efa.control = NULL}, then \code{list(maxit = 1e4)} is passed to \code{efa.control}. If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is passed to \code{rot_control}, where \code{eps} is the absolute tolerance. When the objective function does not make a larger improvement than \code{eps}, the algorithm is assumed to converge.
+#'
 #' If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Target} by default, which means a partially specified target rotation is performed. The same applies for \code{PhiTarget} and \code{PhiWeight}.
+#'
 #' If \code{init = NULL}, then the squared multiple correlations of each item with the remaining ones are used as initial values (These are known to be upper bounds).
+#'
 #' If \code{init_Target} is provided, then an initial target by means of the Schmid-Leiman transformation is not necessary.
+#'
 #' If \code{cutoff} is not 0, loadings smaller than such a cut-off are fixed to 0. When \code{cutoff} = 0, an empirical cut-off is used for each column of the loading matrix. They are the mean of the one-lagged differences of the sorted squared normalized loadings. Then, the target is determined by fixing to 0 the squared normalized loadings smaller than such cut-offs.
 #'
 #' @return List of class \code{twoTier}.
@@ -458,7 +468,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @examples
 #'

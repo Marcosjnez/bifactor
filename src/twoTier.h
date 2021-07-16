@@ -207,9 +207,9 @@ void pass_to_sl(Rcpp::List efa_args,
   } else{
     nullable_PhiWeight = R_NilValue;
   }
-  if (efa_args.containsElementNamed("oblique_indexes")) {
-    Rcpp::Nullable<arma::uvec> oblique_indexes_ = efa_args["oblique_indexes"];
-    nullable_oblq_blocks = oblique_indexes_;
+  if (efa_args.containsElementNamed("oblq_blocks")) {
+    Rcpp::Nullable<arma::uvec> oblq_blocks_ = efa_args["oblq_blocks"];
+    nullable_oblq_blocks = oblq_blocks_;
   } else{
     nullable_oblq_blocks = R_NilValue;
   }
@@ -816,14 +816,14 @@ Rcpp::List GSLiD(std::string projection,
   arma::mat Phi = rotation_result["Phi"];
   rotation_result["loadings"] = loadings;
   rotation_result["Phi"] = Phi;
-  arma::mat Rhat = loadings * Phi * loadings.t();
-  rotation_result["uniquenesses"] = 1 - diagvec(Rhat);
-  Rhat.diag().ones();
-  rotation_result["Rhat"] = Rhat;
+  arma::mat R_hat = loadings * Phi * loadings.t();
+  rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
+  R_hat.diag().ones();
+  rotation_result["R_hat"] = R_hat;
   rotation_result["Target"] = new_Target;
-  rotation_result["Weight"] = Weight;
-  rotation_result["GSLiD_iterations"] = i;
-  rotation_result["GSLiD_convergence"] = Target_convergence;
+  rotation_result["Weights"] = Weight;
+  rotation_result["Target_iterations"] = i;
+  rotation_result["Target_convergence"] = Target_convergence;
   rotation_result["min_congruences"] = min_congruences.head(i);
   rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
@@ -881,7 +881,7 @@ Rcpp::List twoTier(arma::mat R, int n_generals, int n_groups,
 
       // Create the factor correlation matrix for the SL solution:
 
-      arma::mat new_Phi(n_factors, n_factors);
+      arma::mat new_Phi(n_factors, n_factors, arma::fill::eye);
 
       if(n_generals > 1) {
 
@@ -889,10 +889,6 @@ Rcpp::List twoTier(arma::mat R, int n_generals, int n_groups,
         Rcpp::List second_order_solution_rotation = second_order_solution["rotation"];
         arma::mat Phi_generals = second_order_solution_rotation["Phi"];
         new_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1)) = Phi_generals;
-
-      } else {
-
-        new_Phi.eye();
 
       }
 

@@ -268,7 +268,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                empty_loadings, empty_Phi,
                Target, Weight, PhiTarget, PhiWeight,
                Weight2, PhiWeight2,
-               w, epsilon, k, gamma,
+               gamma, epsilon, k, w,
                I_gamma_C, N, M, p2, // Constants
                nullable_oblq_blocks, list_oblq_blocks, oblq_blocks,
                nullable_rot_control, rot_maxit, rot_eps,

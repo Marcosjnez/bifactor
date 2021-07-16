@@ -74,8 +74,11 @@ Fast exploratory factor analysis.
 }
 \details{
 If \code{efa.control = NULL}, then \code{list(maxit = 1e4)} is passed to \code{efa.control}. If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is passed to \code{rot_control}, where \code{eps} is the absolute tolerance. When the objective function does not make a larger improvement than \code{eps}, the algorithm is assumed to converge.
+
 If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Target} by default, which means a partially specified target rotation is performed. The same applies for \code{PhiTarget} and \code{PhiWeight}.
+
 If \code{init = NULL}, then the squared multiple correlations of each item with the remaining ones are used as initial values (These are known to be upper bounds).
+
 If a Heywood case is encountered, then \code{method =} "minrank" is automatically applied to ensure positive uniquenesses.
 }
 \examples{
@@ -93,5 +96,5 @@ projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from osf.io/7aszj
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }

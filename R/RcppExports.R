@@ -33,7 +33,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", Target =
     .Call(`_bifactor_rotate`, loadings, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, gamma, epsilon, k, w, random_starts, cores, rot_control)
 }
 
-efast <- function(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+efast <- function(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 0.01, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
     .Call(`_bifactor_efast`, R, n_factors, method, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, normalize, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 

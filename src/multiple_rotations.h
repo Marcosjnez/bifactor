@@ -126,7 +126,7 @@ void check_rotate(std::string rotation, std::string projection,
                   arma::mat& Target, arma::mat& Weight,
                   arma::mat& PhiTarget, arma::mat& PhiWeight,
                   arma::mat& Weight2, arma::mat& PhiWeight2,
-                  double w, double epsilon, double k, int gamma,
+                  double gamma, double epsilon, double k, double w,
                   arma::mat& I_gamma_C, arma::mat& N, arma::mat& M, double& p2,
                   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                   std::vector<arma::uvec>& list_oblq_blocks, arma::uvec& oblq_blocks,
@@ -174,9 +174,6 @@ void check_rotate(std::string rotation, std::string projection,
 
     if(arma::size(Target) != arma::size(loadings) ||
        arma::size(Weight) != arma::size(loadings)) {
-
-      Rcpp::Rcout << Target.size() << std::endl;
-      Rcpp::Rcout << loadings.size() << std::endl;
 
       Rcpp::stop("Incompatible Target or Weight dimensions");
 
@@ -340,7 +337,7 @@ Rcpp::List rotate(arma::mat loadings, std::string rotation, std::string projecti
                empty_loadings, empty_Phi,
                Target, Weight, PhiTarget, PhiWeight,
                Weight2, PhiWeight2,
-               w, epsilon, k, gamma,
+               gamma, epsilon, k, w,
                I_gamma_C, N, M, p2, // Constants
                nullable_oblq_blocks, list_oblq_blocks, oblq_blocks,
                rot_control, maxit, eps,
