@@ -143,7 +143,7 @@ retr_oblq <- function(X) {
 #'
 #' retr_poblq(X, oblq_blocks)
 #'
-#' @param X An arbitrary matrix.
+#' @param X A matrix.
 #' @param oblq_blocks A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
 #'
 #' @return A partially oblique matrix.
@@ -156,7 +156,6 @@ retr_oblq <- function(X) {
 #'
 #' X <- replicate(8, rnorm(8))
 #' retr_poblq(X, c(2, 3, 3))
-#'
 #'
 #' @export
 retr_poblq <- function(X, oblq_blocks) {
@@ -473,13 +472,13 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @examples
 #'
 #' \dontrun{# Simulate data:
-#' sim <- sim_twoTier(n_generals = 2, groups_per_general = 5, items_per_group = 6,
+#' sim <- sim_twoTier(n_generals = 3, groups_per_general = 5, items_per_group = 6,
 #' generals_rho = 0.3)
 #' scores <- MASS::mvrnorm(1e4, rep(0, nrow(sim$R)), Sigma = sim$R)
 #' s <- cor(scores)
 #'
 #' # Fit an exploratory two-tier model with GSLiD:
-#' GSLiD <- twoTier(s, n_generals = 2, n_groups = 10, method = "minres",
+#' GSLiD <- twoTier(s, n_generals = 3, n_groups = 15, method = "minres",
 #' projection = "poblq", twoTier_method = "GSLiD", oblq_blocks = 3,
 #' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
 #'}

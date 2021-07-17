@@ -119,13 +119,13 @@ void check_rotate_GSLiD(std::string rotation, std::string projection,
 
 arma::vec tucker_congruence(arma::mat X, arma::mat Y) {
 
-  // arma::vec YX = diagvec(Y.t() * X);
-  // arma::vec YY = diagvec(Y.t() * Y);
-  // arma::vec XX = diagvec(X.t() * X);
+  arma::vec YX = diagvec(Y.t() * X);
+  arma::vec YY = diagvec(Y.t() * Y);
+  arma::vec XX = diagvec(X.t() * X);
 
-  arma::vec YX = arma::sum(Y % X, 0);
-  arma::vec YY = arma::sum(Y % Y, 0);
-  arma::vec XX = arma::sum(X % X, 0);
+  // arma::vec YX = arma::sum(Y % X, 0);
+  // arma::vec YY = arma::sum(Y % Y, 0);
+  // arma::vec XX = arma::sum(X % X, 0);
 
   arma::vec congruence = YX / arma::sqrt(YY % XX);
 
@@ -771,6 +771,7 @@ Rcpp::List GSLiD(std::string projection,
     arma::mat new_loadings = rotation_result["loadings"];
 
     congruence = tucker_congruence(loadings, new_loadings);
+
     min_congruences[i] = congruence.min();
     max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 

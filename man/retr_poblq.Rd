@@ -11,7 +11,7 @@ Transform a matrix into a partially oblique matrix.}
 retr_poblq(X, oblq_blocks)
 }
 \arguments{
-\item{X}{An arbitrary matrix.}
+\item{X}{A matrix.}
 
 \item{oblq_blocks}{A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.}
 }
@@ -29,7 +29,6 @@ Transform a matrix into a partially oblique matrix.
 
 X <- replicate(8, rnorm(8))
 retr_poblq(X, c(2, 3, 3))
-
 
 }
 \references{

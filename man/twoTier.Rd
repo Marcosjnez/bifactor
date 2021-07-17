@@ -96,13 +96,13 @@ If \code{cutoff} is not 0, loadings smaller than such a cut-off are fixed to 0. 
 \examples{
 
 \dontrun{# Simulate data:
-sim <- sim_twoTier(n_generals = 2, groups_per_general = 5, items_per_group = 6,
+sim <- sim_twoTier(n_generals = 3, groups_per_general = 5, items_per_group = 6,
 generals_rho = 0.3)
 scores <- MASS::mvrnorm(1e4, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
 # Fit an exploratory two-tier model with GSLiD:
-GSLiD <- twoTier(s, n_generals = 2, n_groups = 10, method = "minres",
+GSLiD <- twoTier(s, n_generals = 3, n_groups = 15, method = "minres",
 projection = "poblq", twoTier_method = "GSLiD", oblq_blocks = 3,
 random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
 }
