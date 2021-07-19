@@ -12,5 +12,7 @@ export(rotate)
 export(sim_twoTier)
 export(sl)
 export(twoTier)
-importFrom(Rcpp,sourceCpp)
+
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
 useDynLib(bifactor, .registration = TRUE)
