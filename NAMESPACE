@@ -12,5 +12,4 @@ export(rotate)
 export(sim_twoTier)
 export(sl)
 export(twoTier)
-importFrom(Rcpp,sourceCpp)
-useDynLib(bifactor, .registration = TRUE)
+
