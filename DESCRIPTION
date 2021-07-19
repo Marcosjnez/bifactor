@@ -1,0 +1,23 @@
+Package: bifactor
+Type: Package
+Title: Exploratory Factor, Bi-factor, Two-tier and Multiple-tier
+        Modeling
+Version: 0.1.0
+Date: 2021-07-20
+Authors@R: c(person(given = "Marcos", family = "Jimenez", role = c("aut", "cre", "cph"), email = "marcosjnezhquez@gmail.com"), person(given="Francisco J.", family = "Abad", role = c("aut", "cph")), person(given="Eduardo", family = "Garcia-Garzon", role = c("aut", "cph")), person(given="Luis E.", family = "Garrido", role = c("aut", "cph")))
+Description: Fit exploratory factor, bi-factor, two-tier and multiple-tier models with correlated factors.
+License: GPL-3
+Depends: R (>= 4.0)
+Imports: Rcpp, Rcsdp
+URL: https://github.com/Marcosjnez/bifactor
+BugReports: https://github.com/Marcosjnez/bifactor/issues
+Encoding: UTF-8
+RoxygenNote: 7.1.1
+LinkingTo: Rcpp, RcppArmadillo
+NeedsCompilation: yes
+Packaged: 2021-07-19 05:19:28 UTC; marcos
+Author: Marcos Jimenez [aut, cre, cph],
+  Francisco J. Abad [aut, cph],
+  Eduardo Garcia-Garzon [aut, cph],
+  Luis E. Garrido [aut, cph]
+Maintainer: Marcos Jimenez <marcosjnezhquez@gmail.com>
