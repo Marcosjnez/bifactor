@@ -15,7 +15,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2021-07-19 10:28:11 UTC; marcos
+Packaged: 2021-07-19 10:36:38 UTC; marcos
 Author: Marcos Jimenez [aut, cre, cph],
   Francisco J. Abad [aut, cph],
   Eduardo Garcia-Garzon [aut, cph],

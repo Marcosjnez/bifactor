@@ -2,46 +2,46 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 random_orth <- function(p, q) {
-    .Call(`_bifactor_random_orth`, p, q)
+    .Call('_bifactor_random_orth', PACKAGE = 'bifactor', p, q)
 }
 
 random_oblq <- function(p, q) {
-    .Call(`_bifactor_random_oblq`, p, q)
+    .Call('_bifactor_random_oblq', PACKAGE = 'bifactor', p, q)
 }
 
 random_poblq <- function(p, q, oblq_blocks) {
-    .Call(`_bifactor_random_poblq`, p, q, oblq_blocks)
+    .Call('_bifactor_random_poblq', PACKAGE = 'bifactor', p, q, oblq_blocks)
 }
 
 retr_orth <- function(X) {
-    .Call(`_bifactor_retr_orth`, X)
+    .Call('_bifactor_retr_orth', PACKAGE = 'bifactor', X)
 }
 
 retr_oblq <- function(X) {
-    .Call(`_bifactor_retr_oblq`, X)
+    .Call('_bifactor_retr_oblq', PACKAGE = 'bifactor', X)
 }
 
 retr_poblq <- function(X, oblq_blocks) {
-    .Call(`_bifactor_retr_poblq`, X, oblq_blocks)
+    .Call('_bifactor_retr_poblq', PACKAGE = 'bifactor', X, oblq_blocks)
 }
 
 sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
-    .Call(`_bifactor_sl`, R, n_generals, n_groups, first_efa, second_efa)
+    .Call('_bifactor_sl', PACKAGE = 'bifactor', R, n_generals, n_groups, first_efa, second_efa)
 }
 
 rotate <- function(loadings, rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, oblq_blocks = NULL, gamma = 0, epsilon = 0.01, k = 0, w = 1, random_starts = 1L, cores = 1L, rot_control = NULL) {
-    .Call(`_bifactor_rotate`, loadings, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, gamma, epsilon, k, w, random_starts, cores, rot_control)
+    .Call('_bifactor_rotate', PACKAGE = 'bifactor', loadings, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, gamma, epsilon, k, w, random_starts, cores, rot_control)
 }
 
 efast <- function(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 0.01, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-    .Call(`_bifactor_efast`, R, n_factors, method, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, normalize, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+    .Call('_bifactor_efast', PACKAGE = 'bifactor', R, n_factors, method, rotation, projection, Target, Weight, PhiTarget, PhiWeight, oblq_blocks, normalize, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 get_target <- function(loadings, Phi, cutoff = 0) {
-    .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
+    .Call('_bifactor_get_target', PACKAGE = 'bifactor', loadings, Phi, cutoff)
 }
 
 twoTier <- function(R, n_generals, n_groups, twoTier_method = "GSLiD", projection = "oblq", PhiTarget = NULL, PhiWeight = NULL, oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE) {
-    .Call(`_bifactor_twoTier`, R, n_generals, n_groups, twoTier_method, projection, PhiTarget, PhiWeight, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
+    .Call('_bifactor_twoTier', PACKAGE = 'bifactor', R, n_generals, n_groups, twoTier_method, projection, PhiTarget, PhiWeight, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
 }
 
