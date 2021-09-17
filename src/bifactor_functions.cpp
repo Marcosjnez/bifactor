@@ -14,7 +14,7 @@
 
 #include <RcppArmadillo.h>
 #include <omp.h>
-#include "fit_indices.h"
+#include "dimensionality.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -85,3 +85,31 @@ Rcpp::List twoTier(arma::mat R, int n_generals, int n_groups,
                    Rcpp::Nullable<Rcpp::List> SL_first_efa = R_NilValue,
                    Rcpp::Nullable<Rcpp::List> SL_second_efa = R_NilValue,
                    bool verbose = true);
+
+// [[Rcpp::export]]
+arma::mat asymp_cov(arma::mat R,
+                    Rcpp::Nullable<arma::mat> X = R_NilValue,
+                    double eta = 1, std::string type = "normal");
+
+// [[Rcpp::export]]
+Rcpp::List se(int n,
+              Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
+              Rcpp::Nullable<arma::mat> R = R_NilValue,
+              Rcpp::Nullable<arma::mat> Lambda = R_NilValue,
+              Rcpp::Nullable<arma::mat> Phi = R_NilValue,
+              Rcpp::Nullable<arma::mat> X = R_NilValue,
+              std::string method = "minres",
+              std::string projection = "oblq",
+              std::string rotation = "oblimin",
+              Rcpp::Nullable<arma::mat> Target = R_NilValue,
+              Rcpp::Nullable<arma::mat> Weight = R_NilValue,
+              Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
+              Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+              double gamma = 0, double k = 0, double epsilon = 0.01,
+              double w = 1, std::string type = "normal", double eta = 1);
+
+// [[Rcpp::export]]
+Rcpp::List PA(arma::mat X, int n_boot = 100, double quant = .95,
+              bool replace = false, bool second_PA = false,
+              Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
+              int cores = 1);
