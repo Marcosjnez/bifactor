@@ -349,6 +349,22 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
 
+  Rcpp::List modelInfo;
+  modelInfo["method"] = method;
+  modelInfo["projection"] = projection;
+  modelInfo["rotation"] = rotation;
+  modelInfo["k"] = k;
+  modelInfo["gamma"] = gamma;
+  modelInfo["epsilon"] = epsilon;
+  modelInfo["w"] = w;
+  modelInfo["normalize"] = normalize;
+  modelInfo["R"] = R;
+  modelInfo["Target"] = Target;
+  modelInfo["Weight"] = Weight;
+  modelInfo["PhiTarget"] = PhiTarget;
+  modelInfo["PhiWeight"] = PhiWeight;
+  result["modelInfo"] = modelInfo;
+
   timer.step("elapsed");
 
   result["elapsed"] = timer;

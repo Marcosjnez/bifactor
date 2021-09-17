@@ -145,19 +145,19 @@ bool is_duplicate(arma::cube Targets, arma::mat Target, int length) {
 
 }
 
-void pass_to_sl(Rcpp::List efa_args,
-                std::string& method, std::string& rotation, std::string& projection,
-                Rcpp::Nullable<arma::mat>& nullable_Target,
-                Rcpp::Nullable<arma::mat>& nullable_Weight,
-                Rcpp::Nullable<arma::mat>& nullable_PhiTarget,
-                Rcpp::Nullable<arma::mat>& nullable_PhiWeight,
-                Rcpp::Nullable<arma::uvec>& nullable_oblq_blocks,
-                bool& normalize, double& gamma, double& epsilon,
-                double& k, double& w,
-                int& random_starts, int& cores,
-                Rcpp::Nullable<arma::vec>& nullable_init,
-                Rcpp::Nullable<Rcpp::List>& nullable_efa_control,
-                Rcpp::Nullable<Rcpp::List>& nullable_rot_control) {
+void pass_to_efast(Rcpp::List efa_args,
+                   std::string& method, std::string& rotation, std::string& projection,
+                   Rcpp::Nullable<arma::mat>& nullable_Target,
+                   Rcpp::Nullable<arma::mat>& nullable_Weight,
+                   Rcpp::Nullable<arma::mat>& nullable_PhiTarget,
+                   Rcpp::Nullable<arma::mat>& nullable_PhiWeight,
+                   Rcpp::Nullable<arma::uvec>& nullable_oblq_blocks,
+                   bool& normalize, double& gamma, double& epsilon,
+                   double& k, double& w,
+                   int& random_starts, int& cores,
+                   Rcpp::Nullable<arma::vec>& nullable_init,
+                   Rcpp::Nullable<Rcpp::List>& nullable_efa_control,
+                   Rcpp::Nullable<Rcpp::List>& nullable_rot_control) {
 
   if (efa_args.containsElementNamed("method")) {
     std::string method_ = efa_args["method"];
@@ -300,16 +300,16 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // Check inputs:
 
-  pass_to_sl(first,
-             method_1, rotation_1, projection_1,
-             nullable_Target_1, nullable_Weight_1,
-             nullable_PhiTarget_1, nullable_PhiWeight_1,
-             nullable_oblq_blocks_1, normalize_1,
-             gamma_1, epsilon_1, k_1, w_1,
-             random_starts_1, cores_1,
-             nullable_init_1,
-             nullable_efa_control_1,
-             nullable_rot_control_1);
+  pass_to_efast(first,
+                method_1, rotation_1, projection_1,
+                nullable_Target_1, nullable_Weight_1,
+                nullable_PhiTarget_1, nullable_PhiWeight_1,
+                nullable_oblq_blocks_1, normalize_1,
+                gamma_1, epsilon_1, k_1, w_1,
+                random_starts_1, cores_1,
+                nullable_init_1,
+                nullable_efa_control_1,
+                nullable_rot_control_1);
 
   // Arguments to pass to second efa in SL:
 
@@ -325,16 +325,16 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // Check inputs:
 
-  pass_to_sl(second,
-             method_2, rotation_2, projection_2,
-             nullable_Target_2, nullable_Weight_2,
-             nullable_PhiTarget_2, nullable_PhiWeight_2,
-             nullable_oblq_blocks_2, normalize_2,
-             gamma_2, epsilon_2, k_2, w_2,
-             random_starts_2, cores_2,
-             nullable_init_2,
-             nullable_efa_control_2,
-             nullable_rot_control_2);
+  pass_to_efast(second,
+                method_2, rotation_2, projection_2,
+                nullable_Target_2, nullable_Weight_2,
+                nullable_PhiTarget_2, nullable_PhiWeight_2,
+                nullable_oblq_blocks_2, normalize_2,
+                gamma_2, epsilon_2, k_2, w_2,
+                random_starts_2, cores_2,
+                nullable_init_2,
+                nullable_efa_control_2,
+                nullable_rot_control_2);
 
   // First efa:
 

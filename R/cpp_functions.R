@@ -488,4 +488,122 @@ twoTier <- function(R, n_generals, n_groups, twoTier_method = "GSLiD", projectio
   .Call(`_bifactor_twoTier`, R, n_generals, n_groups, twoTier_method, projection, PhiTarget, PhiWeight, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
 }
 
+#' @title
+#'
+#' Asymptotic standard errors for correlation matrices.
+#'
+#' @usage
+#'
+#' asymp_cov(R, X = NULL, eta = 1, type = "normal")
+#'
+#' @description
+#'
+#' Get the asymptotic standard errors of correlation matrices of normal or arbitrary random deviates.
+#'
+#' @param R Correlation matrix.
+#' @param X Optional raw data matrix.
+#' @param eta Skewness parameter for elliptical data distributions.
+#' @param type Type of random deviates: "normal", "elliptical" or "general".
+#'
+#' @details
+#'
+#' If \code{type = "normal"}, the calculation assumes that the raw data follows a multivariate normal distribution.
+#' If \code{type = "elliptical"}, the calculation assumes that the raw data follows an elliptical distribution with skewness parameter \code{eta}.
+#' If \code{type = "general"}, no assumption is made but need to provide the raw data via the \code{X} argument.
+#'
+#' @return The asymptotic covariance matrix of \code{R}.
+#'
+#' @references
+#'
+#' M.W. Browne and A. Shapiro (1986). The asymptotic covariance matrix of sample correlation coefficients under general conditions. Linear Algebra and its Applications, 82, 169-176. https://doi.org/10.1016/0024-3795(86)90150-3
+#'
+#' @export
+asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
+  .Call(`_bifactor_asymp_cov`, R, X, eta, type)
+}
 
+#' @title
+#'
+#' Standard errors for rotated factor loadings, factor correlations and uniquenesses.
+#'
+#' @usage
+#'
+#' se(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL,
+#'  method = "minres", projection = "oblq", rotation = "oblimin",
+#'  Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
+#'   gamma = 0, k = 0, epsilon = 0.01, w = 1, type = "normal", eta = 1)
+#'
+#' @description
+#'
+#' Compute the sandwich standard errors of factor loadings, factor correlations and uniquenesses.
+#'
+#' @param n Sample size.
+#' @param fit Optional \code{efast} model.
+#' @param R Correlation matrix.
+#' @param Lambda Estimated factor loadings.
+#' @param Phi Estimated factor correlations.
+#' @param X Raw data matrix.
+#' @param method Method used to estimate the factor model: "minres", "pa", "ml", or "minres".
+#' @param projection Projection used to rotate the factor loadings: "orth", "oblq" or "poblq".
+#' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
+#' @param Target Target matrix for the loadings. Defaults to NULL.
+#' @param Weight Weight matrix for the loadings. Defaults to NULL.
+#' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
+#' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
+#' @param gamma \eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).
+#' @param epsilon \eqn{\epsilon} parameter for the geomin criterion. Defaults to 0.01.
+#' @param k \eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.
+#' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
+#' @param eta Skewness parameter for elliptical data distributions.
+#' @param type Type of random deviates: "normal", "elliptical" or "general".
+#'
+#' @details
+#'
+#' Currently, only available for \code{method = minres}.
+#'
+#' @return A list with the standard errors of the rotated factor loadings, factor correlations and uniquenesses.
+#'
+#' @references
+#'
+#' Zhang G, Preacher KJ, Hattori M, Jiang G, Trichtinger LA (2019). A sandwich standard error estimator for exploratory factor analysis with nonnormal data and imperfect models. Applied Psychological Measurement, 43, 360–373. https://doi.org/10.1177/0146621618798669
+#'
+#' @export
+se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, method = "minres", projection = "oblq", rotation = "oblimin", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, gamma = 0, k = 0, epsilon = 0.01, w = 1, type = "normal", eta = 1) {
+  .Call(`_bifactor_se`, n, fit, S, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta)
+}
+
+#' @title
+#'
+#' Parallel analysis using principal components.
+#'
+#' @usage
+#'
+#' PA(X, n_boot = 100L, quant = .95, replace = FALSE,
+#' second_PA = FALSE, efa = NULL, cores = 1L)
+#'
+#' @description
+#'
+#' Perform parallel analysis to detect dimensionality using principal components.
+#'
+#' @param X Raw data matrix.
+#' @param n_boot Number of bootstrap samples.
+#' @param quant Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
+#' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
+#' @param second_PA Logical indicating whether a second parallel analysis should be performed from the factor scores obtained in the first parallel analysis.
+#' @param efa A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.
+#' @param cores Number of cores to perform the parallel bootstrapping.
+#'
+#' @details
+#'
+#' Not yet.
+#'
+#' @return A list with the bootstrapped eigenvalues and the estimated dimensionality.
+#'
+#' @references
+#'
+#' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis,” Psychometrika, 30, 179-85.
+#'
+#' @export
+PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, second_PA = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_PA`, X, n_boot, quant, replace, second_PA, efa, cores)
+}

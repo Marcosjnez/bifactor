@@ -45,3 +45,15 @@ twoTier <- function(R, n_generals, n_groups, twoTier_method = "GSLiD", projectio
     .Call(`_bifactor_twoTier`, R, n_generals, n_groups, twoTier_method, projection, PhiTarget, PhiWeight, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
 }
 
+asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
+    .Call(`_bifactor_asymp_cov`, R, X, eta, type)
+}
+
+se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, method = "minres", projection = "oblq", rotation = "oblimin", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, gamma = 0, k = 0, epsilon = 0.01, w = 1, type = "normal", eta = 1) {
+    .Call(`_bifactor_se`, n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta)
+}
+
+PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, second_PA = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_PA`, X, n_boot, quant, replace, second_PA, efa, cores)
+}
+

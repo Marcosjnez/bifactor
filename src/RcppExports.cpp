@@ -196,6 +196,66 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// asymp_cov
+arma::mat asymp_cov(arma::mat R, Rcpp::Nullable<arma::mat> X, double eta, std::string type);
+RcppExport SEXP _bifactor_asymp_cov(SEXP RSEXP, SEXP XSEXP, SEXP etaSEXP, SEXP typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(asymp_cov(R, X, eta, type));
+    return rcpp_result_gen;
+END_RCPP
+}
+// se
+Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> fit, Rcpp::Nullable<arma::mat> R, Rcpp::Nullable<arma::mat> Lambda, Rcpp::Nullable<arma::mat> Phi, Rcpp::Nullable<arma::mat> X, std::string method, std::string projection, std::string rotation, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, double gamma, double k, double epsilon, double w, std::string type, double eta);
+RcppExport SEXP _bifactor_se(SEXP nSEXP, SEXP fitSEXP, SEXP RSEXP, SEXP LambdaSEXP, SEXP PhiSEXP, SEXP XSEXP, SEXP methodSEXP, SEXP projectionSEXP, SEXP rotationSEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP gammaSEXP, SEXP kSEXP, SEXP epsilonSEXP, SEXP wSEXP, SEXP typeSEXP, SEXP etaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type fit(fitSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type R(RSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Lambda(LambdaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< std::string >::type projection(projectionSEXP);
+    Rcpp::traits::input_parameter< std::string >::type rotation(rotationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Target(TargetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Weight(WeightSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiTarget(PhiTargetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiWeight(PhiWeightSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< double >::type w(wSEXP);
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    rcpp_result_gen = Rcpp::wrap(se(n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// PA
+Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace, bool second_PA, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_PA(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP replaceSEXP, SEXP second_PASEXP, SEXP efaSEXP, SEXP coresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type n_boot(n_bootSEXP);
+    Rcpp::traits::input_parameter< double >::type quant(quantSEXP);
+    Rcpp::traits::input_parameter< bool >::type replace(replaceSEXP);
+    Rcpp::traits::input_parameter< bool >::type second_PA(second_PASEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(PA(X, n_boot, quant, replace, second_PA, efa, cores));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_random_orth", (DL_FUNC) &_bifactor_random_orth, 2},
@@ -209,6 +269,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 20},
     {"_bifactor_get_target", (DL_FUNC) &_bifactor_get_target, 3},
     {"_bifactor_twoTier", (DL_FUNC) &_bifactor_twoTier, 21},
+    {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
+    {"_bifactor_se", (DL_FUNC) &_bifactor_se, 19},
+    {"_bifactor_PA", (DL_FUNC) &_bifactor_PA, 7},
     {NULL, NULL, 0}
 };
 
