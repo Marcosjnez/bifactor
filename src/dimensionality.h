@@ -31,7 +31,7 @@ arma::mat boot_sample(arma::mat X, bool replace) {
 }
 
 Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
-              bool second_PA, Rcpp::Nullable<Rcpp::List> nullable_efa,
+              bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
               int cores){
 
   int n = X.n_rows;
@@ -61,7 +61,7 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
   result["eigval_boot"] = eigval_boot;
   result["PA_dim"] = PA_dim;
 
-  if(PA_dim == 1 || !second_PA) return result;
+  if(PA_dim <= 1 || !hierarchical) return result;
 
   Rcpp::List efa;
 
@@ -129,6 +129,125 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
 
   result["eigval2_boot"] = eigval2_boot;
   result["PA2_dim"] = PA2_dim;
+
+  return result;
+
+}
+
+Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
+                    Rcpp::Nullable<Rcpp::List> nullable_efa,
+                    int cores) {
+
+  arma::mat S = arma::cor(X);
+  int q = S.n_cols;
+  arma::mat CV_eigvals(N, q);
+  int p = X.n_rows;
+  arma::uvec indexes = consecutive(0, p-1);
+  int half = p/2;
+
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+  for(int i=0; i < N; ++i) {
+
+    arma::uvec selected = arma::randperm(p, half);
+    arma::mat A = X.rows(selected);
+    arma::mat B = X;
+    B.shed_rows(selected);
+    arma::mat cor_A = arma::cor(A);
+    arma::mat cor_B = arma::cor(B);
+    arma::vec eigval;
+    arma::mat eigvec;
+    eig_sym(eigval, eigvec, cor_A);
+
+    arma::vec cv_values = eigvec.t() * cor_B * eigvec;
+    CV_eigvals.row(i) = arma::diagvec(cv_values);
+
+  }
+
+  arma::vec avg_CV_eigvals = arma::mean(CV_eigvals, 0);
+  arma::uvec which = arma::find(avg_CV_eigvals > 1);
+  int dim = which.size();
+
+  Rcpp::List result;
+  result["CV_eigvals"] = avg_CV_eigvals;
+  result["dim"] = dim;
+
+  if(dim <= 1 || !hierarchical) return result;
+
+  Rcpp::List efa;
+
+  if(nullable_efa.isNotNull()) {
+    efa = nullable_efa;
+  }
+
+  // Arguments to pass to efa:
+
+  std::string method, rotation, projection;
+  Rcpp::Nullable<arma::vec> nullable_init;
+  Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
+  nullable_PhiTarget, nullable_PhiWeight;
+  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
+  bool normalize;
+  double gamma, epsilon, k, w;
+  int random_starts, cores_2 = 0;
+  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_rot_control;
+
+  pass_to_efast(efa,
+                method, rotation, projection,
+                nullable_Target, nullable_Weight,
+                nullable_PhiTarget, nullable_PhiWeight,
+                nullable_oblq_blocks, normalize,
+                gamma, epsilon, k, w,
+                random_starts, cores_2,
+                nullable_init,
+                nullable_efa_control,
+                nullable_rot_control);
+
+  // efa:
+
+  Rcpp::List fit = efast(S, dim, method, rotation, projection,
+                         nullable_Target, nullable_Weight,
+                         nullable_PhiTarget, nullable_PhiWeight,
+                         nullable_oblq_blocks,
+                         normalize, gamma, epsilon, k, w,
+                         random_starts, cores_2,
+                         nullable_init,
+                         nullable_efa_control, nullable_rot_control);
+
+  Rcpp::List rot = fit["rotation"];
+  arma::mat Phi = rot["Phi"];
+  arma::mat loadings = rot["loadings"];
+  arma::mat L = loadings * Phi;
+  arma::mat W = arma::solve(S, L);
+  arma::mat fs = X * W;
+
+  arma::mat CV_eigvals2(N, dim);
+
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+  for(int i=0; i < N; ++i) {
+
+    arma::uvec selected = arma::randperm(p, half);
+    arma::mat A = fs.rows(selected);
+    arma::mat B = fs;
+    B.shed_rows(selected);
+    arma::mat cor_A = arma::cor(A);
+    arma::mat cor_B = arma::cor(B);
+    arma::vec eigval;
+    arma::mat eigvec;
+    eig_sym(eigval, eigvec, cor_A);
+
+    arma::vec cv_values = eigvec.t() * cor_B * eigvec;
+    CV_eigvals2.row(i) = arma::diagvec(cv_values);
+
+  }
+
+  arma::vec avg_CV_eigvals2 = arma::mean(CV_eigvals2, 0);
+  arma::uvec which2 = arma::find(avg_CV_eigvals2 > 1);
+  int dim2 = which2.size();
+
+  result["CV_eigvals2"] = avg_CV_eigvals2;
+  result["dim2"] = dim2;
 
   return result;
 

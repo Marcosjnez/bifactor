@@ -240,8 +240,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // PA
-Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace, bool second_PA, Rcpp::Nullable<Rcpp::List> efa, int cores);
-RcppExport SEXP _bifactor_PA(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP replaceSEXP, SEXP second_PASEXP, SEXP efaSEXP, SEXP coresSEXP) {
+Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_PA(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP replaceSEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -249,10 +249,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_boot(n_bootSEXP);
     Rcpp::traits::input_parameter< double >::type quant(quantSEXP);
     Rcpp::traits::input_parameter< bool >::type replace(replaceSEXP);
-    Rcpp::traits::input_parameter< bool >::type second_PA(second_PASEXP);
+    Rcpp::traits::input_parameter< bool >::type hierarchical(hierarchicalSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(PA(X, n_boot, quant, replace, second_PA, efa, cores));
+    rcpp_result_gen = Rcpp::wrap(PA(X, n_boot, quant, replace, hierarchical, efa, cores));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cv_eigen
+Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_cv_eigen(SEXP XSEXP, SEXP NSEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< bool >::type hierarchical(hierarchicalSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(cv_eigen(X, N, hierarchical, efa, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -272,6 +287,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
     {"_bifactor_se", (DL_FUNC) &_bifactor_se, 19},
     {"_bifactor_PA", (DL_FUNC) &_bifactor_PA, 7},
+    {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {NULL, NULL, 0}
 };
 

@@ -110,6 +110,10 @@ Rcpp::List se(int n,
 
 // [[Rcpp::export]]
 Rcpp::List PA(arma::mat X, int n_boot = 100, double quant = .95,
-              bool replace = false, bool second_PA = false,
+              bool replace = false, bool hierarchical = false,
               Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
               int cores = 1);
+
+// [[Rcpp::export]]
+Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
+                    Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
