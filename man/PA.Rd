@@ -5,7 +5,7 @@
 \title{Parallel analysis using principal components.}
 \usage{
 PA(X, n_boot = 100L, quant = .95, replace = FALSE,
-second_PA = FALSE, efa = NULL, cores = 1L)
+hierarchical = FALSE, efa = NULL, cores = 1L)
 }
 \arguments{
 \item{X}{Raw data matrix.}
@@ -16,7 +16,7 @@ second_PA = FALSE, efa = NULL, cores = 1L)
 
 \item{replace}{Logical indicating whether the columns of \code{X} should be permuted with replacement.}
 
-\item{second_PA}{Logical indicating whether a second parallel analysis should be performed from the factor scores obtained in the first parallel analysis.}
+\item{hierarchical}{Logical indicating whether a second parallel analysis should be performed from the factor scores obtained after a first factor analysis analysis.}
 
 \item{efa}{A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.}
 
@@ -32,5 +32,5 @@ Perform parallel analysis to detect dimensionality using principal components.
 Not yet.
 }
 \references{
-Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis,” Psychometrika, 30, 179-85.
+Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85.
 }
