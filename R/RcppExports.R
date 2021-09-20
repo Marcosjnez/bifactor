@@ -53,7 +53,11 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
     .Call(`_bifactor_se`, n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta)
 }
 
-PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, second_PA = FALSE, efa = NULL, cores = 1L) {
-    .Call(`_bifactor_PA`, X, n_boot, quant, replace, second_PA, efa, cores)
+PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_PA`, X, n_boot, quant, replace, hierarchical, efa, cores)
+}
+
+cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_cv_eigen`, X, N, hierarchical, efa, cores)
 }
 

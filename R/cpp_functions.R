@@ -569,7 +569,7 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
 #'
 #' @export
 se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, method = "minres", projection = "oblq", rotation = "oblimin", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, gamma = 0, k = 0, epsilon = 0.01, w = 1, type = "normal", eta = 1) {
-  .Call(`_bifactor_se`, n, fit, S, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta)
+  .Call(`_bifactor_se`, n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, gamma, k, epsilon, w, type, eta)
 }
 
 #' @title
@@ -579,7 +579,7 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #' @usage
 #'
 #' PA(X, n_boot = 100L, quant = .95, replace = FALSE,
-#' second_PA = FALSE, efa = NULL, cores = 1L)
+#' hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
 #'
@@ -589,7 +589,7 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #' @param n_boot Number of bootstrap samples.
 #' @param quant Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
 #' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
-#' @param second_PA Logical indicating whether a second parallel analysis should be performed from the factor scores obtained in the first parallel analysis.
+#' @param hierarchical Logical indicating whether a second parallel analysis should be performed from the factor scores obtained after a first factor analysis analysis.
 #' @param efa A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.
 #' @param cores Number of cores to perform the parallel bootstrapping.
 #'
@@ -601,9 +601,42 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #'
 #' @references
 #'
-#' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis,” Psychometrika, 30, 179-85.
+#' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85.
 #'
 #' @export
-PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, second_PA = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_PA`, X, n_boot, quant, replace, second_PA, efa, cores)
+PA <- function(X, n_boot = 100L, quant = .95, replace = FALSE, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_PA`, X, n_boot, quant, replace, hierarchical, efa, cores)
+}
+
+#' @title
+#'
+#' Cross-validated eigenvalues.
+#'
+#' @usage
+#'
+#' cv_eigen(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L)
+#'
+#' @description
+#'
+#' Estimate cross-validated eigenvalues and the dimensionality using the Kaiser's rule.
+#'
+#' @param X Raw data matrix.
+#' @param N Number of cross-validated samples.
+#' @param hierarchical Logical indicating whether a second cross-validated eigenvalues estimation should be performed from the factor scores obtained after a first factor analysis analysis.
+#' @param efa A list of arguments to pass to \code{efast} when \code{hierarchical = TRUE}.
+#' @param cores Number of cores to perform parallel computations.
+#'
+#' @details
+#'
+#' Not yet.
+#'
+#' @return A list with the cross-validated eigenvalues and the estimated dimensionality.
+#'
+#' @references
+#'
+#' Chen F., Roch S., Rohe K., Yu S (2021). Estimating Graph Dimension with Cross-validated Eigenvalues, arXiv. https://arxiv.org/abs/2108.03336
+#'
+#' @export
+cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_cv_eigen`, X, N, hierarchical, efa, cores)
 }
