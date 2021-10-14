@@ -7,7 +7,8 @@
 sim_twoTier(n_generals, groups_per_general, items_per_group,
 loadings_g = "medium", loadings_s = "medium",
 crossloadings = 0, pure = FALSE,
-generals_rho = 0, groups_rho = 0)
+generals_rho = 0, groups_rho = 0,
+method = "minres", fit = "rmsr", misfit = 0.025)
 }
 \arguments{
 \item{n_generals}{Number of general factors.}
@@ -27,13 +28,21 @@ generals_rho = 0, groups_rho = 0)
 \item{generals_rho}{Correlation among the general factors. Defaults to 0.}
 
 \item{groups_rho}{Correlation among the group factors. Defaults to 0.}
+
+\item{method}{Method used to generate population error: "minres" or "ml".}
+
+\item{fit}{Fit index to control the population error.}
+
+\item{misfit}{Misfit value to generate population error.}
 }
 \value{
 List with the following objects:
 \item{lambda}{Population loading matrix.}
 \item{Phi}{Population factor correlation matrix.}
 \item{R}{Population correlation matrix.}
+\item{R_error}{Population correlation matrix with error.}
 \item{uniquenesses}{Vector of population uniquenesses.}
+\item{delta}{Minimum of the objective function that correspond to the misfit value.}
 }
 \description{
 Simulate a bi-factor or two-tier population structure with cross-loading, pure items and correlated factors.
