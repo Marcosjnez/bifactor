@@ -46,7 +46,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
 
   int iteration = 0;
 
-  if (method == "minres" || method == "ml") {
+  if (method == "minres") {
 
     Rcpp::List optim_result = optim_rcpp(psi, R, n_factors, method, efa_max_iter, efa_factr, lmm);
 
@@ -84,6 +84,46 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
     result["f"] = optim_result["value"];
     result["convergence"] = convergence;
 
+  } else if (method == "ml") {
+
+    Rcpp::List optim_result = optim_rcpp(psi, R, n_factors, method, efa_max_iter, efa_factr, lmm);
+    arma::vec psi_temp = optim_result["par"];
+    psi = psi_temp;
+
+    arma::vec sqrt_psi = sqrt(psi);
+    arma::mat sc = diagmat(1/sqrt_psi);
+    arma::mat Sstar = sc * R * sc;
+
+    arma::vec eigval;
+    arma::mat eigvec;
+    eig_sym(eigval, eigvec, Sstar);
+
+    arma::vec eigval2 = reverse(eigval);
+    arma::mat eigvec2 = reverse(eigvec, 1);
+
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1)) - 1;
+    for(int i=0; i < n_factors; ++i) {
+      if(eigenvalues[i] < 0) eigenvalues[i] = 0;
+    }
+    arma::mat D = diagmat(sqrt(eigenvalues));
+
+    w = A * D;
+    w = diagmat(sqrt_psi) * w;
+    arma::mat ww = w * w.t();
+    uniquenesses = 1 - diagvec(ww);
+
+    Rhat = ww;
+    Rhat.diag().ones();
+
+    bool convergence = false;
+    int convergence_result = optim_result["convergence"];
+
+    if(convergence_result == 0) convergence = true;
+
+    result["f"] = optim_result["value"];
+    result["convergence"] = convergence;
+
   } else if (method == "pa") {
 
     Rcpp::List pa_result = principal_axis(psi, R, n_factors, 1e-03, efa_max_iter);
@@ -94,7 +134,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
 
     w = w_temp;
     uniquenesses = uniquenesses_temp;
-    Rhat= Rhat_temp;
+    Rhat = Rhat_temp;
 
     result["iterations"] = pa_result["iterations"];
 
