@@ -11,7 +11,8 @@
 #' sim_twoTier(n_generals, groups_per_general, items_per_group,
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
-#' generals_rho = 0, groups_rho = 0)
+#' generals_rho = 0, groups_rho = 0,
+#' method = "minres", fit = "rmsr", misfit = 0.025)
 #'
 #' @param n_generals Number of general factors.
 #' @param groups_per_general Number of group factors per general factor.
@@ -22,6 +23,9 @@
 #' @param pure Pure items on the general factors. Defaults to FALSE.
 #' @param generals_rho Correlation among the general factors. Defaults to 0.
 #' @param groups_rho Correlation among the group factors. Defaults to 0.
+#' @param method Method used to generate population error: "minres" or "ml".
+#' @param fit Fit index to control the population error.
+#' @param misfit Misfit value to generate population error.
 #'
 #' @details \code{sim_twoTier} generates bi-factor and two-tier patterns with cross-loadings, pure items and
 #' correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
@@ -36,7 +40,9 @@
 #' \item{lambda}{Population loading matrix.}
 #' \item{Phi}{Population factor correlation matrix.}
 #' \item{R}{Population correlation matrix.}
+#' \item{R_error}{Population correlation matrix with error.}
 #' \item{uniquenesses}{Vector of population uniquenesses.}
+#' \item{delta}{Minimum of the objective function that correspond to the misfit value.}
 #'
 #' @references
 #'
@@ -46,7 +52,12 @@
 sim_twoTier <- function(n_generals, groups_per_general, items_per_group,
                         loadings_g = "medium", loadings_s = "medium",
                         crossloadings = 0, pure = FALSE,
-                        generals_rho = 0, groups_rho = 0) {
+                        generals_rho = 0, groups_rho = 0,
+                        method = "minres", fit = "rmsr", misfit = 0) {
+
+  ng <- n_generals
+  condition <- n_generals == 0
+  if(condition) n_generals <- 1
 
   if(crossloadings > 0.4) {
 
@@ -174,11 +185,20 @@ sim_twoTier <- function(n_generals, groups_per_general, items_per_group,
   Phi[-(1:n_generals), -(1:n_generals)] <- groups_rho
   diag(Phi) <- 1
 
+  if(condition) { # if n_generals == 0, remove the general factor
+
+    lambda <- lambda[, -1, drop = FALSE]
+    Phi <- Phi[-1, , drop = FALSE][, -1, drop = FALSE]
+
+  }
+
   # Population correlation matrix:
 
   R <- lambda %*% Phi %*% t(lambda)
   uniquenesses <- 1 - diag(R)
   diag(R) <- 1
+  R_error <- R
+  delta <- 0
 
   # Execute sim_twoTier recursively until no communality is greater than 1:
 
@@ -186,14 +206,105 @@ sim_twoTier <- function(n_generals, groups_per_general, items_per_group,
 
     warning("At least a communality greater than 1 found \n Resampling...")
 
-    sim <- sim_twoTier(n_generals, groups_per_general, items_per_group,
+    sim <- sim_twoTier(ng, groups_per_general, items_per_group,
                        loadings_g, loadings_s, crossloadings, pure,
                        generals_rho, groups_rho)
 
     lambda = sim$lambda; R = sim$R; Phi = sim$Phi; uniquenesses = sim$uniquenesses
 
+  } else if(misfit != 0 & misfit != "none") { # Population error?
+
+    p <- nrow(R)
+    q <- ncol(lambda)
+
+    tdiag <- TRUE
+    dS_dL <- gLRhat(lambda, diag(q))
+    dS_du <- guRhat(p)
+    gS <- cbind(dS_dL, dS_du) # matrix of derivatives wrt the correlation model
+
+    # Cudeck and Browne (1992):
+
+    if(method == "minres" || method == "ols") {
+
+      B <- -2*gS[lower.tri(R, diag = tdiag), ]
+      # B <- -2*lambda
+
+    } else if(method == "ml") {
+
+      # K <- transition(p)
+      # MP_inv <- solve(t(K) %*% K) %*% t(K)
+      # D <- MP_inv %*% t(MP_inv)
+      indexes <- vector(length = p)
+      indexes[1] <- 1
+      for(i in 2:p) {
+        increment <- i
+        indexes[i] <- indexes[i-1]+increment
+      }
+      D <- matrix(0, p*(p+1)/2, p*(p+1)/2)
+      diag(D) <- 2
+      diag(D)[indexes] <- 1
+      vecs <- apply(gS, 2, FUN = function(x) -t(solve(R) %*% matrix(x, p, p) %*% solve(R)))
+      B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
+      B <- t(B)
+      # B %*% residuals[upper.tri(S, diag = TRUE)] # derivatives wrt FML
+
+    }
+
+    pars <- p*q + p - 0.5*q*(q-1) # Bartholomew's book (Chapter 3.12.1; 3rd edition)
+    df <- p*(p+1)/2 - pars
+
+    BtB <- t(B) %*% B
+    y <- runif(p*(p+1)/2, 0, 1)
+    v <- MASS::ginv(BtB) %*% t(B) %*% y
+    e <- y - B %*% v # equation 7
+
+    if(fit == "rmsr") {
+      if(misfit == "close") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.05*r2
+      } else if(misfit == "acceptable") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.10*r2
+      }
+      delta <- misfit^2*0.5*p*(p-1)
+      # delta <- (1-misfit2)*(0.5*(sum(sim$R_error^2) - p))
+    } else if(fit == "cfi") {
+      null_f <- 0.5*(sum(R^2) - p)
+      delta <- (1-misfit)*null_f
+    } else if(fit == "rmsea") {
+      delta <- misfit^2 * df
+    }
+
+    if(method == "minres" || method == "ols") {
+
+      E <- matrix(0, p, p)
+      E[lower.tri(R, diag = tdiag)] <- e
+      E <- (t(E) + E)
+      diag(E) <- 0
+      k <- sqrt(2*delta/sum(E*E))
+      E <- k*E
+
+    } else if(method == "ml") {
+
+      E <- matrix(0, p, p)
+      E[upper.tri(R, diag = tdiag)] <- e
+      E <- (t(E) + E)
+      diag(E) <- 0
+      E <- 1e-04*E
+      G <- solve(R) %*% E
+      x <- runif(1, 0, 1)
+      root <- optim(x, fn = root_ml, gr = groot_ml, method = "L-BFGS-B",
+                    lower = -Inf, upper = Inf, G = G, delta = delta)
+      k <- root$par
+      E <- k*E
+
+    }
+
+    R_error <- R + E
+
   }
 
-  return( list(lambda = lambda, Phi = Phi, R = R, uniquenesses = uniquenesses) )
+  return( list(lambda = lambda, Phi = Phi, R = R, R_error = R_error,
+               uniquenesses = uniquenesses, delta = delta) )
 
 }
