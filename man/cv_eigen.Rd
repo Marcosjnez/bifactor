@@ -24,7 +24,7 @@ A list with the cross-validated eigenvalues and the estimated dimensionality.
 Estimate cross-validated eigenvalues and the dimensionality using the Kaiser's rule.
 }
 \details{
-Not yet.
+None yet.
 }
 \references{
 Chen F., Roch S., Rohe K., Yu S (2021). Estimating Graph Dimension with Cross-validated Eigenvalues, arXiv. https://arxiv.org/abs/2108.03336

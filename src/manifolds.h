@@ -148,11 +148,39 @@ arma::uvec list_to_vector(std::vector<arma::uvec> X) {
 
 }
 
+std::vector<arma::uvec> increment(arma::uvec oblq_indexes, int p) {
+
+  arma::uvec oblq_indexes_total = oblq_indexes;
+  int n_blocks = oblq_indexes.size();
+  int total = arma::accu(oblq_indexes);
+  if(p != total) {
+    oblq_indexes_total.insert_rows(n_blocks, 1);
+    oblq_indexes_total[n_blocks] = (p - total + 0.00);
+  }
+  std::vector<arma::uvec> indexes_list = vector_to_list2(oblq_indexes_total);
+
+  return(indexes_list);
+
+}
+
 // Manifolds
 
 class base_manifold {
 
 public:
+
+  virtual void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
+                     arma::mat& Inv_T, arma::mat T) = 0;
+
+  virtual void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
+                   arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) = 0;
+
+  virtual void grad(arma::mat& g, arma::mat lambda, arma::mat L,
+                    arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) = 0;
+
+  virtual void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
+                     arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
+                     arma::mat Inv_T_dt) = 0;
 
   virtual void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
                     arma::mat Phi, arma::uvec indexes_1) = 0;
@@ -169,6 +197,35 @@ public:
 class orth:public base_manifold {
 
 public:
+
+  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
+                arma::mat& Inv_T, arma::mat T) {
+
+    L = lambda*T;
+
+  }
+
+  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
+           arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
+
+    dL = lambda * dT;
+
+  }
+
+  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
+         arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+
+    g = lambda.t() * gL;
+
+  }
+
+  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
+          arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
+          arma::mat Inv_T_dt){
+
+    dg = lambda.t() * dgL;
+
+  }
 
   void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
             arma::mat Phi, arma::uvec indexes_1) {
@@ -206,6 +263,67 @@ class oblq:public base_manifold {
 
 public:
 
+  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
+                arma::mat& Inv_T, arma::mat T) {
+
+    Phi = T.t() * T;
+    Inv_T = inv(T);
+    L = lambda * Inv_T.t();
+
+  }
+
+  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
+          arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
+
+    Inv_T_dt = Inv_T * dT;
+    dL = - L * Inv_T_dt.t();
+
+    // if(!dP.is_empty()) {
+
+      dP = T.t() * dT;
+      dP += dP.t();
+
+    // }
+
+  }
+
+  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
+         arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+
+    arma::mat g1 = - Inv_T.t() * gL.t() * L;
+
+    if(gP.is_empty()) {
+
+      g = g1;
+
+    } else {
+
+      arma::mat g2 = w*T*gP;
+      g = g1 + g2;
+
+    }
+
+  }
+
+  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
+          arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
+          arma::mat Inv_T_dt) {
+
+    arma::mat dg1 = - g * Inv_T_dt.t() - (dT * Inv_T).t() * g - (dgL * Inv_T).t() * L;
+
+    if(gP.is_empty()) {
+
+      dg = dg1;
+
+    } else {
+
+      arma::mat dg2 = dT * gP + T * dgP;
+      dg = dg1 + dg2;
+
+    }
+
+  }
+
   void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
             arma::mat Phi, arma::uvec indexes_1) {
 
@@ -233,6 +351,67 @@ public:
 class poblq:public base_manifold {
 
 public:
+
+  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
+             arma::mat& Inv_T, arma::mat T) {
+
+    Phi = T.t() * T;
+    Inv_T = inv(T);
+    L = lambda * Inv_T.t();
+
+  }
+
+  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
+           arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
+
+    Inv_T_dt = Inv_T * dT;
+    dL = - L * Inv_T_dt.t();
+
+    // if(!dP.is_empty()) {
+
+    dP = T.t() * dT;
+    dP += dP.t();
+
+    // }
+
+  }
+
+  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
+            arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+
+    arma::mat g1 = - Inv_T.t() * gL.t() * L;
+
+    if(gP.is_empty()) {
+
+      g = g1;
+
+    } else {
+
+      arma::mat g2 = w*T*gP;
+      g = g1 + g2;
+
+    }
+
+  }
+
+  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
+             arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
+             arma::mat Inv_T_dt) {
+
+    arma::mat dg1 = - g * Inv_T_dt.t() - (dT * Inv_T).t() * g - (dgL * Inv_T).t() * L;
+
+    if(gP.is_empty()) {
+
+      dg = dg1;
+
+    } else {
+
+      arma::mat dg2 = dT * gP + T * dgP;
+      dg = dg1 + dg2;
+
+    }
+
+  }
 
   void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat X,
             arma::mat Phi, arma::uvec indexes_1) {
@@ -321,9 +500,9 @@ arma::mat retr_orth(arma::mat X) {
 
 arma::mat retr_oblq(arma::mat X) {
 
-    X *= arma::diagmat(1 / sqrt(arma::sum(X % X, 0)));
+  X *= arma::diagmat(1 / sqrt(arma::sum(X % X, 0)));
 
-    return X;
+  return X;
 
 }
 

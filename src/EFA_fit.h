@@ -100,7 +100,8 @@ double ml_objective(arma::vec psi, arma::mat R, int n_factors, int n_items) {
 
   arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
 
-  double objective = arma::accu(log(e) - e) - n_factors + n_items;
+  // double objective = -arma::accu(log(e) + 1/e - 1);
+  double objective = arma::accu(log(e) - e) + n_items - n_factors;
 
   return -objective;
 
@@ -138,27 +139,32 @@ arma::vec ml_gradient(arma::vec psi, arma::mat R, int n_factors, int n_items) {
 
 double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
 
+  int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
 
   arma::vec eigval;
-  arma::mat eigvec;
-  eig_sym(eigval, eigvec, reduced_R);
+  // arma::mat eigvec;
+  // eig_sym(eigval, eigvec, reduced_R);
+  //
+  // arma::vec eigval2 = reverse(eigval);
+  // arma::mat eigvec2 = reverse(eigvec, 1);
+  //
+  // arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
+  // arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
+  // for(int i=0; i < n_factors; ++i) {
+  //   if(eigenvalues[i] < 0) eigenvalues[i] = 0;
+  // }
+  // arma::mat D = diagmat(sqrt(eigenvalues));
+  //
+  // arma::mat w = A * D;
+  // arma::mat ww = w * w.t();
+  // arma::mat residuals = R - ww - diagmat(psi);
+  //
+  // double objective = 0.5*arma::accu(residuals % residuals);
 
-  arma::vec eigval2 = reverse(eigval);
-  arma::mat eigvec2 = reverse(eigvec, 1);
-
-  arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-  arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-  for(int i=0; i < n_factors; ++i) {
-    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
-  }
-  arma::mat D = diagmat(sqrt(eigenvalues));
-
-  arma::mat w = A * D;
-  arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psi);
-
-  double objective = 0.5*arma::accu(residuals % residuals);
+  eig_sym(eigval, reduced_R);
+  arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
+  double objective = 0.5*arma::accu(e % e);
 
   return objective;
 
@@ -166,27 +172,31 @@ double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
 
 arma::vec minres_gradient(arma::vec psi, arma::mat R, int n_factors) {
 
+  int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
 
   arma::vec eigval;
   arma::mat eigvec;
   eig_sym(eigval, eigvec, reduced_R);
 
-  arma::vec eigval2 = reverse(eigval);
-  arma::mat eigvec2 = reverse(eigvec, 1);
+  // arma::vec eigval2 = reverse(eigval);
+  // arma::mat eigvec2 = reverse(eigvec, 1);
+  //
+  // arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
+  // arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
+  // for(int i=0; i < n_factors; ++i) {
+  //   if(eigenvalues[i] < 0) eigenvalues[i] = 0;
+  // }
+  // arma::mat D = diagmat(sqrt(eigenvalues));
+  //
+  // arma::mat w = A * D;
+  // arma::mat ww = w * w.t();
+  // arma::mat residuals = R - ww - diagmat(psi);
+  // arma::mat gradient = -diagvec(residuals);
 
-  arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-  arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-  for(int i=0; i < n_factors; ++i) {
-    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
-  }
-  arma::mat D = diagmat(sqrt(eigenvalues));
-
-  arma::mat w = A * D;
-  arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psi);
-
-  arma::mat gradient = -diagvec(residuals);
+  arma::vec e_values = eigval(arma::span(0, n_items - n_factors - 1));
+  arma::mat e_vectors = eigvec(arma::span::all, arma::span(0, n_items - n_factors - 1));
+  arma::mat gradient = -arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
 
   return gradient;
 

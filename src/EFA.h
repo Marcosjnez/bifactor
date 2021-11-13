@@ -189,7 +189,9 @@ Rcpp::List rotate_efa(base_manifold *manifold, base_criterion *criterion,
                       int n, int n_factors, arma::mat loadings,
                       arma::mat Target, arma::mat Weight,
                       arma::mat PhiTarget, arma::mat PhiWeight,
-                      std::vector<arma::uvec> list_oblq_blocks, arma::uvec oblq_blocks,
+                      std::vector<arma::uvec> blocks,
+                      std::vector<arma::uvec> list_oblq_blocks,
+                      arma::uvec oblq_blocks,
                       double gamma, double epsilon, double k, double w,
                       int random_starts, int cores, double eps, int maxit,
                       arma::mat Weight2, arma::mat PhiWeight2, arma::mat I_gamma_C,
@@ -210,7 +212,7 @@ Rcpp::List rotate_efa(base_manifold *manifold, base_criterion *criterion,
     x2[i] = NPF(manifold, criterion, T, loadings,
                 Target, Weight,
                 PhiTarget, PhiWeight,
-                list_oblq_blocks, oblq_blocks,
+                blocks, list_oblq_blocks, oblq_blocks,
                 w, gamma, epsilon,
                 eps, maxit,
                 Weight2, PhiWeight2, I_gamma_C, N, M, p2, k);
@@ -271,6 +273,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                  Rcpp::Nullable<arma::mat> nullable_PhiWeight,
+                 Rcpp::Nullable<arma::uvec> nullable_blocks,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                  bool normalize, double gamma, double epsilon, double k, double w,
                  int random_starts, int cores,
@@ -285,7 +288,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   // Create defaults:
 
   arma::mat Target, Weight, PhiTarget, PhiWeight;
-  std::vector<arma::uvec> list_oblq_blocks;
+  std::vector<arma::uvec> list_oblq_blocks, blocks;
   arma::uvec oblq_blocks;
   arma::vec init;
 
@@ -310,7 +313,9 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                Weight2, PhiWeight2,
                gamma, epsilon, k, w,
                I_gamma_C, N, M, p2, // Constants
-               nullable_oblq_blocks, list_oblq_blocks, oblq_blocks,
+               nullable_blocks,
+               nullable_oblq_blocks, blocks,
+               list_oblq_blocks, oblq_blocks,
                nullable_rot_control, rot_maxit, rot_eps,
                random_starts, cores);
 
@@ -319,7 +324,8 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
             efa_maxit, lmm, efa_factr);
 
   base_manifold* manifold = choose_manifold(projection);
-  base_criterion *criterion = choose_criterion(rotation, projection);
+  base_criterion *criterion = choose_criterion(rotation, projection,
+                                               nullable_blocks);
 
   Rcpp::List result;
 
@@ -358,6 +364,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
     rotation_result = rotate_efa(manifold, criterion,
                                  n, n_factors, loadings,
                                  Target, Weight, PhiTarget, PhiWeight,
+                                 blocks,
                                  list_oblq_blocks, oblq_blocks,
                                  gamma, epsilon, k, w,
                                  random_starts, cores, rot_eps, rot_maxit,

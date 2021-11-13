@@ -58,14 +58,15 @@ void tcg(base_manifold *manifold, base_criterion *criterion,
          arma::mat lambda, arma::mat L, arma::mat Phi, arma::mat g, arma::mat gr,
          arma::mat A, arma::uvec oblq_indexes, arma::mat L2,
          arma::mat LoL2, arma::vec term, int p, double p2,                     // for geomin
-         arma::mat I_gamma_C,  arma::mat IgCL2N, arma::mat N, arma::mat M,                // for oblimin
-         arma::mat f2, arma::mat PhiWeight, arma::mat PhiWeight2, arma::mat Weight2,              // for xtarget
-         double epsilon, double w, double ng, arma::vec c, double rad, double k) {
+         arma::mat I_gamma_C,  arma::mat IgCL2N, arma::mat N, arma::mat M,  // for oblimin
+         arma::mat PhiWeight2, arma::mat Weight2, arma::mat gP,          // for xtarget
+         double epsilon, double ng, arma::vec c, double rad, double k,
+         std::vector<arma::uvec> blocks) {
 
   dir.zeros();
-  arma::mat dir0, dg, Hd;
+  arma::mat dir0, dg, Hd, Inv_T_dt, dL, dP, dgL, dgP;
+
   double alpha, rr0, tau, beta, dHd;
-  //
   arma::mat delta = -gr;
   arma::mat r = delta;
   double rr = ng * ng;
@@ -75,10 +76,18 @@ void tcg(base_manifold *manifold, base_criterion *criterion,
 
   do{
 
-    criterion->dG(dg, lambda, delta, T, Inv_T, L, g,
-       L2, LoL2, term, p2, epsilon, I_gamma_C, IgCL2N, N, M,
-       Weight2, f2, PhiWeight, PhiWeight2, w, k);
+    // Differential of L and P
+    manifold->dLP(dL, dP, Inv_T_dt, T, lambda, L, Inv_T, delta);
 
+    // Differential of the gradient of L and P
+    criterion->dgLP(dgL, dgP, dL, dP, L, L2, LoL2, term, p2,
+                   epsilon, I_gamma_C, IgCL2N, N, M,
+                   Weight2, PhiWeight2, k, blocks);
+
+    // Differential of g
+    manifold->dgrad(dg, dgL, dgP, gP, lambda, delta, T, Inv_T, L, g, Inv_T_dt);
+
+    // Riemannian hessian
     manifold->hess(Hd, delta, g, dg, T, Phi, A, oblq_indexes);
 
     dHd = arma::accu(delta % Hd);
@@ -135,13 +144,14 @@ typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> TRN;
 TRN NPF(base_manifold *manifold, base_criterion *criterion,
         arma::mat T, arma::mat lambda, arma::mat Target, arma::mat Weight,
         arma::mat Phi_Target, arma::mat Phi_Weight,
+        std::vector<arma::uvec> blocks,
         std::vector<arma::uvec> list_oblq_indexes, arma::uvec oblq_indexes,
         double w, double gamma, double epsilon,
         double eps, int max_iter, arma::mat Weight2, arma::mat PhiWeight2,
         arma::mat I_gamma_C, arma::mat N, arma::mat M, double p2, double k) {
 
-  arma::mat Inv_T, L, f1, f2, g, gr, dg, Hd, L2, LoL2, IgCL2N, A,
-  new_T, new_Inv_T, new_L, new_f1, new_f2, new_g, new_gr, new_L2,
+  arma::mat Inv_T, Inv_T_dt, L, dL, dgL, dP, f1, f2, g, gL, gr, dg, Hd, L2, LoL2, IgCL2N, A,
+  new_T, new_Inv_T, new_L, new_f1, new_f2, new_g, new_gr, new_L2, gP, dgP,
   new_LoL2, new_IgCL2N, new_dg, new_Hd;
 
   arma::vec term, new_term;
@@ -154,14 +164,24 @@ TRN NPF(base_manifold *manifold, base_criterion *criterion,
   arma::mat new_Phi;
   arma::mat PW = Phi_Weight;
 
+  // Rcpp::Rcout << blocks[1] << std::endl;
+  // blocks = list_oblq_indexes;
+
+  // Parameterization
+  manifold->param(L, lambda, Phi, Inv_T, T);
+
   // Objective
   criterion->F(Inv_T, L, Phi, f1, f2, f, lambda, T, Target, Weight,
-    L2, term, p, epsilon, IgCL2N, I_gamma_C, N, M,
-    Phi_Target, Phi_Weight, w, k);
+               L2, term, p, epsilon, IgCL2N, I_gamma_C, N, M,
+               Phi_Target, Phi_Weight, w, k, blocks);
 
-  // Gradient
-  criterion->G(g, lambda, f1, f2, T, Inv_T, L, LoL2, L2, term, p, p2,
-    IgCL2N, N, M, Weight, Phi_Weight, w, k);
+  // Gradient wrt L
+  criterion->gLP(gL, gP, f1, f2, L, LoL2, L2, term, p2, epsilon,
+                 I_gamma_C, IgCL2N, N, M, Weight, Phi_Weight, k,
+                 blocks);
+
+  // Gradient wtr T
+  manifold->grad(g, lambda, L, gL, Inv_T, T, gP, w);
 
   // Riemannian gradient
   manifold->proj(gr, A, g, T, Phi, oblq_indexes);
@@ -200,27 +220,37 @@ TRN NPF(base_manifold *manifold, base_criterion *criterion,
     tcg(manifold, criterion, dir, att_bnd, T, Inv_T,
         lambda, L, Phi, g, gr, A, oblq_indexes, L2,
         LoL2,term, p, p2,  I_gamma_C, IgCL2N, N, M,
-        f2, PW, PhiWeight2, Weight2, epsilon, w, ng, c, rad, k);
+        PhiWeight2, Weight2, gP, epsilon, ng, c, rad, k,
+        blocks);
 
     new_T = T + dir;
 
     // Projection onto the manifold
     manifold->retr(new_T, list_oblq_indexes);
 
+    // Differential of L and P
+    manifold->dLP(dL, dP, Inv_T_dt, T, lambda, L, Inv_T, dir);
+
+    // Differential of the gradient of L and P
+    criterion->dgLP(dgL, dgP, dL, dP, L, L2, LoL2, term, p2,
+                   epsilon, I_gamma_C, IgCL2N, N, M,
+                   Weight2, PhiWeight2, k, blocks);
+
     // Differential of g
-    criterion->dG(dg, lambda, dir, T, Inv_T, L, g,
-       L2, LoL2, term, p2, epsilon, I_gamma_C, IgCL2N, N, M,
-       Weight2, f2, PW, PhiWeight2, w, k);
+    manifold->dgrad(dg, dgL, dgP, gP, lambda, dir, T, Inv_T, L, g, Inv_T_dt);
 
     // Riemannian hessian
     manifold->hess(Hd, dir, g, dg, T, Phi, A, oblq_indexes);
 
     preddiff = - arma::accu(dir % ( gr + 0.5 * Hd) );
 
+    // Parameterization
+    manifold->param(new_L, lambda, new_Phi, new_Inv_T, new_T);
+
     // objective
     criterion->F(new_Inv_T, new_L, new_Phi, new_f1, new_f2, new_f, lambda, new_T, Target, Weight,
-      new_L2, new_term, p, epsilon, new_IgCL2N, I_gamma_C, N, M,
-      Phi_Target, Phi_Weight, w, k);
+                 new_L2, new_term, p, epsilon, new_IgCL2N, I_gamma_C, N, M,
+                 Phi_Target, Phi_Weight, w, k, blocks);
 
     if ( std::abs(preddiff) <= arma::datum::eps ) {
 
@@ -260,11 +290,13 @@ TRN NPF(base_manifold *manifold, base_criterion *criterion,
       f2 = new_f2;
 
       // update gradient
-      criterion->G(g, lambda, f1, f2, T, Inv_T, L, LoL2, L2, term, p, p2,
-        IgCL2N, N, M, Weight, Phi_Weight, w, k);
+      criterion->gLP(gL, gP, f1, f2, L, LoL2, L2, term, p2, epsilon,
+                     I_gamma_C, IgCL2N, N, M, Weight, Phi_Weight, k, blocks);
+      manifold->grad(g, lambda, L, gL, Inv_T, T, gP, w);
 
       // Riemannian gradient
       manifold->proj(gr, A, g, T, Phi, oblq_indexes);
+
       ng = sqrt(arma::accu(gr % gr));
 
     }

@@ -6,7 +6,7 @@
 \usage{
 rotate(loadings, rotation = "oblimin", projection = "oblq",
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-oblq_blocks = NULL, gamma = 0, epsilon = 0.01, k = 0, w = 1,
+blocks = NULL, oblq_blocks = NULL, gamma = 0, epsilon = 0.01, k = 0, w = 1,
 random_starts = 1L, cores = 1L, rot_control = NULL)
 }
 \arguments{
@@ -23,6 +23,8 @@ random_starts = 1L, cores = 1L, rot_control = NULL)
 \item{PhiTarget}{Target matrix for the factor correlations. Defaults to NULL.}
 
 \item{PhiWeight}{Weight matrix for the factor correlations. Defaults to NULL.}
+
+\item{blocks}{Vector with the number of factors for which seperately applying the roation criterion. Defaults to NULL.}
 
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
@@ -58,7 +60,7 @@ If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is pas
 If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Target} by default, which means a partially specified target rotation is performed. The same applies for \code{PhiTarget} and \code{PhiWeight}.
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 
 Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 }

@@ -46,6 +46,7 @@ Rcpp::List rotate(arma::mat loadings, std::string rotation = "oblimin",
                   Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+                  Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
                   Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                   double gamma = 0, double epsilon = 0.01, double k = 0,
                   double w = 1, int random_starts = 1, int cores = 1,
@@ -58,6 +59,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
                  Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+                 Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
                  Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                  bool normalize = false, double gamma = 0, double epsilon = 0.01,
                  double k = 0, double w = 1,
@@ -70,11 +72,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
 arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double cutoff = 0);
 
 // [[Rcpp::export]]
-Rcpp::List twoTier(arma::mat R, int n_generals, int n_groups,
+Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                    std::string twoTier_method = "GSLiD",
                    std::string projection = "oblq",
                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+                   Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
                    Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                    Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
                    std::string method = "minres", int maxit = 20, double cutoff = 0,
@@ -109,7 +112,7 @@ Rcpp::List se(int n,
               double w = 1, std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
-Rcpp::List PA(arma::mat X, int n_boot = 100, double quant = .95,
+Rcpp::List parallel(arma::mat X, int n_boot = 100, double quant = .95,
               bool replace = false, bool hierarchical = false,
               Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
               int cores = 1);
@@ -117,3 +120,5 @@ Rcpp::List PA(arma::mat X, int n_boot = 100, double quant = .95,
 // [[Rcpp::export]]
 Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
                     Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
+
+

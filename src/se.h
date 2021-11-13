@@ -94,7 +94,7 @@ Rcpp::List se(int sample_size,
   }
 
   base_manifold* manifold = choose_manifold(projection);
-  base_criterion *criterion = choose_criterion(rotation, projection);
+  base_criterion *criterion = choose_criterion(rotation, projection, R_NilValue);
   arma::mat constraints;
   criterion->d_constraint(constraints, Lambda, Phi, Target, Weight,
                           PhiTarget, PhiWeight, gamma, k, epsilon, w);

@@ -6,7 +6,7 @@
 \usage{
 efast(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq",
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1,
+blocks = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1,
 random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL)
 }
 \arguments{
@@ -27,6 +27,8 @@ random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = N
 \item{PhiTarget}{Target matrix for the factor correlations. Defaults to NULL.}
 
 \item{PhiWeight}{Weight matrix for the factor correlations. Defaults to NULL.}
+
+\item{blocks}{Vector with the number of factors for which seperately applying the roation criterion. Defaults to NULL.}
 
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
@@ -85,7 +87,7 @@ If a Heywood case is encountered, then \code{method =} "minrank" is automaticall
 
 \dontrun{
 # Simulate data:
-sim <- sim_twoTier(n_generals = 2, groups_per_general = 5, items_per_group = 6)
+sim <- sim_factor(n_generals = 2, groups_per_general = 5, items_per_group = 6)
 scores <- MASS::mvrnorm(1e3, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
@@ -96,5 +98,5 @@ projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }

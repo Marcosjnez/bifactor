@@ -2,11 +2,7 @@
 % Please edit documentation in R/cpp_functions.R
 \name{retr_poblq}
 \alias{retr_poblq}
-\title{Retraction of a matrix onto the partially oblique manifold.
-
- @description
-
-Transform a matrix into a partially oblique matrix.}
+\title{Retraction of a matrix onto the partially oblique manifold.}
 \usage{
 retr_poblq(X, oblq_blocks)
 }
@@ -19,10 +15,6 @@ retr_poblq(X, oblq_blocks)
 A partially oblique matrix.
 }
 \description{
-Retraction of a matrix onto the partially oblique manifold.
-
- @description
-
 Transform a matrix into a partially oblique matrix.
 }
 \examples{
@@ -32,5 +24,5 @@ retr_poblq(X, c(2, 3, 3))
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }

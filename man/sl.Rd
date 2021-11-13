@@ -25,7 +25,7 @@ sl(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL)
 \item{Rhat}{Correlation matrix predicted by the (hierarchical) model.}
 }
 \description{
-Schmid-Leiman transformation into a bi-factor or two-tier pattern.
+Schmid-Leiman transformation into a bi-factor or generalized bi-factor pattern.
 }
 \details{
 First, a hierarchical factor model is fitted using a second-order factor analysis on the factor correlation obtained from a first-order factor analysis. Then, the item loadings on the general factors are assumed to be the direct effects of the general factors according to such hierarchical model.
@@ -39,7 +39,7 @@ If the second-order solution does not use an orthogonal projection, then the cor
 
 \dontrun{
 # Simulate data:
-sim <- sim_twoTier(n_generals = 2, groups_per_general = 3, items_per_group = 5)
+sim <- sim_factor(n_generals = 2, groups_per_general = 3, items_per_group = 5)
 lambda <- sim$lambda
 Target <- ifelse(lambda > 0, 1, 0)
 
@@ -52,5 +52,5 @@ SL <- sl(sim$R, n_generals = 2, n_groups = 6, first, second)
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory Two-tier Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }

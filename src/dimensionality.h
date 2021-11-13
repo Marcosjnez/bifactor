@@ -30,12 +30,13 @@ arma::mat boot_sample(arma::mat X, bool replace) {
 
 }
 
-Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
+Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
               bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
               int cores){
 
   int n = X.n_rows;
   int p = X.n_cols;
+  arma::cube X_boots(n, p, n_boot);
 
   arma::mat S = arma::cor(X);
   arma::vec eigval = eig_sym(S);
@@ -46,8 +47,8 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
 #pragma omp parallel for
   for(int i=0; i < n_boot; ++i) {
 
-    arma::mat X_boot = boot_sample(X, replace);
-    arma::mat S_boot = arma::cor(X_boot);
+    X_boots.slice(i) = boot_sample(X, replace);
+    arma::mat S_boot = arma::cor(X_boots.slice(i));
     eigval_boot.row(i) = eig_sym(S_boot);
 
   }
@@ -55,13 +56,13 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
   arma::vec qquant(1);
   qquant[0] = quant;
   arma::mat cutoff = arma::quantile(eigval_boot, qquant);
-  double PA_dim = arma::accu(eigval > cutoff);
+  int groups = arma::accu(eigval > cutoff);
 
   Rcpp::List result;
   result["eigval_boot"] = eigval_boot;
-  result["PA_dim"] = PA_dim;
+  result["groups"] = groups;
 
-  if(PA_dim <= 1 || !hierarchical) return result;
+  if(groups <= 1 || !hierarchical) return result;
 
   Rcpp::List efa;
 
@@ -75,6 +76,7 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
   Rcpp::Nullable<arma::vec> nullable_init;
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
+  Rcpp::Nullable<arma::uvec> nullable_blocks;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
   bool normalize;
   double gamma, epsilon, k, w;
@@ -85,7 +87,7 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
                 method, rotation, projection,
                 nullable_Target, nullable_Weight,
                 nullable_PhiTarget, nullable_PhiWeight,
-                nullable_oblq_blocks, normalize,
+                nullable_blocks, nullable_oblq_blocks, normalize,
                 gamma, epsilon, k, w,
                 random_starts, cores_2,
                 nullable_init,
@@ -94,10 +96,10 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
 
   // efa:
 
-  Rcpp::List fit = efast(S, PA_dim, method, rotation, projection,
+  Rcpp::List fit = efast(S, groups, method, rotation, projection,
                          nullable_Target, nullable_Weight,
                          nullable_PhiTarget, nullable_PhiWeight,
-                         nullable_oblq_blocks,
+                         nullable_blocks, nullable_oblq_blocks,
                          normalize, gamma, epsilon, k, w,
                          random_starts, cores_2,
                          nullable_init,
@@ -112,7 +114,8 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
 
   arma::mat S2 = arma::cor(fs);
   arma::vec eigval2 = eig_sym(S2);
-  arma::mat eigval2_boot(n_boot, PA_dim);
+  arma::mat eigval2_boot(n_boot, groups);
+  arma::mat eigval2_W_boot(n_boot, groups);
 
   omp_set_num_threads(cores);
 #pragma omp parallel for
@@ -122,13 +125,23 @@ Rcpp::List PA(arma::mat X, int n_boot, double quant, bool replace,
     arma::mat S_boot = arma::cor(X_boot);
     eigval2_boot.row(i) = eig_sym(S_boot);
 
+    X_boot = X_boots.slice(i) * W;
+    S_boot = arma::cor(X_boot);
+    eigval2_W_boot.row(i) = eig_sym(S_boot);
+
   }
 
   arma::mat cutoff2 = arma::quantile(eigval2_boot, qquant);
-  int PA2_dim = arma::accu(eigval2 > cutoff2);
+  arma::mat cutoff2_W = arma::quantile(eigval2_W_boot, qquant);
+  int generals = arma::accu(eigval2 > cutoff2);
+  int generalsW = arma::accu(eigval2 > cutoff2_W);
 
   result["eigval2_boot"] = eigval2_boot;
-  result["PA2_dim"] = PA2_dim;
+  result["eigval2_W_boot"] = eigval2_W_boot;
+  result["generals"] = generals;
+  result["generalsW"] = generalsW;
+  result["fit"] = fit;
+  result["fs"] = fs;
 
   return result;
 
@@ -186,6 +199,7 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   Rcpp::Nullable<arma::vec> nullable_init;
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
+  Rcpp::Nullable<arma::uvec> nullable_blocks;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
   bool normalize;
   double gamma, epsilon, k, w;
@@ -196,7 +210,7 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
                 method, rotation, projection,
                 nullable_Target, nullable_Weight,
                 nullable_PhiTarget, nullable_PhiWeight,
-                nullable_oblq_blocks, normalize,
+                nullable_blocks, nullable_oblq_blocks, normalize,
                 gamma, epsilon, k, w,
                 random_starts, cores_2,
                 nullable_init,
@@ -208,7 +222,7 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   Rcpp::List fit = efast(S, dim, method, rotation, projection,
                          nullable_Target, nullable_Weight,
                          nullable_PhiTarget, nullable_PhiWeight,
-                         nullable_oblq_blocks,
+                         nullable_blocks, nullable_oblq_blocks,
                          normalize, gamma, epsilon, k, w,
                          random_starts, cores_2,
                          nullable_init,
@@ -248,6 +262,8 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
 
   result["CV_eigvals2"] = avg_CV_eigvals2;
   result["dim2"] = dim2;
+  result["fit"] = fit;
+  result["fs"] = fs;
 
   return result;
 
