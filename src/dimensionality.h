@@ -55,8 +55,10 @@ Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
 
   arma::vec qquant(1);
   qquant[0] = quant;
-  arma::mat cutoff = arma::quantile(eigval_boot, qquant);
-  int groups = arma::accu(eigval > cutoff);
+  arma::vec cutoff = arma::quantile(eigval_boot, qquant);
+  arma::umat booleans = arma::reverse(eigval > cutoff);
+  arma::uvec ones = arma::find(booleans == 0);
+  int groups = ones[0];
 
   Rcpp::List result;
   result["eigval_boot"] = eigval_boot;
@@ -132,9 +134,14 @@ Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
   }
 
   arma::mat cutoff2 = arma::quantile(eigval2_boot, qquant);
+  booleans = arma::reverse(eigval2 > cutoff2);
+  ones = arma::find(booleans == 0);
+  int generals = ones[0];
+
   arma::mat cutoff2_W = arma::quantile(eigval2_W_boot, qquant);
-  int generals = arma::accu(eigval2 > cutoff2);
-  int generalsW = arma::accu(eigval2 > cutoff2_W);
+  booleans = arma::reverse(eigval2 > cutoff2_W);
+  ones = arma::find(booleans == 0);
+  int generalsW = ones[0];
 
   result["eigval2_boot"] = eigval2_boot;
   result["eigval2_W_boot"] = eigval2_W_boot;
@@ -257,8 +264,10 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   }
 
   arma::vec avg_CV_eigvals2 = arma::mean(CV_eigvals2, 0);
-  arma::uvec which2 = arma::find(avg_CV_eigvals2 > 1);
-  int dim2 = which2.size();
+  // arma::uvec which2 = arma::find(avg_CV_eigvals2 > 1);
+  // int dim2 = which2.size();
+  arma::uvec ones = arma::find((avg_CV_eigvals2 < 1) == 1);
+  int dim2 = ones[0];
 
   result["CV_eigvals2"] = avg_CV_eigvals2;
   result["dim2"] = dim2;
