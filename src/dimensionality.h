@@ -30,9 +30,10 @@ arma::mat boot_sample(arma::mat X, bool replace) {
 
 }
 
-Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
-              bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
-              int cores){
+Rcpp::List parallel(arma::mat X, int n_boot, double quant,
+                    bool mean, bool replace,
+                    bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
+                    int cores){
 
   int n = X.n_rows;
   int p = X.n_cols;
@@ -53,9 +54,20 @@ Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
 
   }
 
-  arma::vec qquant(1);
-  qquant[0] = quant;
-  arma::vec cutoff = arma::quantile(eigval_boot, qquant);
+  arma::vec cutoff;
+
+  if(mean) {
+
+    cutoff = arma::mean(eigval_boot);
+
+  } else {
+
+    arma::vec qquant(1);
+    qquant[0] = quant;
+    cutoff = arma::quantile(eigval_boot, qquant);
+
+  }
+
   arma::umat booleans = arma::reverse(eigval > cutoff);
   arma::uvec ones = arma::find(booleans == 0);
   int groups = ones[0];
@@ -133,12 +145,26 @@ Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
 
   }
 
-  arma::mat cutoff2 = arma::quantile(eigval2_boot, qquant);
+  arma::mat cutoff2, cutoff2_W;
+
+  if(mean) {
+
+    cutoff2 = arma::mean(eigval2_boot);
+    cutoff2_W = arma::mean(eigval2_W_boot);
+
+  } else {
+
+    arma::vec qquant(1);
+    qquant[0] = quant;
+    cutoff2 = arma::quantile(eigval2_boot, qquant);
+    cutoff2_W = arma::quantile(eigval2_W_boot, qquant);
+
+  }
+
   booleans = arma::reverse(eigval2 > cutoff2);
   ones = arma::find(booleans == 0);
   int generals = ones[0];
 
-  arma::mat cutoff2_W = arma::quantile(eigval2_W_boot, qquant);
   booleans = arma::reverse(eigval2 > cutoff2_W);
   ones = arma::find(booleans == 0);
   int generalsW = ones[0];
@@ -149,6 +175,50 @@ Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace,
   result["generalsW"] = generalsW;
   result["fit"] = fit;
   result["fs"] = fs;
+
+  return result;
+
+}
+
+// Te same but only first order:
+Rcpp::List pa(arma::mat X, int n_boot, arma::vec quant, bool replace,
+              int cores){
+
+  int n = X.n_rows;
+  int p = X.n_cols;
+  arma::cube X_boots(n, p, n_boot);
+
+  arma::mat S = arma::cor(X);
+  arma::vec eigval = eig_sym(S);
+
+  arma::mat eigval_boot(p, n_boot);
+
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+  for(int i=0; i < n_boot; ++i) {
+
+    X_boots.slice(i) = boot_sample(X, replace);
+    arma::mat S_boot = arma::cor(X_boots.slice(i));
+    eigval_boot.col(i) = eig_sym(S_boot);
+
+  }
+
+  arma::mat cutoff = arma::quantile(eigval_boot, quant, 1);
+  int n_quant = quant.size();
+  arma::vec groups(n_quant);
+
+  for(int i=0; i < n_quant; ++i) {
+
+    arma::umat booleans = arma::reverse(eigval > cutoff.col(i));
+    arma::uvec ones = arma::find(booleans == 0);
+    groups[i] = ones[0];
+
+  }
+
+  Rcpp::List result;
+  result["eigval_sample"] = eigval;
+  result["eigval_boot"] = eigval_boot;
+  result["groups"] = groups;
 
   return result;
 
