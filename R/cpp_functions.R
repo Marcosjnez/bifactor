@@ -581,7 +581,7 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #'
 #' @usage
 #'
-#' parallel(X, n_boot = 100L, quant = .95, replace = FALSE,
+#' parallel(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE,
 #' hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
@@ -591,6 +591,7 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #' @param X Raw data matrix.
 #' @param n_boot Number of bootstrap samples.
 #' @param quant Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
+#' @param mean Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to FALSE.
 #' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
 #' @param hierarchical Logical indicating whether a second parallel analysis should be performed from the factor scores obtained after a first factor analysis analysis.
 #' @param efa A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.

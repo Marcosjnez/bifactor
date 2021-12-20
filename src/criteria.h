@@ -1,26 +1,9 @@
-arma::mat dxt(arma::mat X) { // derivative wrt transpose
-
-  int p = X.n_rows;
-  int q = X.n_cols;
-  int pq = p*q;
-
-  arma::mat res(pq, pq);
-  arma::mat temp(p, q);
-
-  for(int i=0; i < pq; ++i) {
-    temp.zeros();
-    temp(i) = 1;
-    res.col(i) = arma::vectorise(temp.t(), 0);
-  }
-
-  return res;
-
-}
+#include "manifolds.h"
 
 arma::mat kdiag(arma::mat X) {
 
   /*
-   * Transform every column subset into a diagonal matrix and bind
+   * Transform every column into a diagonal matrix and bind
    */
 
   int pq = X.n_rows;
@@ -87,13 +70,22 @@ public:
                   arma::mat Weight, arma::mat Phi_Weight, double k,
                   std::vector<arma::uvec> indexes_list) = 0;
 
+  virtual void hLP(arma::mat& hL, arma::mat& hP,
+                   arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+                   arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+                   arma::vec term, double p2, double epsilon,
+                   arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+                   arma::mat Weight, arma::mat Phi_Weight, double k,
+                   std::vector<arma::uvec> indexes_list) = 0;
+
   virtual void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
                    arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
                    double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
                    arma::mat W2, arma::mat PW2, double k,
                    std::vector<arma::uvec> indexes_list) = 0;
 
-  virtual void d_constraint(arma::mat& d_constraints, arma::mat lambda, arma::mat Phi,
+  virtual void d_constraint(arma::mat& d_constraints_temp, arma::mat& gL,
+                            arma::mat lambda, arma::mat Phi,
                             arma::mat Target, arma::mat Weight,
                             arma::mat PhiTarget, arma::mat PhiWeight,
                             double gamma, double k, double epsilon, double w) = 0;
@@ -137,11 +129,27 @@ public:
 
   }
 
-  void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
-           arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
-           double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
-           arma::mat W2, arma::mat PW2, double k,
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
            std::vector<arma::uvec> indexes_list) {
+
+    arma::mat c1 = arma::diagmat(arma::vectorise(IgCL2N));
+    arma::mat diagL = arma::diagmat(arma::vectorise(L));
+    arma::mat diag2L = 2*diagL;
+    arma::mat c2 = diagL * arma::kron(N, I_gamma_C) * diag2L;
+    hL = c1 + c2;
+
+  }
+
+  void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
+            arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
+            double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+            arma::mat W2, arma::mat PW2, double k,
+            std::vector<arma::uvec> indexes_list) {
 
     arma::mat dL2 = 2 * dL % L;
     arma::mat df1 = (1-k) * dL % (L2 * N) + (1-k) * L % (dL2 * N);
@@ -151,19 +159,14 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints_temp, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
 
     int p = L.n_rows;
     int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
     arma::mat I1(p, p, arma::fill::eye);
     arma::mat I2(q, q, arma::fill::eye);
 
@@ -172,11 +175,13 @@ public:
     arma::mat M(p, p, arma::fill::ones);
     M.diag(0).zeros();
 
+    // Find gL:
     arma::mat L2 = L % L;
     arma::mat f1 = (1-k) * L % (L2 * N);
     arma::mat f2 = k * L % (M * L2);
-    arma::mat gL = f1 + f2;
+    gL = f1 + f2;
 
+    // Find hL:
     arma::mat diagL = diagmat(arma::vectorise(L));
     arma::mat diag2L = 2*diagL;
     arma::mat c2 = arma::kron(N, I1) * diag2L;
@@ -185,33 +190,8 @@ public:
     arma::mat gf2 = k * (diagL * c3 + arma::diagmat(arma::vectorise(M * L2)));
     arma::mat hL = gf1 + gf2;
 
-    arma::mat d_constraints_temp = arma::kron(I2, L.t()) * hL + arma::kron(gL.t(), I2) * dxt(L);
-
-    // Orthogonal case
-    // arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
-    // arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
-    // d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
-    // d_constraints.insert_cols(p*q, p);
-
-    /*
-     * Multiply each column (q x q form) by inv_Phi
-     */
-
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
-    arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
-    B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
-
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
-    arma::mat HP = HP_temp.cols(indexes_2);
-
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    d_constraints_temp = arma::kron(I2, L.t()) * hL +
+      arma::kron(gL.t(), I2) * dxt(L);
 
   }
 
@@ -249,6 +229,22 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+    arma::mat c1 = arma::diagmat(arma::vectorise(IgCL2N));
+    arma::mat diagL = arma::diagmat(arma::vectorise(L));
+    arma::mat diag2L = 2*diagL;
+    arma::mat c2 = diagL * arma::kron(N, I_gamma_C) * diag2L;
+    hL = c1 + c2;
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
            arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
            double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -259,65 +255,37 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints_temp, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
 
     int p = L.n_rows;
     int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
     arma::mat I1(p, p, arma::fill::eye);
     arma::mat I2(q, q, arma::fill::eye);
 
     arma::mat N(q, q, arma::fill::ones);
     N.diag(0).zeros();
-
     arma::mat gC(p, p, arma::fill::ones);
     gC *= gamma/p;
     arma::mat IgC = I1 - gC;
+
+    // Find gL:
     arma::mat L2 = L % L;
     arma::mat IgC_L2_N = IgC * L2 * N;
-    arma::mat gL = L % IgC_L2_N;
+    gL = L % IgC_L2_N;
 
+    // Find hL:
     arma::mat c1 = arma::diagmat(arma::vectorise(IgC_L2_N));
     arma::mat diagL = arma::diagmat(arma::vectorise(L));
     arma::mat diag2L = 2*diagL;
     arma::mat c2 = diagL * arma::kron(N, IgC) * diag2L;
     arma::mat hL = c1 + c2;
 
-    arma::mat d_constraints_temp = arma::kron(I2, L.t()) * hL + arma::kron(gL.t(), I2) * dxt(L);
-
-    // Orthogonal case
-    // arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
-    // arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
-    // d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
-    // d_constraints.insert_cols(p*q, p);
-
-    /*
-     * Multiply each column (q x q form) by inv_Phi
-     */
-
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
-    arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
-    B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
-
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
-    arma::mat HP = HP_temp.cols(indexes_2);
-
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    d_constraints_temp = arma::kron(I2, L.t()) * hL +
+      arma::kron(gL.t(), I2) * dxt(L);
 
   }
 
@@ -358,6 +326,32 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+    int q = L.n_cols;
+    arma::mat cx = p2 * LoL2;
+
+    arma::mat c1 = p2*(arma::vectorise(L2) - arma::vectorise(2*L % L)) /
+      arma::vectorise(L2 % L2);
+    arma::mat gcx = arma::diagmat(c1);
+    arma::mat c2 = (1/L2) % (2*L) / q;
+    c2.each_col() %= term;
+    arma::mat gterm = cbind_diag(c2);
+    arma::mat v = gterm.t() * cx;
+    hL = gcx;
+    arma::mat term2 = term;
+    for(int i=0; i < (q-1); ++i) term2 = arma::join_cols(term2, term);
+    hL.each_col() %= term2;
+    hL += kdiag(v);
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
            arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
            double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -374,30 +368,27 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints_temp, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
 
     int p = L.n_rows;
     int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
     arma::mat I2(q, q, arma::fill::eye);
 
+    // Find gL:
     arma::mat L2 = L % L + epsilon;
     arma::mat LoL2 = L / L2;
     double q2 = 2/(q + 0.0);
     arma::mat cx = q2 * LoL2;
     arma::mat I(q, 1, arma::fill::ones);
     arma::mat term = exp(log(L2) * I / q);
-    arma::mat gL = cx;
+    gL = cx;
     gL.each_col() %= term;
 
+    // Find hL:
     arma::mat c1 = q2*(arma::vectorise(L2) - arma::vectorise(2*L % L)) /
       arma::vectorise(L2 % L2);
     arma::mat gcx = arma::diagmat(c1);
@@ -411,33 +402,8 @@ public:
     hL.each_col() %= term2;
     hL += kdiag(v);
 
-    arma::mat d_constraints_temp = arma::kron(I2, L.t()) * hL + arma::kron(gL.t(), I2) * dxt(L);
-
-    // Orthogonal case
-    // arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
-    // arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
-    // d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
-    // d_constraints.insert_cols(p*q, p);
-
-    /*
-     * Multiply each column (q x q form) by inv_Phi
-     */
-
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
-    arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
-    B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
-
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
-    arma::mat HP = HP_temp.cols(indexes_2);
-
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    d_constraints_temp = arma::kron(I2, L.t()) * hL +
+      arma::kron(gL.t(), I2) * dxt(L);
 
   }
 
@@ -473,6 +439,19 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+    arma::mat W2 = Weight % Weight;
+    hL = arma::diagmat(arma::vectorise(W2));
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
            arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
            double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -483,52 +462,22 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints_temp, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
 
     int p = L.n_rows;
     int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
     arma::mat I2(q, q, arma::fill::eye);
 
     arma::mat W2 = Weight % Weight;
-    arma::mat gL = W2 % (L - Target);
+    gL = W2 % (L - Target);
     arma::mat hL = arma::diagmat(arma::vectorise(W2));
 
-    arma::mat d_constraints_temp = arma::kron(I2, L.t()) * hL + arma::kron(gL.t(), I2) * dxt(L);
-
-    // Orthogonal case
-    // arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
-    // arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
-    // d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
-    // d_constraints.insert_cols(p*q, p);
-
-    /*
-     * Multiply each column (q x q form) by inv_Phi
-     */
-
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
-    arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
-    B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
-
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
-    arma::mat HP = HP_temp.cols(indexes_2);
-
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    d_constraints_temp = arma::kron(I2, L.t()) * hL +
+      arma::kron(gL.t(), I2) * dxt(L);
 
   }
 
@@ -567,6 +516,23 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+    arma::mat W2 = Weight % Weight;
+    hL = arma::diagmat(arma::vectorise(W2));
+
+    arma::mat Phi_t = dxt(Phi);
+    arma::mat diag_PW2 = arma::diagmat(arma::vectorise(Phi_Weight % Phi_Weight));
+    hP = diag_PW2 + diag_PW2 * Phi_t;
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
            arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
            double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -578,7 +544,8 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
@@ -589,15 +556,17 @@ public:
     int qq = q*q;
     int q_cor = q*(q-1)/2;
     arma::uvec indexes_1(q);
+
     for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
     arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
     arma::mat I2(q, q, arma::fill::eye);
 
     arma::mat W2 = Weight % Weight;
-    arma::mat gL = W2 % (L - Target);
+    gL = W2 % (L - Target);
     arma::mat hL = arma::diagmat(arma::vectorise(W2));
 
-    arma::mat d_constraints_temp = arma::kron(I2, L.t()) * hL + arma::kron(gL.t(), I2) * dxt(L);
+    arma::mat d_constraints_temp = arma::kron(I2, L.t()) *
+      hL + arma::kron(gL.t(), I2) * dxt(L);
 
     // Orthogonal case
     // arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
@@ -617,6 +586,7 @@ public:
     B.reshape(q*q, pq, 1);
     d_constraints_temp = B.slice(0);
 
+    // This
     arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
     arma::mat Phi_t = dxt(Phi);
     arma::mat HP_temp = c1p + c1p * Phi_t;
@@ -689,6 +659,16 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
             arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
             double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -716,7 +696,8 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
@@ -740,7 +721,7 @@ public:
     arma::mat L2 = L % L;
     arma::mat f1 = (1-k) * L % (L2 * N);
     arma::mat f2 = k * L % (M * L2);
-    arma::mat gL = f1 + f2;
+    gL = f1 + f2;
 
     arma::mat diagL = diagmat(arma::vectorise(L));
     arma::mat diag2L = 2*diagL;
@@ -837,6 +818,16 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
             arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
             double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N,
@@ -861,7 +852,8 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
@@ -885,7 +877,7 @@ public:
     arma::mat IgC = I1 - gC;
     arma::mat L2 = L % L;
     arma::mat IgC_L2_N = IgC * L2 * N;
-    arma::mat gL = L % IgC_L2_N;
+    gL = L % IgC_L2_N;
 
     arma::mat c1 = arma::diagmat(arma::vectorise(IgC_L2_N));
     arma::mat diagL = arma::diagmat(arma::vectorise(L));
@@ -984,6 +976,16 @@ public:
 
   }
 
+  void hLP(arma::mat& hL, arma::mat& hP,
+           arma::mat gL, arma::mat gP, arma::mat f1, arma::mat f2,
+           arma::mat L, arma::mat Phi, arma::mat LoL2, arma::mat L2,
+           arma::vec term, double p2, double epsilon,
+           arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
+           arma::mat Weight, arma::mat Phi_Weight, double k,
+           std::vector<arma::uvec> indexes_list) {
+
+  }
+
   void dgLP(arma::mat& dgL, arma::mat& dgP, arma::mat dL, arma::mat dP,
             arma::mat L, arma::mat L2, arma::mat LoL2, arma::vec term,
             double p2, double epsilon, arma::mat I_gamma_C, arma::mat IgCL2N, arma::mat N, arma::mat M,
@@ -1016,7 +1018,8 @@ public:
 
   }
 
-  void d_constraint(arma::mat& d_constraints, arma::mat L, arma::mat Phi,
+  void d_constraint(arma::mat& d_constraints, arma::mat& gL,
+                    arma::mat L, arma::mat Phi,
                     arma::mat Target, arma::mat Weight,
                     arma::mat PhiTarget, arma::mat PhiWeight,
                     double gamma, double k, double epsilon, double w){
@@ -1037,7 +1040,7 @@ public:
     arma::mat cx = q2 * LoL2;
     arma::mat I(q, 1, arma::fill::ones);
     arma::mat term = exp(log(L2) * I / q);
-    arma::mat gL = cx;
+    gL = cx;
     gL.each_col() %= term;
 
     arma::mat c1 = q2*(arma::vectorise(L2) - arma::vectorise(2*L % L)) /

@@ -34,6 +34,21 @@ arma::mat gPRhat(arma::mat Lambda, arma::mat Phi) {
   return g;
 }
 
+arma::mat guRhat(int p) {
+
+  arma::mat gu(p*p, p, arma::fill::zeros);
+
+  for(int i=0; i < p; ++i) {
+
+    int index = i*p + i;
+    gu(index, i) = 1;
+
+  }
+
+  return gu;
+
+}
+
 arma::mat hessian_Lambda(arma::mat S, arma::mat Lambda,
                          arma::mat Phi, arma::vec psi) {
 
@@ -196,23 +211,23 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   }
 
-    /*
-     * Second derivatives for Lambda and Psi
-     */
+  /*
+   * Second derivatives for Lambda and Psi
+   */
 
-    arma::mat LP = 2*LambdaPhi;
-    arma::mat h_Lambdapsi = arma::diagmat(LP.col(0));
+  arma::mat LP = 2*LambdaPhi;
+  arma::mat h_Lambdapsi = arma::diagmat(LP.col(0));
 
-    for(int i=1; i < q; ++i) {
+  for(int i=1; i < q; ++i) {
 
-      arma::mat aug = arma::diagmat(LP.col(i));
-      h_Lambdapsi = arma::join_cols(h_Lambdapsi, aug);
+    arma::mat aug = arma::diagmat(LP.col(i));
+    h_Lambdapsi = arma::join_cols(h_Lambdapsi, aug);
 
-    }
+  }
 
-    arma::mat h_Phipsi;
+  arma::mat h_Phipsi;
 
-    if(projection == "oblq") {
+  if(projection == "oblq") {
 
     /*
      * Second derivatives for Phi and Psi
@@ -224,57 +239,57 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   }
 
-    arma::mat hessian;
+  arma::mat hessian;
 
-    if(projection == "oblq") {
+  if(projection == "oblq") {
 
-      /*
-       * Join all the derivatives such that
-       * h_Lambda         h_LambdaPhi   h_Lambdapsi
-       * h_LambdaPhi.t()  h_Phi         h_Phipsi
-       * h_Lambdapsi.t()  h_Phipsi.t()  h_psi
-       */
+    /*
+     * Join all the derivatives such that
+     * h_Lambda         h_LambdaPhi   h_Lambdapsi
+     * h_LambdaPhi.t()  h_Phi         h_Phipsi
+     * h_Lambdapsi.t()  h_Phipsi.t()  h_psi
+     */
 
-      int q_cor = q*(q-1)/2;
+    int q_cor = q*(q-1)/2;
 
-      // insert columnwise:
-      arma::mat hessian1 = h_Lambda; // pq x pq
-      hessian1.insert_cols(pq, h_LambdaPhi); // pq x q_cor
-      hessian1.insert_cols(pq + q_cor, h_Lambdapsi); // pq x p
+    // insert columnwise:
+    arma::mat hessian1 = h_Lambda; // pq x pq
+    hessian1.insert_cols(pq, h_LambdaPhi); // pq x q_cor
+    hessian1.insert_cols(pq + q_cor, h_Lambdapsi); // pq x p
 
-      // insert columnwise:
-      arma::mat hessian2 = h_LambdaPhi.t(); // q_cor x pq
-      hessian2.insert_cols(pq, h_Phi); // q_cor x q_cor
-      hessian2.insert_cols(pq + q_cor, h_Phipsi); // q_cor x p
+    // insert columnwise:
+    arma::mat hessian2 = h_LambdaPhi.t(); // q_cor x pq
+    hessian2.insert_cols(pq, h_Phi); // q_cor x q_cor
+    hessian2.insert_cols(pq + q_cor, h_Phipsi); // q_cor x p
 
-      // insert columnwise:
-      arma::mat hessian3 = h_Lambdapsi.t(); // p x pq
-      hessian3.insert_cols(pq, h_Phipsi.t()); // p x pq
-      hessian3.insert_cols(pq + q_cor, h_psi); // p x p
+    // insert columnwise:
+    arma::mat hessian3 = h_Lambdapsi.t(); // p x pq
+    hessian3.insert_cols(pq, h_Phipsi.t()); // p x pq
+    hessian3.insert_cols(pq + q_cor, h_psi); // p x p
 
-      // stack the blocks:
-      hessian = arma::join_cols(hessian1, hessian2, hessian3);
+    // stack the blocks:
+    hessian = arma::join_cols(hessian1, hessian2, hessian3);
 
-    } else if(projection == "orth") {
+  } else if(projection == "orth") {
 
-      /*
-       * Join all the derivatives such that
-       * h_Lambda        h_Lambdapsi
-       * h_Lambdapsi.t()    h_psi
-       */
+    /*
+     * Join all the derivatives such that
+     * h_Lambda        h_Lambdapsi
+     * h_Lambdapsi.t()    h_psi
+     */
 
-      // insert columnwise:
-      arma::mat hessian1 = h_Lambda; // pq x pq
-      hessian1.insert_cols(pq, h_Lambdapsi); // pq x p
+    // insert columnwise:
+    arma::mat hessian1 = h_Lambda; // pq x pq
+    hessian1.insert_cols(pq, h_Lambdapsi); // pq x p
 
-      // insert columnwise:
-      arma::mat hessian2 = h_Lambdapsi.t(); // p x pq
-      hessian2.insert_cols(pq, h_psi); // p x p
+    // insert columnwise:
+    arma::mat hessian2 = h_Lambdapsi.t(); // p x pq
+    hessian2.insert_cols(pq, h_psi); // p x p
 
-      // stack the blocks:
-      hessian = arma::join_cols(hessian1, hessian2);
+    // stack the blocks:
+    hessian = arma::join_cols(hessian1, hessian2);
 
-    }
+  }
 
   return hessian;
 
@@ -363,13 +378,243 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
 }
 
+/*
+ * Hessian for maximum likelihood
+ */
+
+arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
+                     std::string projection) {
+
+  /*
+   * Compute all the functions above and create the hessian matrix
+   */
+
+  /*
+   * Second derivatives for Lambda
+   */
+
+  int p = Lambda.n_rows;
+  int q = Phi.n_rows;
+  int pp = p*p;
+  int pq = p*q;
+  arma::mat I1(p, p, arma::fill::eye);
+
+  arma::mat LambdaPhi = Lambda * Phi;
+  arma::mat Rhat = LambdaPhi * Lambda.t();
+  Rhat.diag().ones();
+  arma::mat Rhat_inv = arma::inv_sympd(Rhat);
+  arma::mat residuals = Rhat - S;
+  arma::mat Ri_res_Ri = 2*Rhat_inv * residuals * Rhat_inv;
+  arma::mat h1 = arma::kron(Phi, Ri_res_Ri);
+
+  arma::mat dRhat_dL = gLRhat(Lambda, Phi);
+  arma::mat dRi_res_Ri_dRhat = 2*arma::kron(Rhat_inv, Rhat_inv) -
+    arma::kron(Ri_res_Ri, Rhat_inv) - arma::kron(Rhat_inv, Ri_res_Ri);
+  arma::mat dRi_res_Ri_dL = dRi_res_Ri_dRhat * dRhat_dL;
+  arma::mat LPtxI = arma::kron(LambdaPhi.t(), I1);
+  arma::mat h2 = LPtxI * dRi_res_Ri_dL;
+
+  arma::mat h_Lambda = h1 + h2;
+
+  arma::mat dRhat_dP;
+  arma::uvec indexes1;
+  arma::mat dRi_res_Ri_dP;
+  arma::mat h_Phi;
+
+  if(projection == "oblq") {
+
+    /*
+     * Second derivatives for Phi
+     */
+
+    indexes1 = trimatl_ind(arma::size(Phi), -1);
+    arma::mat LxL = 2*arma::kron(Lambda, Lambda);
+    arma::mat LxLt = LxL.t();
+    dRhat_dP = gPRhat(Lambda, Phi);
+    dRi_res_Ri_dP = dRi_res_Ri_dRhat * dRhat_dP;
+    arma::mat LtxLt = arma::kron(Lambda.t(), Lambda.t());
+
+    h_Phi = LtxLt.rows(indexes1) * dRi_res_Ri_dP;
+
+  }
+  /*
+   * Second derivatives for psi
+   */
+
+  arma::uvec indexes2 = arma::linspace<arma::uvec>(0, pp-1, p);
+  arma::mat dRhat_du = guRhat(p);
+  arma::mat dRi_res_Ri_du = dRi_res_Ri_dRhat * dRhat_du;
+  arma::mat h_psi = 0.5*dRi_res_Ri_du.rows(indexes2);
+
+  arma::mat h_LambdaPhi;
+
+  if(projection == "oblq") {
+
+    /*
+     * Second derivatives for Lambda and Phi
+     */
+
+    arma::mat I2(q, q, arma::fill::eye);
+
+    arma::mat dxtPhi = dxt(Phi);
+    h1 = LPtxI * dRi_res_Ri_dP;
+    arma::mat h21 = arma::kron(I2, Ri_res_Ri * Lambda);
+    arma::mat h22 = h21 * dxtPhi;
+    h2 = h21 + h22;
+
+    h_LambdaPhi = h1 + h2.cols(indexes1);
+
+  }
+
+  /*
+   * Second derivatives for Lambda and Psi
+   */
+
+  arma::mat h_Lambdapsi = LPtxI * dRi_res_Ri_du;
+
+  arma::mat h_Phipsi;
+
+  if(projection == "oblq") {
+
+    /*
+     * Second derivatives for Phi and Psi
+     */
+
+    h_Phipsi = 0.5*dRi_res_Ri_dP.rows(indexes2).t();
+
+  }
+
+  arma::mat hessian;
+
+  if(projection == "oblq") {
+
+    /*
+     * Join all the derivatives such that
+     * h_Lambda         h_LambdaPhi   h_Lambdapsi
+     * h_LambdaPhi.t()  h_Phi         h_Phipsi
+     * h_Lambdapsi.t()  h_Phipsi.t()  h_psi
+     */
+
+    int q_cor = q*(q-1)/2;
+
+    // insert columnwise:
+    arma::mat hessian1 = h_Lambda; // pq x pq
+    hessian1.insert_cols(pq, h_LambdaPhi); // pq x q_cor
+    hessian1.insert_cols(pq + q_cor, h_Lambdapsi); // pq x p
+
+    // insert columnwise:
+    arma::mat hessian2 = h_LambdaPhi.t(); // q_cor x pq
+    hessian2.insert_cols(pq, h_Phi); // q_cor x q_cor
+    hessian2.insert_cols(pq + q_cor, h_Phipsi); // q_cor x p
+
+    // insert columnwise:
+    arma::mat hessian3 = h_Lambdapsi.t(); // p x pq
+    hessian3.insert_cols(pq, h_Phipsi.t()); // p x pq
+    hessian3.insert_cols(pq + q_cor, h_psi); // p x p
+
+    // stack the blocks:
+    hessian = arma::join_cols(hessian1, hessian2, hessian3);
+
+  } else if(projection == "orth") {
+
+    /*
+     * Join all the derivatives such that
+     * h_Lambda        h_Lambdapsi
+     * h_Lambdapsi.t()    h_psi
+     */
+
+    // insert columnwise:
+    arma::mat hessian1 = h_Lambda; // pq x pq
+    hessian1.insert_cols(pq, h_Lambdapsi); // pq x p
+
+    // insert columnwise:
+    arma::mat hessian2 = h_Lambdapsi.t(); // p x pq
+    hessian2.insert_cols(pq, h_psi); // p x p
+
+    // stack the blocks:
+    hessian = arma::join_cols(hessian1, hessian2);
+
+  }
+
+  return hessian;
+
+}
+
+/*
+ * d2f/(dtheta ds) for ml
+ */
+
+arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
+                  std::string projection) {
+
+  /*
+   * Compute d2f/(dtheta ds)
+   */
+
+  int p = Lambda.n_rows;
+  int q = Lambda.n_cols;
+  int pp = p*p;
+
+  arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
+  arma::uvec indexes2 = trimatl_ind(arma::size(S), -1);
+  arma::uvec indexes3 = arma::linspace<arma::uvec>(0, pp-1, p);
+  arma::mat I1(p, p, arma::fill::eye);
+
+  /*
+   * for Lambda
+   */
+
+  arma::mat LambdaPhi = Lambda * Phi;
+  arma::mat Rhat = LambdaPhi * Lambda.t();
+  Rhat.diag().ones();
+  arma::mat Rhat_inv = arma::inv_sympd(Rhat);
+  arma::mat dRi_res_Ri_dS = -2*arma::kron(Rhat_inv, Rhat_inv);
+  arma::mat dxtS = dxt(S);
+  dRi_res_Ri_dS += dRi_res_Ri_dS * dxtS;
+  arma::mat g_temp = arma::kron(LambdaPhi.t(), I1) * dRi_res_Ri_dS;
+  arma::mat g = g_temp.cols(indexes2);
+
+  arma::mat gd;
+  int k;
+
+  /*
+   * for Phi
+   */
+
+  if(projection == "orth") {
+
+    gd = g;
+    k = p*q;
+
+  } else if(projection == "oblq") {
+
+    arma::mat d1 = arma::kron(Lambda.t(), Lambda.t());
+    arma::mat d_temp = d1 * dRi_res_Ri_dS;
+
+    arma::mat d = d_temp(indexes1, indexes2);
+    gd = arma::join_cols(g, d);
+    k = p*q + q*(q-1)/2;
+
+  }
+
+  /*
+   * for psi
+   */
+
+  arma::mat h = 0.5*dRi_res_Ri_dS(indexes3, indexes2);
+  arma::mat gdh = arma::join_cols(gd, h);
+
+  return gdh;
+
+}
+
 arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
             Rcpp::Nullable<arma::mat> nullable_X = R_NilValue,
             std::string method = "minres", std::string projection = "oblq",
             std::string type = "continuous", double eta = 1) {
 
   /*
-   * Compute the B matrix from the sandwich covariance matrix estimator
+   * B matrix from the sandwich covariance matrix estimator
    */
 
   arma::uvec indexes = trimatl_ind(arma::size(S), -1);
@@ -379,9 +624,9 @@ arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
     gLPS = gLPS_minres(S, Lambda, Phi, projection);
 
-  } else {
+  } else if(method == "ml") {
 
-    Rcpp::stop("Standard errors not implemented yet for maximum likelihood");
+    gLPS = gLPS_ml(S, Lambda, Phi, projection);
 
   }
 

@@ -1,3 +1,22 @@
+arma::mat dxt(arma::mat X) { // derivative wrt transpose
+
+  int p = X.n_rows;
+  int q = X.n_cols;
+  int pq = p*q;
+
+  arma::mat res(pq, pq);
+  arma::mat temp(p, q);
+
+  for(int i=0; i < pq; ++i) {
+    temp.zeros();
+    temp(i) = 1;
+    res.col(i) = arma::vectorise(temp.t(), 0);
+  }
+
+  return res;
+
+}
+
 arma::mat skew(arma::mat X) {
 
   return 0.5 * (X - X.t());
@@ -182,6 +201,9 @@ public:
                      arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
                      arma::mat Inv_T_dt) = 0;
 
+  virtual void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
+                             arma::mat L, arma::mat Phi, arma::mat gL) = 0;
+
   virtual void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
                     arma::mat Phi, arma::uvec indexes_1) = 0;
 
@@ -224,6 +246,20 @@ public:
           arma::mat Inv_T_dt){
 
     dg = lambda.t() * dgL;
+
+  }
+
+  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
+                     arma::mat L, arma::mat Phi, arma::mat gL) {
+
+    int p = L.n_rows;
+    int q = L.n_cols;
+    int pq = p*q;
+
+    arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
+    arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
+    d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
+    d_constraints.insert_cols(pq, p);
 
   }
 
@@ -324,6 +360,37 @@ public:
 
   }
 
+  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
+                     arma::mat L, arma::mat Phi, arma::mat gL) {
+
+    int p = L.n_rows;
+    int q = L.n_cols;
+    int pq = p*q;
+    int qq = q*q;
+    int q_cor = q*(q-1)/2;
+
+    arma::uvec indexes_1(q);
+    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
+    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
+
+    arma::mat inv_Phi = arma::inv_sympd(Phi);
+    arma::cube B(qq, pq, 1);
+    B.slice(0) = d_constraints_temp;
+    B.reshape(q, q, pq);
+    B.each_slice() *= inv_Phi;
+    B.reshape(q*q, pq, 1);
+    d_constraints_temp = B.slice(0);
+
+    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
+    arma::mat HP_temp = c1p + c1p * dxt(Phi);
+    arma::mat HP = HP_temp.cols(indexes_2);
+
+    d_constraints = arma::join_rows(d_constraints_temp, HP);
+    d_constraints.shed_rows(indexes_1);
+    d_constraints.insert_cols(p*q + q_cor, p);
+
+  };
+
   void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
             arma::mat Phi, arma::uvec indexes_1) {
 
@@ -412,6 +479,37 @@ public:
     }
 
   }
+
+  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
+                     arma::mat L, arma::mat Phi, arma::mat gL) {
+
+    int p = L.n_rows;
+    int q = L.n_cols;
+    int pq = p*q;
+    int qq = q*q;
+    int q_cor = q*(q-1)/2;
+
+    arma::uvec indexes_1(q);
+    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
+    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
+
+    arma::mat inv_Phi = arma::inv_sympd(Phi);
+    arma::cube B(qq, pq, 1);
+    B.slice(0) = d_constraints_temp;
+    B.reshape(q, q, pq);
+    B.each_slice() *= inv_Phi;
+    B.reshape(q*q, pq, 1);
+    d_constraints_temp = B.slice(0);
+
+    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
+    arma::mat HP_temp = c1p + c1p * dxt(Phi);
+    arma::mat HP = HP_temp.cols(indexes_2);
+
+    d_constraints = arma::join_rows(d_constraints_temp, HP);
+    d_constraints.shed_rows(indexes_1);
+    d_constraints.insert_cols(p*q + q_cor, p);
+
+  };
 
   void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat X,
             arma::mat Phi, arma::uvec indexes_1) {

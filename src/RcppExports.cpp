@@ -243,19 +243,20 @@ BEGIN_RCPP
 END_RCPP
 }
 // parallel
-Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool replace, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
-RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP replaceSEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
+Rcpp::List parallel(arma::mat X, int n_boot, double quant, bool mean, bool replace, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP meanSEXP, SEXP replaceSEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< int >::type n_boot(n_bootSEXP);
     Rcpp::traits::input_parameter< double >::type quant(quantSEXP);
+    Rcpp::traits::input_parameter< bool >::type mean(meanSEXP);
     Rcpp::traits::input_parameter< bool >::type replace(replaceSEXP);
     Rcpp::traits::input_parameter< bool >::type hierarchical(hierarchicalSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(parallel(X, n_boot, quant, replace, hierarchical, efa, cores));
+    rcpp_result_gen = Rcpp::wrap(parallel(X, n_boot, quant, mean, replace, hierarchical, efa, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -289,7 +290,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 22},
     {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
     {"_bifactor_se", (DL_FUNC) &_bifactor_se, 19},
-    {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 7},
+    {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 8},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {NULL, NULL, 0}
 };

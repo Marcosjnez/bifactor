@@ -1,7 +1,6 @@
 #include "method_derivatives.h"
 
-Rcpp::List se(int sample_size,
-              Rcpp::Nullable<Rcpp::List> nullable_fit,
+Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> nullable_fit,
               Rcpp::Nullable<arma::mat> nullable_S,
               Rcpp::Nullable<arma::mat> nullable_Lambda,
               Rcpp::Nullable<arma::mat> nullable_Phi,
@@ -86,30 +85,39 @@ Rcpp::List se(int sample_size,
     m = p*q + q_cor + p;
     indexes = arma::trimatl_ind(arma::size(Phi), -1);
   }
+
   arma::mat H;
   if(method == "minres") {
     H = hessian_minres(S, Lambda, Phi, projection);
-  } else{
-    Rcpp::stop("minres is the only available method at the moment");
+  } else if(method == "ml"){
+    H = hessian_ml(S, Lambda, Phi, projection);
+  } else {
+    Rcpp::stop("Standard errors are not implemented yet for this method");
   }
 
   base_manifold* manifold = choose_manifold(projection);
   base_criterion *criterion = choose_criterion(rotation, projection, R_NilValue);
-  arma::mat constraints;
-  criterion->d_constraint(constraints, Lambda, Phi, Target, Weight,
+
+  // Compute the rotation constraints:
+  arma::mat constraints_temp, gL, constraints;
+  criterion->d_constraint(constraints_temp, gL, Lambda, Phi, Target, Weight,
                           PhiTarget, PhiWeight, gamma, k, epsilon, w);
+  manifold->g_constraints(constraints, constraints_temp, Lambda, Phi, gL);
+  // Add constraints to the hessian matrix:
   int kk = constraints.n_rows;
   H = arma::join_rows(H, constraints.t());
+  // Add zeros to make H a square matrix:
   arma::mat zeros(kk, kk);
   arma::mat C = arma::join_rows(constraints, zeros);
   H = arma::join_cols(H, C);
   arma::mat H_inv = arma::inv(H);
 
-  arma::mat A = H_inv(arma::span(0, m-1), arma::span(0, m-1));
+  // Find A^{-1}BA^{-1}:
+  arma::mat A_inv = H_inv(arma::span(0, m-1), arma::span(0, m-1));
   arma::mat BB = B(S, Lambda, Phi, nullable_X, method, projection,
                    type, eta);
-  arma::mat VAR = A * BB * A;
-  arma::vec se = sqrt(arma::diagvec(VAR)/(sample_size-1));
+  arma::mat VAR = A_inv * BB * A_inv;
+  arma::vec se = sqrt(arma::diagvec(VAR)/(n-1));
 
   Rcpp::List result;
   arma::mat Lambda_se(p, q);

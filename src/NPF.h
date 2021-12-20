@@ -1,4 +1,3 @@
-#include "manifolds.h"
 #include "criteria.h"
 
 std::vector<int> subvector(std::vector<int> v, int lower, int upper) {
