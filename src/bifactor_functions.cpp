@@ -95,8 +95,7 @@ arma::mat asymp_cov(arma::mat R,
                     double eta = 1, std::string type = "normal");
 
 // [[Rcpp::export]]
-Rcpp::List se(int n,
-              Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
+Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
               Rcpp::Nullable<arma::mat> R = R_NilValue,
               Rcpp::Nullable<arma::mat> Lambda = R_NilValue,
               Rcpp::Nullable<arma::mat> Phi = R_NilValue,
@@ -113,9 +112,9 @@ Rcpp::List se(int n,
 
 // [[Rcpp::export]]
 Rcpp::List parallel(arma::mat X, int n_boot = 100, double quant = .95,
-              bool replace = false, bool hierarchical = false,
-              Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
-              int cores = 1);
+                    bool mean = false, bool replace = false, bool hierarchical = false,
+                    Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
+                    int cores = 1);
 
 // [[Rcpp::export]]
 Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
