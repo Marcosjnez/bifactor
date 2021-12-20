@@ -4,7 +4,7 @@
 \alias{parallel}
 \title{Parallel analysis using principal components.}
 \usage{
-parallel(X, n_boot = 100L, quant = .95, replace = FALSE,
+parallel(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE,
 hierarchical = FALSE, efa = NULL, cores = 1L)
 }
 \arguments{
@@ -13,6 +13,8 @@ hierarchical = FALSE, efa = NULL, cores = 1L)
 \item{n_boot}{Number of bootstrap samples.}
 
 \item{quant}{Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.}
+
+\item{mean}{Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to FALSE.}
 
 \item{replace}{Logical indicating whether the columns of \code{X} should be permuted with replacement.}
 
