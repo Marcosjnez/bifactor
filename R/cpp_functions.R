@@ -607,8 +607,8 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85. https://doi.org/10.1007/BF02289447
 #'
 #' @export
-parallel <- function(X, n_boot = 100L, quant = .95, replace = FALSE, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_parallel`, X, n_boot, quant, replace, hierarchical, efa, cores)
+parallel <- function(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, hierarchical, efa, cores)
 }
 
 #' @title
