@@ -1,10 +1,10 @@
 Package: bifactor
 Type: Package
-Title: Exploratory Factor, Bi-factor, Two-tier and Multiple-tier Modeling
+Title: Exploratory Factor, Bi-factor, and Generalized Bi-factor Modeling
 Version: 0.1.0
-Date: 2021-07-20
+Date: 2021-11-22
 Authors@R: c(person(given = "Marcos", family = "Jimenez", role = c("aut", "cre", "cph"), email = "marcosjnezhquez@gmail.com"), person(given="Francisco J.", family = "Abad", role = c("aut", "cph")), person(given="Eduardo", family = "Garcia-Garzon", role = c("aut", "cph")), person(given="Luis E.", family = "Garrido", role = c("aut", "cph")))
-Description: Fit exploratory factor, bi-factor, two-tier and multiple-tier models with correlated factors.
+Description: Fit exploratory factor, bi-factor, and Generalized Bi-factor Models
 License: GPL-3
 LazyData: TRUE
 Depends: R (>= 4.0)
@@ -15,7 +15,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.2
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2021-06-24 14:30:19 UTC; marcos
+Packaged: 2021-11-22 14:30:19 UTC; marcos
 Author: Marcos Jimenez [aut, cre, cph],
   Francisco J. Abad [aut, cph],
   Eduardo Garcia-Garzon [aut, cph],
