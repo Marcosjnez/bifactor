@@ -2,25 +2,27 @@
 % Please edit documentation in R/cpp_functions.R
 \name{parallel}
 \alias{parallel}
-\title{Parallel analysis using principal components.}
+\title{Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).}
 \usage{
-parallel(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE,
-hierarchical = FALSE, efa = NULL, cores = 1L)
+parallel(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE,
+PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 }
 \arguments{
 \item{X}{Raw data matrix.}
 
 \item{n_boot}{Number of bootstrap samples.}
 
-\item{quant}{Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.}
+\item{quant}{Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.}
 
-\item{mean}{Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to FALSE.}
+\item{mean}{Logical. Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to TRUE.}
 
 \item{replace}{Logical indicating whether the columns of \code{X} should be permuted with replacement.}
 
+\item{PA}{Parallel analysis method. It can be either principal components ("PCA"), principal axis ("PAF") or both ("PCA" and "PAF"). Defaults to NULL, which sets c("PCA", "PAF").}
+
 \item{hierarchical}{Logical indicating whether a second parallel analysis should be performed from the factor scores obtained after a first factor analysis analysis.}
 
-\item{efa}{A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.}
+\item{efa}{A list of arguments to pass to \code{efast} when \code{hierarchical = TRUE}.}
 
 \item{cores}{Number of cores to perform the parallel bootstrapping.}
 }
@@ -28,7 +30,7 @@ hierarchical = FALSE, efa = NULL, cores = 1L)
 A list with the bootstrapped eigenvalues and the estimated dimensionality.
 }
 \description{
-Perform parallel analysis to detect dimensionality using principal components.
+Perform hierarchical parallel analysis to detect dimensionality using either principal components or principal axis factoring.
 }
 \details{
 Not yet.

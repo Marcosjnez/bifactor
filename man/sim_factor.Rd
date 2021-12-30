@@ -7,8 +7,8 @@
 sim_factor(n_generals, groups_per_general, items_per_group,
 loadings_g = "medium", loadings_s = "medium",
 crossloadings = 0, pure = FALSE,
-generals_rho = 0, groups_rho = 0,
-method = "minres", fit = "rmsr", misfit = 0.025)
+generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
+method = "minres", fit = "rmsr", misfit = 0)
 }
 \arguments{
 \item{n_generals}{Number of general factors.}
@@ -28,6 +28,8 @@ method = "minres", fit = "rmsr", misfit = 0.025)
 \item{generals_rho}{Correlation among the general factors. Defaults to 0.}
 
 \item{groups_rho}{Correlation among the group factors. Defaults to 0.}
+
+\item{confirmatory}{Logical. Should the misfit value be computed according to a confirmatory model (TRUE) or an exploratory model (FALSE). Defaults to TRUE.}
 
 \item{method}{Method used to generate population error: "minres" or "ml".}
 

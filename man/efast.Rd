@@ -4,10 +4,12 @@
 \alias{efast}
 \title{Fast exploratory factor analysis.}
 \usage{
-efast(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq",
+efast(R, n_factors, method = "minres",
+rotation = "oblimin", projection = "oblq",
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-blocks = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1,
-random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL)
+blocks = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0,
+epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L,
+init = NULL, efa_control = NULL, rot_control = NULL)
 }
 \arguments{
 \item{R}{Correlation matrix.}
