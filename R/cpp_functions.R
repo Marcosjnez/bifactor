@@ -286,10 +286,12 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", Target =
 #'
 #' @usage
 #'
-#' efast(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq",
+#' efast(R, n_factors, method = "minres",
+#' rotation = "oblimin", projection = "oblq",
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-#' blocks = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0, epsilon = 1e-02, k = 0, w = 1,
-#' random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL)
+#' blocks = NULL, oblq_blocks = NULL, normalize = FALSE, gamma = 0,
+#' epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L,
+#' init = NULL, efa_control = NULL, rot_control = NULL)
 #'
 #' @param R Correlation matrix.
 #' @param n_factors Number of common factors to extract.
@@ -577,24 +579,25 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 
 #' @title
 #'
-#' Parallel analysis using principal components.
+#' Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).
 #'
 #' @usage
 #'
-#' parallel(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE,
-#' hierarchical = FALSE, efa = NULL, cores = 1L)
+#' parallel(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE,
+#' PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
 #'
-#' Perform parallel analysis to detect dimensionality using principal components.
+#' Perform hierarchical parallel analysis to detect dimensionality using either principal components or principal axis factoring.
 #'
 #' @param X Raw data matrix.
 #' @param n_boot Number of bootstrap samples.
-#' @param quant Quantile of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
-#' @param mean Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to FALSE.
+#' @param quant Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
+#' @param mean Logical. Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to TRUE.
 #' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
+#' @param PA Parallel analysis method. It can be either principal components ("PCA"), principal axis ("PAF") or both ("PCA" and "PAF"). Defaults to NULL, which sets c("PCA", "PAF").
 #' @param hierarchical Logical indicating whether a second parallel analysis should be performed from the factor scores obtained after a first factor analysis analysis.
-#' @param efa A list of arguments to pass to \code{efast} when \code{secon_PA = TRUE}.
+#' @param efa A list of arguments to pass to \code{efast} when \code{hierarchical = TRUE}.
 #' @param cores Number of cores to perform the parallel bootstrapping.
 #'
 #' @details
@@ -608,8 +611,8 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85. https://doi.org/10.1007/BF02289447
 #'
 #' @export
-parallel <- function(X, n_boot = 100L, quant = .95, mean = FALSE, replace = FALSE, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, hierarchical, efa, cores)
+parallel <- function(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 #' @title

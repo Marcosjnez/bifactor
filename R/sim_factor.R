@@ -11,8 +11,8 @@
 #' sim_factor(n_generals, groups_per_general, items_per_group,
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
-#' generals_rho = 0, groups_rho = 0,
-#' method = "minres", fit = "rmsr", misfit = 0.025)
+#' generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
+#' method = "minres", fit = "rmsr", misfit = 0)
 #'
 #' @param n_generals Number of general factors.
 #' @param groups_per_general Number of group factors per general factor.
@@ -23,6 +23,7 @@
 #' @param pure Fix a pure item on each general factor. Defaults to FALSE.
 #' @param generals_rho Correlation among the general factors. Defaults to 0.
 #' @param groups_rho Correlation among the group factors. Defaults to 0.
+#' @param confirmatory Logical. Should the misfit value be computed according to a confirmatory model (TRUE) or an exploratory model (FALSE). Defaults to TRUE.
 #' @param method Method used to generate population error: "minres" or "ml".
 #' @param fit Fit index to control the population error.
 #' @param misfit Misfit value to generate population error.
@@ -50,11 +51,11 @@
 #'
 #' @export
 sim_factor <- function(n_generals, groups_per_general, items_per_group,
-                         loadings_g = "medium", loadings_s = "medium",
-                         crossloadings = 0, pure = FALSE,
-                         generals_rho = 0, groups_rho = 0,
-                         confirmatory = FALSE,
-                         method = "minres", fit = "rmsr", misfit = 0) {
+                       loadings_g = "medium", loadings_s = "medium",
+                       crossloadings = 0, pure = FALSE,
+                       generals_rho = 0, groups_rho = 0,
+                       confirmatory = TRUE, method = "minres",
+                       fit = "rmsr", misfit = 0) {
 
   root_ml <- function(x, delta, G) {
 
@@ -358,7 +359,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
     # BtB <- t(B) %*% B
     m <- p+1
-    U <- replicate(p, runif(m, 0, 1))
+    U <- replicate(p, stats::runif(m, 0, 1))
     A1 <- t(U) %*% U
     sq <- diag(1/sqrt(diag(A1)))
     A2 <- sq %*% A1 %*% sq
@@ -366,13 +367,13 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
     y <- diag_u %*% A2 %*% diag_u
     y <- y[lower.tri(y, diag = tdiag)]
     # y <- A2[lower.tri(A2, diag = tdiag)]
-    # y <- runif(p*(p+1)/2, 0, 1)
+    # y <- stats::runif(p*(p+1)/2, 0, 1)
     # e <- qr.Q(qr(cbind(B, y)))[, ncol(B)+1]
     # v <- MASS::ginv(BtB) %*% t(B) %*% y
     # e <- y - B %*% v # equation 7
     # B.qr <- qr(B)
     # e <- qr.resid(B.qr, y)
-    e <- unname(lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
+    e <- unname(stats::lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
 
     if(fit == "rmsr") {
       if(misfit == "close") {
@@ -410,8 +411,8 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
       diag(E) <- 0
       E <- 1e-04*E # Fix this to avoid NAs
       G <- R_inv %*% E
-      x <- runif(1, 0, 1)
-      root <- optim(x, fn = root_ml, gr = groot_ml, method = "L-BFGS-B",
+      x <- stats::runif(1, 0, 1)
+      root <- stats::optim(x, fn = root_ml, gr = groot_ml, method = "L-BFGS-B",
                     lower = -Inf, upper = Inf, G = G, delta = delta)
       k <- root$par
       E <- k*E
