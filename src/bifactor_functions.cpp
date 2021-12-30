@@ -111,9 +111,10 @@ Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
               double w = 1, std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
-Rcpp::List parallel(arma::mat X, int n_boot = 100, double quant = .95,
-                    bool mean = false, bool replace = false, bool hierarchical = false,
-                    Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
+Rcpp::List parallel(arma::mat X, int n_boot = 100, Rcpp::Nullable<arma::vec> quant = R_NilValue,
+                    bool mean = false, bool replace = false,
+                    Rcpp::Nullable<std::vector<std::string>> PA = R_NilValue,
+                    bool hierarchical = false, Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
                     int cores = 1);
 
 // [[Rcpp::export]]

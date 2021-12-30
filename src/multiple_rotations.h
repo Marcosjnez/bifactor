@@ -1,5 +1,4 @@
 #include <Rcpp/Benchmark/Timer.h>
-#include "GPF.h"
 #include "NPF.h"
 
 base_manifold* choose_manifold(std::string projection) {
