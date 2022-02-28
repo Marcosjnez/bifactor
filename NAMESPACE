@@ -16,6 +16,5 @@ export(rotate)
 export(se)
 export(sim_factor)
 export(sl)
-
-importFrom(Rcpp,sourceCpp)
-useDynLib(bifactor, .registration = TRUE)
+importFrom(Rcpp, sourceCpp)
+useDynLib(bifactordev, .registration = TRUE)
