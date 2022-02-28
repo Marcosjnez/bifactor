@@ -1,4 +1,8 @@
-arma::mat dxt(arma::mat X) { // derivative wrt transpose
+arma::mat dxt(arma::mat X) {
+
+  /*
+   * derivative of a matrix wrt its transpose
+   */
 
   int p = X.n_rows;
   int q = X.n_cols;
@@ -29,7 +33,7 @@ arma::mat symm(arma::mat X) {
 
 }
 
-// Solve the lyapunov equation YX + XY = Q for symmetric Q and X:
+// Solve the lyapunov equation YX + XY = Q with symmetric Q and X:
 
 arma::mat lyap_sym(arma::mat Y, arma::mat Q) {
 
@@ -178,9 +182,36 @@ std::vector<arma::uvec> increment(arma::uvec oblq_indexes, int p) {
   }
   std::vector<arma::uvec> indexes_list = vector_to_list2(oblq_indexes_total);
 
-  return(indexes_list);
+  return indexes_list;
 
 }
+
+typedef struct arguments{
+
+  int p, q;
+  double w, gamma, epsilon, k, f, q2, a = 1e6;
+
+  arma::mat lambda, T, L, Phi, Inv_T, dL, dP, Inv_T_dt, dT, g,
+  gL, gP, dg, dgL, dgP, hL, hP, d_constr, d_constr_temp, rg, A,
+  dH, f1, f2, L2, LoL2, IgCL2N, I_gamma_C, N, M, H, HL2,
+  Target, Weight, Phi_Target, Phi_Weight, Weight2, Phi_Weight2, S,
+  Ls, Lg, L2s, L2g, exp_aL2g, g_exp_aL2g, gL2g, gL2s, C, logC, logCN,
+  gC1, gC, glogC, glogCN, gexplogCN, exp_lCN, gL1, gL2, I1, I2, Ng, dxt_L2s;
+  std::string penalization = "none";
+  bool penalize = false;
+
+  arma::vec term;
+  arma::uvec oblq_indexes, blocks_vector; // REMOVE blocks_vector?
+  std::vector<arma::uvec> list_oblq_indexes, blocks_list;
+  arma::vec block_weights;
+  int n_blocks, i, n_loads;
+
+  std::vector<std::string> rotations;
+  std::string projection;
+  std::vector<arma::mat> Li, Li2, Ni, HLi2, LoLi2, IgCL2Ni;
+  std::vector<arma::vec> termi;
+
+} args;
 
 // Manifolds
 
@@ -188,29 +219,21 @@ class base_manifold {
 
 public:
 
-  virtual void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
-                     arma::mat& Inv_T, arma::mat T) = 0;
+  virtual void param(arguments& x) = 0;
 
-  virtual void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
-                   arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) = 0;
+  virtual void dLP(arguments& x) = 0;
 
-  virtual void grad(arma::mat& g, arma::mat lambda, arma::mat L,
-                    arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) = 0;
+  virtual void grad(arguments& x) = 0;
 
-  virtual void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
-                     arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
-                     arma::mat Inv_T_dt) = 0;
+  virtual void dgrad(arguments& x) = 0;
 
-  virtual void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
-                             arma::mat L, arma::mat Phi, arma::mat gL) = 0;
+  virtual void g_constraints(arguments& x) = 0;
 
-  virtual void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
-                    arma::mat Phi, arma::uvec indexes_1) = 0;
+  virtual void proj(arguments& x) = 0;
 
-  virtual void hess(arma::mat& dH, arma::mat delta, arma::mat g, arma::mat dg, arma::mat T,
-                    arma::mat Phi, arma::mat A, arma::uvec indexes_1) = 0;
+  virtual void hess(arguments& x) = 0;
 
-  virtual void retr(arma::mat& T, std::vector<arma::uvec> oblq_indexes) = 0;
+  virtual void retr(arguments& x) = 0;
 
 };
 
@@ -220,74 +243,70 @@ class orth:public base_manifold {
 
 public:
 
-  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
-                arma::mat& Inv_T, arma::mat T) {
+  void param(arguments& x) {
 
-    L = lambda*T;
-
-  }
-
-  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
-           arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
-
-    dL = lambda * dT;
+    x.L = x.lambda*x.T;
 
   }
 
-  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
-         arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+  void dLP(arguments& x) {
 
-    g = lambda.t() * gL;
-
-  }
-
-  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
-          arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
-          arma::mat Inv_T_dt){
-
-    dg = lambda.t() * dgL;
+    x.dL = x.lambda * x.dT;
 
   }
 
-  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
-                     arma::mat L, arma::mat Phi, arma::mat gL) {
+  void grad(arguments& x) {
 
-    int p = L.n_rows;
-    int q = L.n_cols;
-    int pq = p*q;
-
-    arma::uvec indexes_1 = arma::trimatl_ind(arma::size(Phi), -1);
-    arma::uvec indexes_2 = arma::trimatu_ind(arma::size(Phi), 1);
-    d_constraints = d_constraints_temp.rows(indexes_1) - d_constraints_temp.rows(indexes_2);
-    d_constraints.insert_cols(pq, p);
+    x.g = x.lambda.t() * x.gL;
 
   }
 
-  void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
-            arma::mat Phi, arma::uvec indexes_1) {
+  void dgrad(arguments& x) {
 
-    // A = skew(T.t() * g);
-    // rg = T * A;
-    rg = T * skew(T.t() * g);
+    x.dg = x.lambda.t() * x.dgL;
 
   }
 
-  void hess(arma::mat& dH, arma::mat delta, arma::mat g, arma::mat dg, arma::mat T,
-            arma::mat Phi, arma::mat A, arma::uvec indexes_1) {
+  void g_constraints(arguments& x) {
 
-    // arma::mat hessian = delta * A + T * skew(delta.t() * g + T.t() * dg);
-    // proj_orth(dH, A, hessian, T, Phi, indexes_1);
-    dg -= delta * symm(T.t() * g);
-    proj(dH, A, dg, T, Phi, indexes_1);
+    arma::mat I1(x.p, x.p, arma::fill::eye);
+    arma::mat I2(x.q, x.q, arma::fill::eye);
+    int pq = x.p*x.q;
+
+    x.d_constr_temp = arma::kron(I2, x.L.t()) * x.hL +
+      arma::kron(x.gL.t(), I2) * dxt(x.L);
+
+    arma::uvec indexes_1 = arma::trimatl_ind(arma::size(I2), -1);
+    arma::uvec indexes_2 = arma::trimatu_ind(arma::size(I2), 1);
+    arma::mat d_constr2 = dxt(I2) * x.d_constr_temp;
+    x.d_constr_temp -= d_constr2;
+    x.d_constr = x.d_constr_temp.rows(indexes_1);
+    x.d_constr.insert_cols(pq, x.p);
 
   }
 
-  void retr(arma::mat& T, std::vector<arma::uvec> oblq_indexes) {
+  void proj(arguments& x) {
+
+    x.rg = x.T * skew(x.T.t() * x.g);
+
+  }
+
+  void hess(arguments& x) {
+
+    arma::mat drg = x.dg - x.dT * symm(x.T.t() * x.g); // update this?
+    // Rcpp::Rcout << drg << std::endl;
+    // arma::mat drg = x.dT * skew(x.T.t() * x.g) + x.T * skew(x.dT.t() * x.g) + x.T*skew(x.T.t() * x.dg);
+    // Rcpp::Rcout << drg << std::endl;
+    x.dH = x.T * skew(x.T.t() * drg);
+
+  }
+
+  void retr(arguments& x) {
 
     arma::mat Q, R;
-    arma::qr_econ(Q, R, T);
+    arma::qr_econ(Q, R, x.T);
 
-    T = Q;
+    x.T = Q;
 
   }
 
@@ -299,115 +318,114 @@ class oblq:public base_manifold {
 
 public:
 
-  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
-                arma::mat& Inv_T, arma::mat T) {
+  void param(arguments& x) {
 
-    Phi = T.t() * T;
-    Inv_T = inv(T);
-    L = lambda * Inv_T.t();
+    x.Phi = x.T.t() * x.T;
+    x.Inv_T = arma::inv(x.T);
+    x.L = x.lambda * x.Inv_T.t();
 
   }
 
-  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
-          arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
+  void dLP(arguments& x) {
 
-    Inv_T_dt = Inv_T * dT;
-    dL = - L * Inv_T_dt.t();
+    x.Inv_T_dt = x.Inv_T * x.dT;
+    x.dL = - x.L * x.Inv_T_dt.t();
 
     // if(!dP.is_empty()) {
 
-      dP = T.t() * dT;
-      dP += dP.t();
+      x.dP = x.T.t() * x.dT;
+      x.dP += x.dP.t();
 
     // }
 
   }
 
-  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
-         arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+  void grad(arguments& x) {
 
-    arma::mat g1 = - Inv_T.t() * gL.t() * L;
+    arma::mat g1 = - x.Inv_T.t() * x.gL.t() * x.L;
 
-    if(gP.is_empty()) {
+    if(x.gP.is_empty()) {
 
-      g = g1;
+      x.g = g1;
 
     } else {
 
-      arma::mat g2 = w*T*gP;
-      g = g1 + g2;
+      arma::mat g2 = x.T * x.gP;
+      x.g = g1 + g2;
 
     }
 
   }
 
-  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
-          arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
-          arma::mat Inv_T_dt) {
+  void dgrad(arguments& x) {
 
-    arma::mat dg1 = - g * Inv_T_dt.t() - (dT * Inv_T).t() * g - (dgL * Inv_T).t() * L;
+    arma::mat dg1 = - x.g * x.Inv_T_dt.t() - (x.dT * x.Inv_T).t() * x.g - (x.dgL * x.Inv_T).t() * x.L;
 
-    if(gP.is_empty()) {
+    if(x.gP.is_empty()) {
 
-      dg = dg1;
+      x.dg = dg1;
 
     } else {
 
-      arma::mat dg2 = dT * gP + T * dgP;
-      dg = dg1 + dg2;
+      arma::mat dg2 = x.dT * x.gP + x.T * x.dgP;
+      x.dg = dg1 + dg2;
 
     }
 
   }
 
-  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
-                     arma::mat L, arma::mat Phi, arma::mat gL) {
+  void g_constraints(arguments& x) {
 
-    int p = L.n_rows;
-    int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
+    int pq = x.p*x.q;
+    int qq = x.q*x.q;
+    int q_cor = x.q*(x.q-1)/2;
+    arma::uvec indexes_1(x.q);
 
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
+    for(int i=0; i < x.q; ++i) indexes_1[i] = ((i+1)*x.q) - (x.q-i);
+    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(x.Phi), -1);
+    arma::mat I2(x.q, x.q, arma::fill::eye);
 
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
+    x.d_constr_temp = arma::kron(I2, x.L.t()) * x.hL +
+      arma::kron(x.gL.t(), I2) * dxt(x.L);
+
+    arma::mat inv_Phi = arma::inv_sympd(x.Phi);
     arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
+    B.slice(0) = x.d_constr_temp;
+    B.reshape(x.q, x.q, pq);
     B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
+    B.reshape(x.q*x.q, pq, 1);
+    x.d_constr_temp = B.slice(0);
 
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
+    arma::mat c1p = -arma::kron(inv_Phi.t(), (x.L.t() * x.gL * inv_Phi));
+    arma::mat Phi_t = dxt(x.Phi);
+    arma::mat HP_temp = c1p + c1p * Phi_t;
+    if(!x.hP.is_empty()) HP_temp -= x.hP;
     arma::mat HP = HP_temp.cols(indexes_2);
 
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    x.d_constr = arma::join_rows(x.d_constr_temp, HP);
+    x.d_constr.shed_rows(indexes_1);
+    x.d_constr.insert_cols(pq + q_cor, x.p);
 
   };
 
-  void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat T,
-            arma::mat Phi, arma::uvec indexes_1) {
+  void proj(arguments& x) {
 
-    rg = g - T * diagmat( T.t() * g );
-
-  }
-
-  void hess(arma::mat& dH, arma::mat delta, arma::mat g, arma::mat dg, arma::mat T,
-            arma::mat Phi, arma::mat A, arma::uvec indexes_1) {
-
-    dH = dg - T * diagmat( T.t() * dg ) - delta * diagmat( T.t() * g);
+    x.rg = x.g - x.T * arma::diagmat( x.T.t() * x.g );
 
   }
 
-  void retr(arma::mat& T, std::vector<arma::uvec> oblq_indexes) {
+  void hess(arguments& x) {
 
-    T *= arma::diagmat(1 / sqrt(arma::sum(T % T, 0)));
+    x.dH = x.dg - x.dT * arma::diagmat( x.T.t() * x.g) - x.T * arma::diagmat( x.T.t() * x.dg );
+    // arma::mat drg = x.dg - x.dT * arma::diagmat( x.T.t() * x.g) - x.T * arma::diagmat( x.dT.t() * x.g ) -
+      // x.T * arma::diagmat( x.T.t() * x.dg );
+    // x.dH = drg - x.T * arma::diagmat( x.T.t() * drg );
+
+  }
+
+  void retr(arguments& x) {
+
+    x.T *= arma::diagmat( 1 / sqrt(arma::sum(x.T % x.T, 0)) );
 
   }
 
@@ -419,163 +437,167 @@ class poblq:public base_manifold {
 
 public:
 
-  void param(arma::mat& L, arma::mat lambda, arma::mat& Phi,
-             arma::mat& Inv_T, arma::mat T) {
+  void param(arguments& x) {
 
-    Phi = T.t() * T;
-    Inv_T = inv(T);
-    L = lambda * Inv_T.t();
-
-  }
-
-  void dLP(arma::mat& dL, arma::mat& dP, arma::mat& Inv_T_dt, arma::mat T,
-           arma::mat lambda, arma::mat L, arma::mat Inv_T, arma::mat dT) {
-
-    Inv_T_dt = Inv_T * dT;
-    dL = - L * Inv_T_dt.t();
-
-    // if(!dP.is_empty()) {
-
-    dP = T.t() * dT;
-    dP += dP.t();
-
-    // }
+    x.Phi = x.T.t() * x.T;
+    x.Inv_T = arma::inv(x.T);
+    x.L = x.lambda * x.Inv_T.t();
 
   }
 
-  void grad(arma::mat& g, arma::mat lambda, arma::mat L,
-            arma::mat gL, arma::mat Inv_T, arma::mat T, arma::mat gP, double w) {
+  void dLP(arguments& x) {
 
-    arma::mat g1 = - Inv_T.t() * gL.t() * L;
+    x.Inv_T_dt = x.Inv_T * x.dT;
+    x.dL = - x.L * x.Inv_T_dt.t();
 
-    if(gP.is_empty()) {
+    x.dP = x.T.t() * x.dT;
+    x.dP += x.dP.t();
 
-      g = g1;
+  }
+
+  void grad(arguments& x) {
+
+    arma::mat g1 = - x.Inv_T.t() * x.gL.t() * x.L;
+
+    if(x.gP.is_empty()) {
+
+      x.g = g1;
 
     } else {
 
-      arma::mat g2 = w*T*gP;
-      g = g1 + g2;
+      arma::mat g2 = x.T * x.gP;
+      x.g = g1 + g2;
 
     }
 
   }
 
-  void dgrad(arma::mat& dg, arma::mat dgL, arma::mat dgP, arma::mat gP, arma::mat lambda,
-             arma::mat dT, arma::mat T, arma::mat Inv_T, arma::mat L, arma::mat g,
-             arma::mat Inv_T_dt) {
+  void dgrad(arguments& x) {
 
-    arma::mat dg1 = - g * Inv_T_dt.t() - (dT * Inv_T).t() * g - (dgL * Inv_T).t() * L;
+    arma::mat dg1 = - x.g * x.Inv_T_dt.t() - (x.dT * x.Inv_T).t() * x.g - (x.dgL * x.Inv_T).t() * x.L;
 
-    if(gP.is_empty()) {
+    if(x.gP.is_empty()) {
 
-      dg = dg1;
+      x.dg = dg1;
 
     } else {
 
-      arma::mat dg2 = dT * gP + T * dgP;
-      dg = dg1 + dg2;
+      arma::mat dg2 = x.dT * x.gP + x.T * x.dgP;
+      x.dg = dg1 + dg2;
 
     }
 
   }
 
-  void g_constraints(arma::mat& d_constraints, arma::mat d_constraints_temp,
-                     arma::mat L, arma::mat Phi, arma::mat gL) {
+  void g_constraints(arguments& x) {
 
-    int p = L.n_rows;
-    int q = L.n_cols;
-    int pq = p*q;
-    int qq = q*q;
-    int q_cor = q*(q-1)/2;
+    int pq = x.p*x.q;
+    int qq = x.q*x.q;
+    int q_cor = x.q*(x.q-1)/2;
+    arma::uvec indexes_1(x.q);
 
-    arma::uvec indexes_1(q);
-    for(int i=0; i < q; ++i) indexes_1[i] = ((i+1)*q) - (q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(Phi), -1);
+    for(int i=0; i < x.q; ++i) indexes_1[i] = ((i+1)*x.q) - (x.q-i);
+    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(x.Phi), -1);
+    arma::mat I2(x.q, x.q, arma::fill::eye);
 
-    arma::mat inv_Phi = arma::inv_sympd(Phi);
+    x.d_constr_temp = arma::kron(I2, x.L.t()) * x.hL +
+      arma::kron(x.gL.t(), I2) * dxt(x.L);
+
+    arma::mat inv_Phi = arma::inv_sympd(x.Phi);
     arma::cube B(qq, pq, 1);
-    B.slice(0) = d_constraints_temp;
-    B.reshape(q, q, pq);
+    B.slice(0) = x.d_constr_temp;
+    B.reshape(x.q, x.q, pq);
     B.each_slice() *= inv_Phi;
-    B.reshape(q*q, pq, 1);
-    d_constraints_temp = B.slice(0);
+    B.reshape(x.q*x.q, pq, 1);
+    x.d_constr_temp = B.slice(0);
 
-    arma::mat c1p = -arma::kron(inv_Phi.t(), (L.t() * gL * inv_Phi));
-    arma::mat HP_temp = c1p + c1p * dxt(Phi);
+    arma::mat c1p = -arma::kron(inv_Phi.t(), (x.L.t() * x.gL * inv_Phi));
+    arma::mat Phi_t = dxt(x.Phi);
+    arma::mat HP_temp = c1p + c1p * Phi_t;
+    if(!x.hP.is_empty()) HP_temp -= x.hP;
     arma::mat HP = HP_temp.cols(indexes_2);
 
-    d_constraints = arma::join_rows(d_constraints_temp, HP);
-    d_constraints.shed_rows(indexes_1);
-    d_constraints.insert_cols(p*q + q_cor, p);
+    x.d_constr = arma::join_rows(x.d_constr_temp, HP);
+    x.d_constr.shed_rows(indexes_1);
+    x.d_constr.insert_cols(pq + q_cor, x.p);
 
   };
 
-  void proj(arma::mat& rg, arma::mat& A, arma::mat g, arma::mat X,
-            arma::mat Phi, arma::uvec indexes_1) {
+  void proj(arguments& x) {
 
-    arma::mat c1 = X.t() * g;
+    arma::mat c1 = x.T.t() * x.g;
     arma::mat X0 = c1 + c1.t();
-    A = lyap_sym(Phi, X0);
-    A(indexes_1).zeros();
-    // A = syl(Phi, X0);
-    // X0(indexes_1).zeros(); A = lyapunov(Phi, X0, indexes_1); A(indexes_1).zeros();
-    // A = lyapunov_2(Phi, X0, indexes_1);
-    arma::mat N = X * A;
-    rg = g - N;
+    x.A = lyap_sym(x.Phi, X0);
+    x.A(x.oblq_indexes).zeros();
+
+    // x.A = syl(x.Phi, X0);
+    // X0(x.oblq_indexes).zeros(); x.A = lyapunov(x.Phi, X0, x.oblq_indexes); x.A(x.oblq_indexes).zeros();
+    // x.A = lyapunov_2(x.Phi, X0, x.oblq_indexes);
+    arma::mat N = x.T * x.A;
+    x.rg = x.g - N;
 
   }
 
-  void hess(arma::mat& dH, arma::mat Z, arma::mat g, arma::mat dg, arma::mat X,
-            arma::mat Phi, arma::mat A, arma::uvec indexes_1) {
+  void hess(arguments& x) {
 
-    int q = X.n_cols;
-    arma::mat c1 = Z.t() * g + X.t() * dg;
-    arma::mat c2 = Z.t() * X;
-    arma::mat c3 = A * (c2 + c2.t());
-    arma::mat Q = c1 + c1.t() - c3 - c3.t();
-    arma::mat dA = lyap_sym(Phi, Q);
-    dA(indexes_1).zeros();
+    // Implicit differentiation of APhi + PhiA = X0
+    arma::mat dc1 = x.dT.t() * x.g + x.T.t() * x.dg; // Differential of c1
+    arma::mat dX0 = dc1 + dc1.t(); // Differential of X0
+    arma::mat c2 = x.A * x.dP + x.dP * x.A; // Differential of APhi + PhiA wrt Phi
+    arma::mat Q = dX0 - c2;
+    // dAPhi + PhidA = Q
+    arma::mat dA = lyap_sym(x.Phi, Q);
+    dA(x.oblq_indexes).zeros(); // should be set to 0?
+
     // arma::mat dA = syl(Phi, Q);
-    // Q(indexes_1).zeros(); arma::mat dA = lyapunov(Phi, Q, indexes_1); dA(indexes_1).zeros();
-    // arma::mat dA = lyapunov_2(Phi, Q, indexes_1);
-    arma::mat hessian = dg - (Z * A + X * dA);
+    // Q(x.oblq_indexes).zeros(); arma::mat dA = lyapunov(x.Phi, Q, x.oblq_indexes); dA(x.oblq_indexes).zeros();
+    // arma::mat dA = lyapunov_2(x.Phi, Q, x.oblq_indexes);
+    arma::mat drg = x.dg - (x.dT * x.A + x.T * dA);
 
-    proj(dH, A, hessian, X, Phi, indexes_1);
+    // projection
+    arma::mat c = x.T.t() * drg;
+    arma::mat X0 = c + c.t();
+    arma::mat A = lyap_sym(x.Phi, X0);
+    A(x.oblq_indexes).zeros();
+
+    // X0(x.oblq_indexes).zeros(); arma::mat A = lyapunov(x.Phi, X0, x.oblq_indexes); A(x.oblq_indexes).zeros();
+    // arma::mat A = lyapunov_2(x.Phi, X0, x.oblq_indexes);
+    arma::mat N = x.T * A;
+    x.dH = drg - N;
 
   }
 
-  void retr(arma::mat& X, std::vector<arma::uvec> oblq_indexes) {
+  void retr(arguments& x) {
 
-    X *= diagmat(1 / sqrt(diagvec(X.t() * X)));
+    x.T *= arma::diagmat( 1 / sqrt(arma::diagvec( x.T.t() * x.T )) );
 
     arma::mat Q;
     arma::mat R;
-    qr_econ(Q, R, X);
+    qr_econ(Q, R, x.T);
 
-    arma::mat X2 = X;
-    X = Q;
-    X.cols(oblq_indexes[0]) = X2.cols(oblq_indexes[0]);
+    arma::mat X2 = x.T;
+    x.T = Q;
+    x.T.cols(x.list_oblq_indexes[0]) = X2.cols(x.list_oblq_indexes[0]);
 
-    int J = X.n_cols;
-    int I = oblq_indexes.size()-1;
+    int J = x.T.n_cols;
+    int I = x.list_oblq_indexes.size()-1;
 
     // In the following loop, the Gram-Schmidt process is performed between blocks:
 
     for(int i=0; i < I; ++i) {
 
       // Select the cumulative indexes of blocks:
-      std::vector<arma::uvec> indexes(&oblq_indexes[0], &oblq_indexes[i+1]);
+      std::vector<arma::uvec> indexes(&x.list_oblq_indexes[0], &x.list_oblq_indexes[i+1]);
       arma::uvec cum_indexes = list_to_vector(indexes);
 
       arma::mat orthogonals = Q.cols(cum_indexes);
       int n = orthogonals.n_cols;
 
-      for(int j=0; j < oblq_indexes[i+1].size(); ++j) {
+      for(int j=0; j < x.list_oblq_indexes[i+1].size(); ++j) {
 
         // orthogonalize every column of the following block:
-        int index = oblq_indexes[i+1][j];
-        X.col(index) = orthogonalize(orthogonals, X2.col(index), n);
+        int index = x.list_oblq_indexes[i+1][j];
+        x.T.col(index) = orthogonalize(orthogonals, X2.col(index), n);
 
       }
 
@@ -612,9 +634,12 @@ arma::mat retr_poblq(arma::mat X, arma::uvec oblq_blocks) {
   std::vector<arma::uvec> list_oblq_blocks = vector_to_list2(oblq_blocks);
 
   poblq RR;
-  RR.retr(X, list_oblq_blocks);
+  arguments x;
+  x.T = X;
+  x.list_oblq_indexes = list_oblq_blocks;
+  RR.retr(x);
 
-  return X;
+  return x.T;
 
 }
 
@@ -647,8 +672,11 @@ arma::mat random_poblq(int p, int q, arma::uvec oblq_blocks) {
 
   arma::mat X(p, q, arma::fill::randn);
   poblq RR;
-  RR.retr(X, list_oblq_blocks);
+  arguments x;
+  x.T = X;
+  x.list_oblq_indexes = list_oblq_blocks;
+  RR.retr(x);
 
-  return X;
+  return x.T;
 
 }

@@ -1,6 +1,8 @@
 #include <Rcpp/Benchmark/Timer.h>
 #include "NPF.h"
 
+// Choose the manifold:
+
 base_manifold* choose_manifold(std::string projection) {
 
   base_manifold* manifold;
@@ -22,16 +24,23 @@ base_manifold* choose_manifold(std::string projection) {
 
 }
 
-base_criterion* choose_criterion(std::string rotation, std::string projection,
-                                 Rcpp::Nullable<arma::uvec> nullable_blocks) {
+// Choose the rotation criteria:
+
+base_criterion* choose_criterion(std::vector<std::string> rotations, std::string projection,
+                                 std::vector<arma::uvec> blocks_list) {
 
   base_criterion *criterion;
 
-  if (rotation == "target") {
+  if(!blocks_list.empty()) {
+
+    // Rcpp::stop("Mixed rotation criteria not supported yet");
+    criterion = new mixed();
+
+  } else if (rotations[0] == "target") {
 
     criterion = new target();
 
-  }  else if(rotation == "xtarget") {
+  }  else if(rotations[0] == "xtarget") {
 
     if(projection == "orth") {
       criterion = new target();
@@ -39,35 +48,31 @@ base_criterion* choose_criterion(std::string rotation, std::string projection,
       criterion = new xtarget();
     }
 
-  } else if(rotation == "cf") {
+  } else if(rotations[0] == "cf") {
 
-    if(nullable_blocks.isNull()) {
       criterion = new cf();
-    } else {
-      criterion = new rep_cf();
-    }
 
-  } else if(rotation == "oblimin") {
+  } else if(rotations[0] == "oblimin") {
 
-    if(nullable_blocks.isNull()) {
       criterion = new oblimin();
-    } else {
-      criterion = new rep_oblimin();
-    }
 
-  } else if(rotation == "geomin") {
+  } else if(rotations[0] == "geomin") {
 
-    if(nullable_blocks.isNull()) {
       criterion = new geomin();
-    } else {
-      criterion = new rep_geomin();
-    }
 
-  } else if(rotation == "none") {
+  } else if(rotations[0] == "varimax") {
+
+      criterion = new varimax();
+
+  } else if(rotations[0] == "varimin") {
+
+      criterion = new varimin();
+
+  } else if(rotations[0] == "none") {
 
   } else {
 
-    Rcpp::stop("Available rotations: \n target, xtarget, cf, oblimin, geomin");
+    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget");
 
   }
 
@@ -92,172 +97,261 @@ arma::mat zeros(arma::mat X, std::vector<arma::uvec> indexes) {
 
 }
 
-void check_rotate(std::string rotation, std::string projection,
-                  int n, int n_factors,
+void check_rotate(arguments& x,
                   Rcpp::Nullable<arma::mat> nullable_Target,
                   Rcpp::Nullable<arma::mat> nullable_Weight,
                   Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                   Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                  arma::mat loadings, arma::mat Phi,
-                  arma::mat& Target, arma::mat& Weight,
-                  arma::mat& PhiTarget, arma::mat& PhiWeight,
-                  arma::mat& Weight2, arma::mat& PhiWeight2,
-                  double gamma, double epsilon, double k, double w,
-                  arma::mat& I_gamma_C, arma::mat& N, arma::mat& M, double& p2,
-                  Rcpp::Nullable<arma::uvec>& nullable_blocks,
+                  Rcpp::Nullable<arma::uvec> nullable_blocks,
+                  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                  std::vector<arma::uvec>& blocks,
-                  std::vector<arma::uvec>& list_oblq_blocks, arma::uvec& oblq_blocks,
                   Rcpp::Nullable<Rcpp::List> nullable_rot_control,
                   int& rot_maxit, double& rot_eps,
                   int random_starts, int cores) {
 
-  if(!nullable_blocks.isNull()) {
+  // Create a list of column indexes for each block of factors:
 
-    // blocks = Rcpp::as<std::vector<arma::uvec>>(nullable_blocks);
-    // arma::uvec blocks_indexes = list_to_vector(blocks);
-    // if(blocks_indexes.max() > n_factors) Rcpp::stop("To many factors declared in blocks");
+  if(nullable_blocks.isNotNull() || nullable_blocks_list.isNotNull()) {
 
-    arma::uvec blocks_vector = Rcpp::as<arma::uvec>(nullable_blocks);
-    if(arma::accu(blocks_vector) > n_factors) Rcpp::stop("To many factors declared in oblq_blocks");
-    blocks = vector_to_list2(blocks_vector);
-    // blocks = increment(blocks_vector, n_factors);
+    if(nullable_blocks_list.isNull()) {
+      x.blocks_vector = Rcpp::as<arma::uvec>(nullable_blocks);
+      if(arma::accu(x.blocks_vector) > x.q) Rcpp::stop("To many factors declared in blocks");
 
-  }
+      x.blocks_list = vector_to_list2(x.blocks_vector);
+    } else {
+      x.blocks_list = Rcpp::as<std::vector<arma::uvec>>(nullable_blocks_list);
+      arma::uvec v_blocks = list_to_vector(x.blocks_list);
+      if(v_blocks.max() > x.q || v_blocks.min() < 1) {
+        Rcpp::stop("blocks_list must contain values between 1 and the number of factors");
+      }
+      for(int i=0; i < x.blocks_list.size(); ++i) x.blocks_list[i] -= 1;
+    }
 
-  // Check partially oblique projection:
+    // Resize rotation to match the length of blocks:
 
-  if(projection == "poblq") {
+    x.n_blocks = x.blocks_list.size();
 
-    if(nullable_oblq_blocks.isNull()) {
+    if(nullable_block_weights.isNull()) {
 
-      Rcpp::stop("Please, provide a vector with the number of factors in each oblique block via the oblq_blocks argument");
+      x.block_weights.set_size(x.n_blocks);
+      x.block_weights.ones();
 
     } else {
 
-      oblq_blocks = Rcpp::as<arma::uvec>(nullable_oblq_blocks);
-      if(arma::accu(oblq_blocks) > n_factors) Rcpp::stop("To many factors declared in oblq_blocks");
-      // blocks_indexes = increment(oblq_blocks, n_factors);
+      x.block_weights = Rcpp::as<arma::vec>(nullable_block_weights);
+      if(x.block_weights.size() != x.n_blocks) {
+        Rcpp::stop("The vector of weights must equal the number of blocks");
+      }
 
-      list_oblq_blocks = vector_to_list2(oblq_blocks);
-      // for(int i=0; i < list_oblq_blocks.size(); i++) list_oblq_blocks[i] -= 1;
+    }
 
-      arma::mat X(n_factors, n_factors, arma::fill::ones);
-      arma::mat Q = zeros(X, list_oblq_blocks);
-      oblq_blocks = arma::find(Q == 0);
+    x.Li.resize(x.n_blocks), x.Li2.resize(x.n_blocks), x.Ni.resize(x.n_blocks),
+    x.HLi2.resize(x.n_blocks), x.LoLi2.resize(x.n_blocks), x.termi.resize(x.n_blocks),
+    x.IgCL2Ni.resize(x.n_blocks);
+    int n_rotations = x.rotations.size();
+
+    if(n_rotations == 1) {
+
+      x.rotations.resize(x.n_blocks, x.rotations[0]);
+
+    } else {
+
+      if(n_rotations != x.n_blocks) Rcpp::stop("The number of rotation criteria and blocks does not match");
+
+    }
+
+  } else {
+
+    int n_rotations = x.rotations.size();
+    if(n_rotations > 1) Rcpp::stop("Use the blocks argument to specify the number of factors to which apply each rotation criteria");
+
+  }
+
+  // Check inputs for partially oblique projection:
+
+  if(x.projection == "poblq") {
+
+    if(nullable_oblq_blocks.isNull()) {
+
+      Rcpp::stop("Please, provide a vector with the number of factors in each oblique block in the oblq_blocks argument");
+
+    } else {
+
+      // Create indexes to fix to zero the entries for the nonconstrained correlations:
+
+      x.oblq_indexes = Rcpp::as<arma::uvec>(nullable_oblq_blocks);
+      if(arma::accu(x.oblq_indexes) > x.q) Rcpp::stop("To many factors declared in oblq_blocks");
+      x.list_oblq_indexes = vector_to_list2(x.oblq_indexes);
+
+      arma::mat X(x.q, x.q, arma::fill::ones);
+      arma::mat Q = zeros(X, x.list_oblq_indexes);
+      x.oblq_indexes = arma::find(Q == 0);
 
     }
 
   }
 
-  // Check criteria:
+  // Check and build defaults for each rotation criteria:
 
-  if(rotation == "target") {
+  std::vector<std::string> all_rotations = {"cf", "oblimin", "geomin", "target",
+                                            "xtarget", "varimax", "varimin", "none"};
+
+  for (auto i: x.rotations) {
+    if (std::find(all_rotations.begin(), all_rotations.end(), i) == all_rotations.end()) {
+      Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget");
+    }
+  }
+
+  if(std::find(x.rotations.begin(), x.rotations.end(), "target") != x.rotations.end()) {
 
     if (nullable_Target.isNotNull()) {
-      Target = Rcpp::as<arma::mat>(nullable_Target);
+      x.Target = Rcpp::as<arma::mat>(nullable_Target);
     } else {
       Rcpp::stop("Provide a Target for target rotation");
     }
     if (nullable_Weight.isNotNull()) {
-      Weight = Rcpp::as<arma::mat>(nullable_Weight);
+      x.Weight = Rcpp::as<arma::mat>(nullable_Weight);
     } else {
-      Weight = 1 - Target;
+      x.Weight = 1 - x.Target;
     }
 
-    if(arma::size(Target) != arma::size(loadings) ||
-       arma::size(Weight) != arma::size(loadings)) {
+    if(arma::size(x.Target) != arma::size(x.lambda) ||
+       arma::size(x.Weight) != arma::size(x.lambda)) {
 
-      Rcpp::stop("Incompatible Target or Weight dimensions");
+      Rcpp::stop("Incompatible Target and Weight dimensions");
 
     }
 
-    Weight2 = Weight % Weight;
+    x.Weight2 = x.Weight % x.Weight;
 
-  } else if(rotation == "xtarget") {
+  }
 
-    if(w < 0) Rcpp::stop("w must be nonnegative");
+  if(std::find(x.rotations.begin(), x.rotations.end(), "xtarget") != x.rotations.end()) {
+
+    if(x.w < 0) Rcpp::stop("w must be nonnegative");
 
     if (nullable_Target.isNotNull()) {
-      Target = Rcpp::as<arma::mat>(nullable_Target);
+      x.Target = Rcpp::as<arma::mat>(nullable_Target);
     } else {
       Rcpp::stop("Provide a Target for xtarget rotation");
     }
     if (nullable_PhiTarget.isNotNull()) {
-      PhiTarget = Rcpp::as<arma::mat>(nullable_PhiTarget);
+      x.Phi_Target = Rcpp::as<arma::mat>(nullable_PhiTarget);
     } else {
       Rcpp::stop("Provide a PhiTarget for xtarget rotation");
     }
     if (nullable_Weight.isNotNull()) {
-      Weight = Rcpp::as<arma::mat>(nullable_Weight);
+      x.Weight = Rcpp::as<arma::mat>(nullable_Weight);
     } else {
-      Weight = 1 - Target;
+      x.Weight = 1 - x.Target;
     }
     if (nullable_PhiWeight.isNotNull()) {
-      PhiWeight = Rcpp::as<arma::mat>(nullable_PhiWeight);
+      x.Phi_Weight = Rcpp::as<arma::mat>(nullable_PhiWeight);
     } else {
-      PhiWeight = 1 - PhiTarget;
+      x.Phi_Weight = 1 - x.Phi_Target;
     }
 
-    if(arma::size(Target) != arma::size(loadings) ||
-       arma::size(Weight) != arma::size(loadings) ||
-       arma::size(PhiTarget) != arma::size(Phi) ||
-       arma::size(PhiWeight) != arma::size(Phi)) {
+    if(arma::size(x.Target) != arma::size(x.lambda) ||
+       arma::size(x.Weight) != arma::size(x.lambda) ||
+       arma::size(x.Phi_Target) != arma::size(x.Phi) ||
+       arma::size(x.Phi_Weight) != arma::size(x.Phi)) {
 
-      Rcpp::stop("Incompatible Target, PhiTarget, Weight or PhiWeight dimensions");
-
-    }
-
-    Weight2 = Weight % Weight;
-    PhiWeight2 = PhiWeight % PhiWeight;
-
-  } else if(rotation == "geomin") {
-
-    if(epsilon <= 0) {
-
-      Rcpp::stop("epsilon must be greater than 0");
+      Rcpp::stop("Incompatible dimensions between Target, PhiTarget, Weight or PhiWeight");
 
     }
 
-    p2 = 2/(n_factors + 0.0);
+    x.Phi_Weight.diag().zeros();
+    x.Weight2 = x.Weight % x.Weight;
+    x.Phi_Weight2 = x.Phi_Weight % x.Phi_Weight;
 
-  } else if(rotation == "oblimin") {
+  }
+  if(std::find(x.rotations.begin(), x.rotations.end(), "geomin") != x.rotations.end()) {
 
-    if(gamma < 0) {
+    if(x.epsilon <= 0) {
+
+      Rcpp::stop("epsilon must be positive");
+
+    }
+
+    x.q2 = 2/(x.q + 0.0);
+
+  }
+  if(std::find(x.rotations.begin(), x.rotations.end(), "oblimin") != x.rotations.end()) {
+
+    if(x.gamma < 0) {
 
       Rcpp::stop("gamma must be nonnegative");
 
     }
 
-    N.set_size(n_factors, n_factors); N.ones();
-    N.diag(0).zeros();
-    arma::mat I(n, n, arma::fill::eye), gamma_C(n, n, arma::fill::ones);
-    double gamma_n = gamma/n;
+    x.N.set_size(x.q, x.q); x.N.ones();
+    x.N.diag(0).zeros();
+    arma::mat I(x.p, x.p, arma::fill::eye), gamma_C(x.p, x.p, arma::fill::ones);
+    double gamma_n = x.gamma/x.p;
     gamma_C *= gamma_n;
-    I_gamma_C = (I - gamma_C);
+    x.I_gamma_C = (I - gamma_C);
 
-  } else if(rotation == "cf") {
+  }
+  if(std::find(x.rotations.begin(), x.rotations.end(), "cf") != x.rotations.end()) {
 
-    if(k < 0 || k > 1) {
+    if(x.k < 0 || x.k > 1) {
 
       Rcpp::stop("k must be a scalar between 0 and 1");
 
     }
 
-    N.set_size(n_factors, n_factors); N.ones();
-    N.diag(0).zeros();
-    M.set_size(n, n); M.ones();
-    M.diag(0).zeros();
+    x.N.set_size(x.q, x.q); x.N.ones();
+    x.N.diag(0).zeros();
+    x.M.set_size(x.p, x.p); x.M.ones();
+    x.M.diag(0).zeros();
 
-  } else if(rotation == "none") {
+  }
+  if(std::find(x.rotations.begin(), x.rotations.end(), "varimax") != x.rotations.end()) {
 
-  } else {
+    if(x.projection == "oblq" | x.projection == "poblq") {
+      Rcpp::warning("Usually, the varimax criterion does not converge with (partially) oblique projection. \n Consider using cf with k = 1/(number of items), which is equivalent to varimax for orthogonal rotation but also converges with (partially) oblique projection.");
+    }
 
-    Rcpp::stop("Available rotations: \n target, xtarget, cf, oblimin, geomin, varimax");
+    arma::vec v(x.p, arma::fill::ones);
+    arma::mat I(x.p, x.p, arma::fill::eye);
+    x.H = I - v * v.t() / (x.p + 0.0); // Centering matrix
+
+  }
+  if(std::find(x.rotations.begin(), x.rotations.end(), "varimin") != x.rotations.end()) {
+
+    arma::vec v(x.p, arma::fill::ones);
+    arma::mat I(x.p, x.p, arma::fill::eye);
+    x.H = I - v * v.t() / (x.p + 0.0); // Centering matrix
+
+  }
+  if(x.rotations[0] == "none") {
+
+    // do nothing
 
   }
 
-  // Check rotation parameters:
+  if(x.penalization == "TL" || x.penalization == "TLM") {
+
+    x.penalize = true;
+
+    if(!x.blocks_list.empty()) {
+
+      if(x.n_blocks < 2) {
+        Rcpp::stop("Penalization can only be used with more than one block of factors");
+      }
+
+    } else {
+      Rcpp::stop("Penalization can only be used with more than one block of factors");
+    }
+
+  } else if(x.penalization != "none") {
+
+    Rcpp::stop("Unkown penalization. Available penalizations: TL and TLM");
+
+  }
+
+  // Check rotation optimization parameters:
 
   Rcpp::List rot_control;
 
@@ -285,67 +379,64 @@ void check_rotate(std::string rotation, std::string projection,
 
   }
 
-  if(random_starts < 0) Rcpp::stop("random_starts must be nonnegative");
+  // Check parallelization setup:
+
+  if(random_starts < 1) Rcpp::stop("random_starts must be a positive integer");
   if(cores < 1) Rcpp::stop("The number of cores must be a positive integer");
 
 }
 
-Rcpp::List rotate(arma::mat loadings, std::string rotation, std::string projection,
+Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
+                  std::string projection,
+                  double gamma, double epsilon, double k, double w, double alpha,
                   Rcpp::Nullable<arma::mat> nullable_Target,
                   Rcpp::Nullable<arma::mat> nullable_Weight,
                   Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                   Rcpp::Nullable<arma::mat> nullable_PhiWeight,
                   Rcpp::Nullable<arma::uvec> nullable_blocks,
+                  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                  double gamma, double epsilon, double k, double w,
-                  int random_starts, int cores,
-                  Rcpp::Nullable<Rcpp::List> rot_control) {
+                  std::string penalization,
+                  Rcpp::Nullable<Rcpp::List> nullable_rot_control,
+                  int random_starts, int cores) {
 
   Rcpp::Timer timer;
 
-  int n = loadings.n_rows;
-  int n_factors = loadings.n_cols;
+  std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
-  // Create defaults:
+  // Structure of arguments:
 
-  arma::mat Target, Weight, PhiTarget, PhiWeight;
-  std::vector<arma::uvec> list_oblq_blocks, blocks;
-  arma::uvec oblq_blocks;
+  arguments x;
+  x.p = loadings.n_rows, x.q = loadings.n_cols;
+  x.lambda = loadings;
+  x.Phi.set_size(x.q, x.q); x.Phi.eye();
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.a = alpha;
+  x.penalization = penalization;
+  x.rotations = rotation;
+  x.projection = projection;
 
   int maxit;
   double eps;
 
-  // Constants for rotation criteria:
-
-  arma::mat empty_loadings(n, n_factors), empty_Phi(n_factors, n_factors),
-  Weight2, PhiWeight2, I_gamma_C, N, M;
-
-  double p2;
-
   // Check inputs and compute constants for rotation criteria:
-
-  check_rotate(rotation, projection,
-               n, n_factors,
+  check_rotate(x,
                nullable_Target, nullable_Weight,
                nullable_PhiTarget, nullable_PhiWeight,
-               empty_loadings, empty_Phi,
-               Target, Weight, PhiTarget, PhiWeight,
-               Weight2, PhiWeight2,
-               gamma, epsilon, k, w,
-               I_gamma_C, N, M, p2, // Constants
                nullable_blocks,
+               nullable_blocks_list,
+               nullable_block_weights,
                nullable_oblq_blocks,
-               blocks,
-               list_oblq_blocks, oblq_blocks,
-               rot_control, maxit, eps,
+               nullable_rot_control, maxit, eps,
                random_starts, cores);
 
-  base_manifold* manifold = choose_manifold(projection);
-  base_criterion *criterion = choose_criterion(rotation, projection,
-                                               nullable_blocks);
+  // Select one manifold:
+  base_manifold* manifold = choose_manifold(x.projection);
+  // Select one specific criteria or mixed criteria:
+  base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
 
   arma::vec xf(random_starts);
-  TRN x;
+  TRN x1;
   std::vector<TRN> x2(random_starts);
 
   // Perform multiple rotations with random starting values:
@@ -354,15 +445,10 @@ Rcpp::List rotate(arma::mat loadings, std::string rotation, std::string projecti
 #pragma omp parallel for
   for (int i=0; i < random_starts; ++i) {
 
-    arma::mat T = random_orth(n_factors, n_factors);
+    arguments args = x;
+    args.T = random_orth(args.q, args.q);
 
-    x2[i] = NPF(manifold, criterion, T, loadings,
-                Target, Weight,
-                PhiTarget, PhiWeight,
-                blocks, list_oblq_blocks, oblq_blocks,
-                w, gamma, epsilon,
-                eps, maxit,
-                Weight2, PhiWeight2, I_gamma_C, N, M, p2, k);
+    x2[i] = NPF(args, manifold, criterion, eps, maxit);
 
     xf[i] = std::get<3>(x2[i]);
 
@@ -371,22 +457,22 @@ Rcpp::List rotate(arma::mat loadings, std::string rotation, std::string projecti
   // Choose the rotation with the smallest objective value:
 
   arma::uword index_minimum = index_min(xf);
-  x = x2[index_minimum];
+  x1 = x2[index_minimum];
 
-  arma::mat L = std::get<0>(x);
-  arma::mat Phi = std::get<1>(x);
-  if(Phi.is_empty()) {Phi.set_size(n_factors, n_factors); Phi.eye();}
-  arma::mat T = std::get<2>(x);
-  double f = std::get<3>(x);
-  int iterations = std::get<4>(x);
-  bool convergence = std::get<5>(x);
+  arma::mat L = std::get<0>(x1);
+  arma::mat Phi = std::get<1>(x1);
+  if(Phi.is_empty()) {Phi.set_size(x.q, x.q); Phi.eye();}
+  arma::mat T = std::get<2>(x1);
+  double f = std::get<3>(x1);
+  int iterations = std::get<4>(x1);
+  bool convergence = std::get<5>(x1);
 
   // Force average positive loadings in all factors:
 
   // arma::vec v = arma::sign(arma::sum(L, 0));
   // L.each_row() /= v;
 
-  for (int j=0; j < n_factors; ++j) {
+  for (int j=0; j < x.q; ++j) {
     if (sum(L.col(j)) < 0) {
       L.col(j)   *= -1;
       Phi.col(j) *= -1;

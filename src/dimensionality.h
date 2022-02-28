@@ -333,14 +333,17 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
 
   // Arguments to pass to efa:
 
-  std::string method, rotation, projection;
+  std::vector<std::string> rotation;
+  std::string method, projection, penalization;
   Rcpp::Nullable<arma::vec> nullable_init;
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
   Rcpp::Nullable<arma::uvec> nullable_blocks;
+  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list;
+  Rcpp::Nullable<arma::vec> nullable_block_weights;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
   bool normalize;
-  double gamma, epsilon, k, w;
+  double gamma, epsilon, k, w, alpha;
   int random_starts, cores_2 = 1;
   Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_rot_control;
 
@@ -348,8 +351,10 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
                 method, rotation, projection,
                 nullable_Target, nullable_Weight,
                 nullable_PhiTarget, nullable_PhiWeight,
-                nullable_blocks, nullable_oblq_blocks, normalize,
-                gamma, epsilon, k, w,
+                nullable_blocks, nullable_blocks_list,
+                nullable_block_weights,
+                nullable_oblq_blocks, normalize, penalization,
+                gamma, epsilon, k, w, alpha,
                 random_starts, cores_2,
                 nullable_init,
                 nullable_efa_control,
@@ -366,8 +371,11 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
       Rcpp::List fit = efast(S, unique[i], method, rotation, projection,
                              nullable_Target, nullable_Weight,
                              nullable_PhiTarget, nullable_PhiWeight,
-                             nullable_blocks, nullable_oblq_blocks,
-                             normalize, gamma, epsilon, k, w,
+                             nullable_blocks, nullable_blocks_list,
+                             nullable_block_weights,
+                             nullable_oblq_blocks,
+                             normalize, penalization,
+                             gamma, epsilon, k, w, alpha,
                              random_starts, cores_2,
                              nullable_init, nullable_efa_control,
                              nullable_rot_control);
@@ -566,14 +574,17 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
 
   // Arguments to pass to efa:
 
-  std::string method, rotation, projection;
+  std::vector<std::string> rotation;
+  std::string method, projection, penalization;
   Rcpp::Nullable<arma::vec> nullable_init;
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
   Rcpp::Nullable<arma::uvec> nullable_blocks;
+  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list;
+  Rcpp::Nullable<arma::vec> nullable_block_weights;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
   bool normalize;
-  double gamma, epsilon, k, w;
+  double gamma, epsilon, k, w, alpha;
   int random_starts, cores_2 = 0;
   Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_rot_control;
 
@@ -581,8 +592,10 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
                 method, rotation, projection,
                 nullable_Target, nullable_Weight,
                 nullable_PhiTarget, nullable_PhiWeight,
-                nullable_blocks, nullable_oblq_blocks, normalize,
-                gamma, epsilon, k, w,
+                nullable_blocks, nullable_blocks_list,
+                nullable_block_weights,
+                nullable_oblq_blocks, normalize, penalization,
+                gamma, epsilon, k, w, alpha,
                 random_starts, cores_2,
                 nullable_init,
                 nullable_efa_control,
@@ -593,8 +606,11 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   Rcpp::List fit = efast(S, dim, method, rotation, projection,
                          nullable_Target, nullable_Weight,
                          nullable_PhiTarget, nullable_PhiWeight,
-                         nullable_blocks, nullable_oblq_blocks,
-                         normalize, gamma, epsilon, k, w,
+                         nullable_blocks, nullable_blocks_list,
+                         nullable_block_weights,
+                         nullable_oblq_blocks,
+                         normalize, penalization,
+                         gamma, epsilon, k, w, alpha,
                          random_starts, cores_2,
                          nullable_init,
                          nullable_efa_control, nullable_rot_control);

@@ -1,5 +1,5 @@
-// #define ARMA_DONT_USE_OPENMP
 #define ARMA_NO_DEBUG
+// #define ARMA_DONT_USE_OPENMP
 // #define ARMA_DONT_OPTIMISE_BAND
 // #define ARMA_OPENMP_THREADS 10
 // #define ARMA_DONT_OPTIMISE_SYMPD
@@ -12,8 +12,11 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(openmp)]]
 
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 #include <RcppArmadillo.h>
-#include <omp.h>
 #include "dimensionality.h"
 
 // [[Rcpp::export]]
@@ -40,29 +43,38 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
               Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue);
 
 // [[Rcpp::export]]
-Rcpp::List rotate(arma::mat loadings, std::string rotation = "oblimin",
+Rcpp::List rotate(arma::mat loadings,
+                  Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                   std::string projection = "oblq",
+                  double gamma = 0, double epsilon = 0.01,
+                  double k = 0, double w = 1, double alpha = 1,
                   Rcpp::Nullable<arma::mat> Target = R_NilValue,
                   Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
                   Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
+                  Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                  Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
                   Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                  double gamma = 0, double epsilon = 0.01, double k = 0,
-                  double w = 1, int random_starts = 1, int cores = 1,
-                  Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue);
+                  std::string penalization = "none",
+                  Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
+                  int random_starts = 1, int cores = 1);
 
 // [[Rcpp::export]]
 Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
-                 std::string rotation = "oblimin", std::string projection = "oblq",
+                 Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
+                 std::string projection = "oblq",
                  Rcpp::Nullable<arma::mat> Target = R_NilValue,
                  Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
                  Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
+                 Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                 Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
                  Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                 bool normalize = false, double gamma = 0, double epsilon = 0.01,
-                 double k = 0, double w = 1,
+                 bool normalize = false, std::string penalization = "none",
+                 double gamma = 0, double epsilon = 0.01,
+                 double k = 0, double w = 1, double alpha = 1,
                  int random_starts = 1, int cores = 1,
                  Rcpp::Nullable<arma::vec> init = R_NilValue,
                  Rcpp::Nullable<Rcpp::List> efa_control = R_NilValue,
@@ -73,11 +85,13 @@ arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double c
 
 // [[Rcpp::export]]
 Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
-                   std::string twoTier_method = "GSLiD",
+                   std::string bifactor_method = "GSLiD",
                    std::string projection = "oblq",
                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
                    Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
+                   Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                   Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
                    Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                    Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
                    std::string method = "minres", int maxit = 20, double cutoff = 0,
@@ -102,13 +116,19 @@ Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
               Rcpp::Nullable<arma::mat> X = R_NilValue,
               std::string method = "minres",
               std::string projection = "oblq",
-              std::string rotation = "oblimin",
+              Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
               Rcpp::Nullable<arma::mat> Target = R_NilValue,
               Rcpp::Nullable<arma::mat> Weight = R_NilValue,
               Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
               Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+              Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
+              Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+              Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
+              Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
               double gamma = 0, double k = 0, double epsilon = 0.01,
-              double w = 1, std::string type = "normal", double eta = 1);
+              double w = 1, double alpha = 1,
+              bool normalize = false, std::string penalization = "none",
+              std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
 Rcpp::List parallel(arma::mat X, int n_boot = 100, Rcpp::Nullable<arma::vec> quant = R_NilValue,

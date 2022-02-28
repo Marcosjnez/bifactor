@@ -1,139 +1,5 @@
 #include "EFA.h"
 
-void check_rotate_GSLiD(std::string rotation, std::string projection,
-                        int n, int n_factors, double w,
-                        arma::mat Target, arma::mat Weight,
-                        Rcpp::Nullable<arma::mat> nullable_PhiTarget,
-                        Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                        arma::mat loadings, arma::mat Phi,
-                        arma::mat& PhiTarget, arma::mat& PhiWeight,
-                        arma::mat& Weight2, arma::mat& PhiWeight2,
-                        Rcpp::Nullable<arma::uvec>& nullable_blocks,
-                        Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                        std::vector<arma::uvec>& blocks,
-                        std::vector<arma::uvec>& list_oblq_blocks,
-                        arma::uvec& oblq_blocks,
-                        Rcpp::Nullable<Rcpp::List> nullable_rot_control,
-                        int& rot_maxit, double& rot_eps,
-                        int random_starts, int cores) {
-
-  if(!nullable_blocks.isNull()) {
-
-    // blocks = Rcpp::as<std::vector<arma::uvec>>(nullable_blocks);
-    // arma::uvec blocks_indexes = list_to_vector(blocks);
-    // if(blocks_indexes.max() > n_factors) Rcpp::stop("To many factors declared in blocks");
-
-    arma::uvec blocks_vector = Rcpp::as<arma::uvec>(nullable_blocks);
-    if(arma::accu(blocks_vector) > n_factors) Rcpp::stop("To many factors declared in oblq_blocks");
-    blocks = vector_to_list2(blocks_vector);
-    // blocks = increment(blocks_vector, n_factors);
-
-  }
-
-  // Check partially oblique projection:
-
-  if(projection == "poblq") {
-
-    if(nullable_oblq_blocks.isNull()) {
-
-      Rcpp::stop("Please, provide a vector with the number of factors in each oblique block via the oblq_blocks argument");
-
-    } else {
-
-      oblq_blocks = Rcpp::as<arma::uvec>(nullable_oblq_blocks);
-      if(arma::accu(oblq_blocks) > n_factors) Rcpp::stop("To many factors declared in oblq_blocks");
-      // blocks_indexes = increment(oblq_blocks, n_factors);
-
-      list_oblq_blocks = vector_to_list2(oblq_blocks);
-      // for(int i=0; i < list_oblq_blocks.size(); i++) list_oblq_blocks[i] -= 1;
-
-      arma::mat X(n_factors, n_factors, arma::fill::ones);
-      arma::mat Q = zeros(X, list_oblq_blocks);
-      oblq_blocks = arma::find(Q == 0);
-
-    }
-
-  }
-
-  // Check criteria:
-
-  if(rotation == "target") {
-
-    if(arma::size(Target) != arma::size(loadings) ||
-       arma::size(Weight) != arma::size(loadings)) {
-
-      Rcpp::stop("Incompatible Target or Weight dimensions");
-
-    }
-
-    Weight2 = Weight % Weight;
-
-  } else if(rotation == "xtarget") {
-
-    if(w < 0) Rcpp::stop("w must be nonnegative");
-
-    if (nullable_PhiTarget.isNotNull()) {
-      PhiTarget = Rcpp::as<arma::mat>(nullable_PhiTarget);
-    } else {
-      Rcpp::stop("Provide a PhiTarget for xtarget rotation");
-    }
-    if (nullable_PhiWeight.isNotNull()) {
-      PhiWeight = Rcpp::as<arma::mat>(nullable_PhiWeight);
-    } else {
-      PhiWeight = 1 - PhiTarget;
-    }
-
-    if(arma::size(Target) != arma::size(loadings) ||
-       arma::size(Weight) != arma::size(loadings) ||
-       arma::size(PhiTarget) != arma::size(Phi) ||
-       arma::size(PhiWeight) != arma::size(Phi)) {
-
-      Rcpp::stop("Incompatible Target, PhiTarget, Weight or PhiWeight dimensions");
-
-    }
-
-    Weight2 = Weight % Weight;
-    PhiWeight2 = PhiWeight % PhiWeight;
-
-  } else {
-
-    Rcpp::stop("Invalid rotation criteria");
-
-  }
-
-  // Check rotation parameters:
-
-  Rcpp::List rot_control;
-
-  if (nullable_rot_control.isNotNull()) {
-
-    rot_control = Rcpp::as<Rcpp::List>(nullable_rot_control);
-
-  }
-  if(rot_control.containsElementNamed("maxit")) {
-
-    rot_maxit = rot_control["maxit"];
-
-  } else {
-
-    rot_maxit = 1e04;
-
-  }
-  if(rot_control.containsElementNamed("eps")) {
-
-    rot_eps = rot_control["eps"];
-
-  } else {
-
-    rot_eps = 1e-05;
-
-  }
-
-  if(random_starts < 0) Rcpp::stop("random_starts must be nonnegative");
-  if(cores < 1) Rcpp::stop("The number of cores must be a positive integer");
-
-}
-
 arma::vec tucker_congruence(arma::mat X, arma::mat Y) {
 
   arma::vec YX = diagvec(Y.t() * X);
@@ -163,15 +29,19 @@ bool is_duplicate(arma::cube Targets, arma::mat Target, int length) {
 }
 
 void pass_to_efast(Rcpp::List efa_args,
-                   std::string& method, std::string& rotation, std::string& projection,
+                   std::string& method, std::vector<std::string>& rotation,
+                   std::string& projection,
                    Rcpp::Nullable<arma::mat>& nullable_Target,
                    Rcpp::Nullable<arma::mat>& nullable_Weight,
                    Rcpp::Nullable<arma::mat>& nullable_PhiTarget,
                    Rcpp::Nullable<arma::mat>& nullable_PhiWeight,
                    Rcpp::Nullable<arma::uvec>& nullable_blocks,
+                   Rcpp::Nullable<std::vector<arma::uvec>>& nullable_blocks_list,
+                   Rcpp::Nullable<arma::vec>& nullable_block_weights,
                    Rcpp::Nullable<arma::uvec>& nullable_oblq_blocks,
-                   bool& normalize, double& gamma, double& epsilon,
-                   double& k, double& w,
+                   bool& normalize, std::string& penalization,
+                   double& gamma, double& epsilon,
+                   double& k, double& w, double& alpha,
                    int& random_starts, int& cores,
                    Rcpp::Nullable<arma::vec>& nullable_init,
                    Rcpp::Nullable<Rcpp::List>& nullable_efa_control,
@@ -184,10 +54,10 @@ void pass_to_efast(Rcpp::List efa_args,
     method = "minres";
   }
   if(efa_args.containsElementNamed("rotation")) {
-    std::string rotation_ = efa_args["rotation"];
+    std::vector<std::string> rotation_ = efa_args["rotation"];
     rotation = rotation_;
   } else{
-    rotation = "oblimin";
+    rotation = {"oblimin"};
   }
   if(efa_args.containsElementNamed("projection")) {
     std::string projection_ = efa_args["projection"];
@@ -231,6 +101,18 @@ void pass_to_efast(Rcpp::List efa_args,
   } else{
     nullable_blocks = R_NilValue;
   }
+  if (efa_args.containsElementNamed("blocks_list")) {
+    Rcpp::Nullable<arma::uvec> blocks_list_ = efa_args["blocks_list"];
+    nullable_blocks = blocks_list_;
+  } else{
+    nullable_blocks_list = R_NilValue;
+  }
+  if (efa_args.containsElementNamed("block_weights")) {
+    Rcpp::Nullable<arma::vec> block_weights_ = efa_args["block_weights"];
+    nullable_block_weights = block_weights_;
+  } else{
+    nullable_block_weights = R_NilValue;
+  }
   if (efa_args.containsElementNamed("oblq_blocks")) {
     Rcpp::Nullable<arma::uvec> oblq_blocks_ = efa_args["oblq_blocks"];
     nullable_oblq_blocks = oblq_blocks_;
@@ -242,6 +124,12 @@ void pass_to_efast(Rcpp::List efa_args,
     normalize = normalize_;
   } else{
     normalize = false;
+  }
+  if (efa_args.containsElementNamed("penalization")) {
+    std::string penalization_ = efa_args["penalization"];
+    penalization = penalization_;
+  } else{
+    penalization = "none";
   }
   if (efa_args.containsElementNamed("gamma")) {
     double gamma_ = efa_args["gamma"];
@@ -266,6 +154,12 @@ void pass_to_efast(Rcpp::List efa_args,
     w = w_;
   } else{
     w = 1;
+  }
+  if (efa_args.containsElementNamed("alpha")) {
+    double alpha_ = efa_args["alpha"];
+    alpha = alpha_;
+  } else{
+    alpha = 1;
   }
   if (efa_args.containsElementNamed("random_starts")) {
     int random_starts_ = efa_args["random_starts"];
@@ -312,14 +206,17 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // Arguments to pass to first efa in SL:
 
-  std::string method_1, rotation_1, projection_1;
+  std::vector<std::string> rotation_1;
+  std::string method_1, projection_1, penalization_1;
   Rcpp::Nullable<arma::vec> nullable_init_1;
   Rcpp::Nullable<arma::mat> nullable_Target_1, nullable_Weight_1,
   nullable_PhiTarget_1, nullable_PhiWeight_1;
   Rcpp::Nullable<arma::uvec> nullable_blocks_1;
+  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list_1;
+  Rcpp::Nullable<arma::vec> nullable_block_weights_1;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks_1;
   bool normalize_1;
-  double gamma_1, epsilon_1, k_1, w_1;
+  double gamma_1, epsilon_1, k_1, w_1, alpha_1;
   int random_starts_1, cores_1;
   Rcpp::Nullable<Rcpp::List> nullable_efa_control_1, nullable_rot_control_1;
 
@@ -329,8 +226,10 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
                 method_1, rotation_1, projection_1,
                 nullable_Target_1, nullable_Weight_1,
                 nullable_PhiTarget_1, nullable_PhiWeight_1,
-                nullable_blocks_1, nullable_oblq_blocks_1, normalize_1,
-                gamma_1, epsilon_1, k_1, w_1,
+                nullable_blocks_1, nullable_blocks_list_1,
+                nullable_block_weights_1,
+                nullable_oblq_blocks_1, normalize_1, penalization_1,
+                gamma_1, epsilon_1, k_1, w_1, alpha_1,
                 random_starts_1, cores_1,
                 nullable_init_1,
                 nullable_efa_control_1,
@@ -338,14 +237,17 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // Arguments to pass to second efa in SL:
 
-  std::string method_2, rotation_2, projection_2;
+  std::vector<std::string> rotation_2;
+  std::string method_2, projection_2, penalization_2;
   Rcpp::Nullable<arma::vec> nullable_init_2;
   Rcpp::Nullable<arma::mat> nullable_Target_2, nullable_Weight_2,
   nullable_PhiTarget_2, nullable_PhiWeight_2;
   Rcpp::Nullable<arma::uvec> nullable_blocks_2;
+  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list_2;
+  Rcpp::Nullable<arma::vec> nullable_block_weights_2;
   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks_2;
   bool normalize_2;
-  double gamma_2, epsilon_2, k_2, w_2;
+  double gamma_2, epsilon_2, k_2, w_2, alpha_2;
   int random_starts_2, cores_2;
   Rcpp::Nullable<Rcpp::List> nullable_efa_control_2, nullable_rot_control_2;
 
@@ -355,8 +257,10 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
                 method_2, rotation_2, projection_2,
                 nullable_Target_2, nullable_Weight_2,
                 nullable_PhiTarget_2, nullable_PhiWeight_2,
-                nullable_blocks_2, nullable_oblq_blocks_2, normalize_2,
-                gamma_2, epsilon_2, k_2, w_2,
+                nullable_blocks_2, nullable_blocks_list_2,
+                nullable_block_weights_2,
+                nullable_oblq_blocks_2, normalize_2, penalization_2,
+                gamma_2, epsilon_2, k_2, w_2, alpha_2,
                 random_starts_2, cores_2,
                 nullable_init_2,
                 nullable_efa_control_2,
@@ -367,8 +271,11 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
   Rcpp::List first_order_efa = efast(R, n_groups, method_1, rotation_1, projection_1,
                                      nullable_Target_1, nullable_Weight_1,
                                      nullable_PhiTarget_1, nullable_PhiWeight_1,
-                                     nullable_blocks_1, nullable_oblq_blocks_1,
-                                     normalize_1, gamma_1, epsilon_1, k_1, w_1,
+                                     nullable_blocks_1, nullable_blocks_list_1,
+                                     nullable_block_weights_1,
+                                     nullable_oblq_blocks_1,
+                                     normalize_1, penalization_1,
+                                     gamma_1, epsilon_1, k_1, w_1, alpha_1,
                                      random_starts_1, cores_1,
                                      nullable_init_1,
                                      nullable_efa_control_1, nullable_rot_control_1);
@@ -378,14 +285,18 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   arma::mat loadings_1 = efa_model_rotation["loadings"];
   arma::mat Phi_1 = efa_model_rotation["Phi"];
+  std::vector<std::string> rotation_none(1); rotation_none[0] = "none";
 
   if ( n_generals == 1 ) {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, method_2, "none", "none",
+    Rcpp::List efa_result = efast(Phi_1, n_generals, method_2, rotation_none, "none",
                                   nullable_Target_2, nullable_Weight_2,
                                   nullable_PhiTarget_2, nullable_PhiWeight_2,
-                                  nullable_blocks_2, nullable_oblq_blocks_2,
-                                  normalize_2, gamma_2, epsilon_2, k_2, w_2,
+                                  nullable_blocks_2, nullable_blocks_list_2,
+                                  nullable_block_weights_2,
+                                  nullable_oblq_blocks_2,
+                                  normalize_2, penalization_2,
+                                  gamma_2, epsilon_2, k_2, w_2, alpha_2,
                                   random_starts_2, cores_2,
                                   nullable_init_2,
                                   nullable_efa_control_2, nullable_rot_control_2);
@@ -420,8 +331,11 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
     Rcpp::List efa_result = efast(Phi_1, n_generals, method_2, rotation_2, projection_2,
                                   nullable_Target_2, nullable_Weight_2,
                                   nullable_PhiTarget_2, nullable_PhiWeight_2,
-                                  nullable_blocks_2, nullable_oblq_blocks_2,
-                                  normalize_2, gamma_2, epsilon_2, k_2, w_2,
+                                  nullable_blocks_2, nullable_blocks_list_2,
+                                  nullable_block_weights_2,
+                                  nullable_oblq_blocks_2,
+                                  normalize_2, penalization_2,
+                                  gamma_2, epsilon_2, k_2, w_2, alpha_2,
                                   random_starts_2, cores_2,
                                   nullable_init_2,
                                   nullable_efa_control_2, nullable_rot_control_2);
@@ -687,7 +601,8 @@ void update_target(int n_generals, int n, int n_factors,
 
 Rcpp::List GSLiD(std::string projection,
                  arma::mat R, int n_generals, int n_groups,
-                 std::string method, arma::mat initialTarget,
+                 std::string method,
+                 Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                  Rcpp::Nullable<arma::mat> nullable_PhiWeight,
                  double w, int maxit, int random_starts, int cores,
@@ -695,73 +610,70 @@ Rcpp::List GSLiD(std::string projection,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
                  Rcpp::Nullable<Rcpp::List> nullable_rot_control,
                  Rcpp::Nullable<arma::uvec> nullable_blocks,
+                 Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                 Rcpp::Nullable<arma::vec> nullable_block_weights,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                  double cutoff, bool verbose) {
 
-  // Rcpp::Timer timer;
+  std::vector<std::string> rotation;
 
-  int n = R.n_rows;
-  int n_factors = n_generals + n_groups;
+  arguments x;
+  x.p = R.n_rows, x.q = n_generals + n_groups;
+  x.lambda.set_size(x.p, x.q);
+  x.Phi.set_size(x.q, x.q); x.Phi.eye();
+  x.w = w;
+  x.rotations = rotation;
+  x.projection = projection;
+  x.penalization = "none";
 
   // Choose manifold and rotation criteria:
 
-  std::string rotation;
-
-  if(projection == "poblq" || projection == "orth") {
-    rotation = "target";
-  } else if(projection == "oblq") {
-    rotation = "xtarget";
+  if(x.projection == "poblq" || x.projection == "orth") {
+    x.rotations = {"target"};
+  } else if(x.projection == "oblq") {
+    x.rotations = {"xtarget"};
   } else {
     Rcpp::stop("Unkown projection method");
   }
 
-  base_manifold* manifold = choose_manifold(projection);
-  base_criterion *criterion = choose_criterion(rotation, projection,
-                                               nullable_blocks);
-
   // Create defaults:
-
-  arma::mat PhiTarget, PhiWeight;
-  arma::mat Weight = 1 - initialTarget;
-  std::vector<arma::uvec> list_oblq_blocks, blocks;
-  arma::uvec oblq_blocks;
-  arma::vec init;
 
   int efa_maxit, lmm, rot_maxit;
   double efa_factr, rot_eps;
 
-  // Rcpp::stop("Hasta aquí bien");
+  arma::vec init;
 
   // Check inputs for efa:
 
-  check_efa(R, n_factors, nullable_init, init,
+  check_efa(R, x.q, nullable_init, init,
             nullable_efa_control,
             efa_maxit, lmm, efa_factr);
 
   // Check inputs and compute constants for rotation criteria:
 
-  arma::mat empty_loadings(n, n_factors), empty_Phi(n_factors, n_factors),
-  Weight2, PhiWeight2, I_gamma_C, N, M;
+  Rcpp::Nullable<arma::mat> nullable_Weight = R_NilValue;
 
-  double p2;
-  double epsilon = 0, k = 0, gamma = 0;
+  check_rotate(x,
+               nullable_Target,
+               nullable_Weight,
+               nullable_PhiTarget,
+               nullable_PhiWeight,
+               nullable_blocks,
+               nullable_blocks_list,
+               nullable_block_weights,
+               nullable_oblq_blocks,
+               nullable_rot_control,
+               rot_maxit, rot_eps,
+               random_starts, cores);
 
-  check_rotate_GSLiD(rotation, projection,
-                     n, n_factors, w,
-                     initialTarget, Weight,
-                     nullable_PhiTarget, nullable_PhiWeight,
-                     empty_loadings, empty_Phi,
-                     PhiTarget, PhiWeight,
-                     Weight2, PhiWeight2,
-                     nullable_blocks,
-                     nullable_oblq_blocks,
-                     blocks, list_oblq_blocks, oblq_blocks,
-                     nullable_rot_control, rot_maxit, rot_eps,
-                     random_starts, cores);
+  base_manifold* manifold = choose_manifold(projection);
+  base_criterion *criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+
+  arma::mat new_Target = x.Target;
 
   // Unrotated efa:
 
-  Rcpp::List efa_result = efa(init, R, n_factors, method, efa_maxit, efa_factr, lmm);
+  Rcpp::List efa_result = efa(init, R, x.q, method, efa_maxit, efa_factr, lmm);
   arma::mat unrotated_loadings = efa_result["loadings"];
   arma::mat loadings = unrotated_loadings;
 
@@ -770,12 +682,10 @@ Rcpp::List GSLiD(std::string projection,
 
   // Initialize stuff:
 
-  arma::mat new_Target = initialTarget;
-  Weight = 1 - new_Target;
-  Weight2 = Weight % Weight;
+  x.lambda = unrotated_loadings; // x.lambda will always correspond to the unrotated loadings
 
   arma::vec congruence;
-  arma::cube Targets(n, n_factors, maxit, arma::fill::zeros);
+  arma::cube Targets(x.p, x.q, maxit, arma::fill::zeros);
   Targets.slice(0) = new_Target;
   arma::vec max_abs_diffs(maxit), min_congruences(maxit);
   int Target_discrepancies;
@@ -790,28 +700,25 @@ Rcpp::List GSLiD(std::string projection,
 
     old_Target = new_Target;
 
-    rotation_result = rotate_efa(manifold, criterion,
-                                 n, n_factors, unrotated_loadings,
-                                 new_Target, Weight, PhiTarget, PhiWeight,
-                                 blocks, list_oblq_blocks, oblq_blocks,
-                                 gamma, epsilon, k, w,
-                                 random_starts, cores, rot_eps, rot_maxit,
-                                 Weight2, PhiWeight2, I_gamma_C, N, M, p2);
+    rotation_result = rotate_efa(x, manifold, criterion, random_starts,
+                                 cores, rot_eps, rot_maxit);
 
     arma::mat new_loadings = rotation_result["loadings"];
 
-    congruence = tucker_congruence(loadings, new_loadings);
+    // congruence = tucker_congruence(loadings, new_loadings);
 
-    min_congruences[i] = congruence.min();
+    // min_congruences[i] = congruence.min();
     max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 
     loadings = new_loadings;
     arma::mat new_Phi = rotation_result["Phi"];
 
-    update_target(n_generals, n, n_factors, loadings, new_Phi, cutoff, new_Target);
+    // update target
+    update_target(n_generals, x.p, x.q, loadings, new_Phi, cutoff, new_Target);
 
-    Weight = 1 - new_Target;
-    Weight2 = Weight % Weight;
+    x.Target = new_Target;
+    x.Weight = 1 - new_Target;
+    x.Weight2 = x.Weight % x.Weight;
 
     Target_discrepancies = arma::accu(arma::abs(old_Target - new_Target));
 
@@ -821,8 +728,7 @@ Rcpp::List GSLiD(std::string projection,
     ++i;
 
     if (verbose) Rcpp::Rcout << "\r" << "  Iteration " << i
-                             << ":  Mean Tucker congruence = " << mean(congruence) <<
-    "  Target discrepancies = " << Target_discrepancies << "   \r";
+                             << "  Target discrepancies = " << Target_discrepancies << "   \r";
 
     if(check) break;
 
@@ -851,18 +757,14 @@ Rcpp::List GSLiD(std::string projection,
   rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
   R_hat.diag().ones();
   rotation_result["R_hat"] = R_hat;
-  rotation_result["Target"] = new_Target;
-  rotation_result["Weights"] = Weight;
+  rotation_result["Target"] = x.Target;
+  rotation_result["Weights"] = x.Weight;
   rotation_result["Target_iterations"] = i;
   rotation_result["Target_convergence"] = Target_convergence;
   rotation_result["min_congruences"] = min_congruences.head(i);
   rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
   // rotation_result["Targets"] = Targets;
-
-  // timer.step("elapsed");
-  // rotation_result["elapsed"] = timer;
-
   result["efa"] = efa_result;
   result["bifactor"] = rotation_result;
 
@@ -875,8 +777,10 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                    Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                    Rcpp::Nullable<arma::mat> nullable_PhiWeight,
                    Rcpp::Nullable<arma::uvec> nullable_blocks,
+                   Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                   Rcpp::Nullable<arma::vec> nullable_block_weights,
                    Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                   Rcpp::Nullable<arma::mat> nullable_initialTarget,
+                   Rcpp::Nullable<arma::mat> nullable_Target,
                    std::string method, int maxit, double cutoff,
                    double w, int random_starts, int cores,
                    Rcpp::Nullable<arma::vec> nullable_init,
@@ -903,11 +807,9 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
   } else if(bifactor_method == "GSLiD") {
 
-    arma::mat initialTarget;
-
     // Create initial target with Schmid-Leiman (SL) if there is no custom initial target:
 
-    if(nullable_initialTarget.isNull()) {
+    if(nullable_Target.isNull()) {
 
       SL_result = sl(R, n_generals, n_groups, nullable_SL_first_efa, nullable_SL_second_efa);
 
@@ -931,24 +833,24 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
       // Create initial target:
 
-      update_target(n_generals, n, n_factors, loadings, new_Phi, cutoff, initialTarget);
-
-    } else {
-
-      // Use a custom initial target:
-
-      initialTarget = Rcpp::as<arma::mat>(nullable_initialTarget);
+      arma::mat Target;
+      update_target(n_generals, n, n_factors, loadings, new_Phi, cutoff, Target);
+      SEXP Target_ = Rcpp::wrap(Target);
+      nullable_Target = Target_;
 
     }
 
     Rcpp::List GSLiD_result = GSLiD(projection,
                                     R, n_generals, n_groups,
-                                    method, initialTarget,
+                                    method, nullable_Target,
                                     nullable_PhiTarget, nullable_PhiWeight,
                                     w, maxit, random_starts, cores,
                                     nullable_init, nullable_efa_control,
                                     nullable_rot_control,
-                                    nullable_blocks, nullable_oblq_blocks,
+                                    nullable_blocks,
+                                    nullable_blocks_list,
+                                    nullable_block_weights,
+                                    nullable_oblq_blocks,
                                     cutoff, verbose);
 
     result = GSLiD_result;
