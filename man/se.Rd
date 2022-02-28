@@ -7,7 +7,9 @@
 se(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL,
  method = "minres", projection = "oblq", rotation = "oblimin",
  Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-  gamma = 0, k = 0, epsilon = 0.01, w = 1, type = "normal", eta = 1)
+ blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL,
+ gamma = 0, k = 0, epsilon = 0.01, w = 1, alpha = 1,
+ normalize = FALSE, penalization = "none", type = "normal", eta = 1)
 }
 \arguments{
 \item{n}{Sample size.}
@@ -36,6 +38,14 @@ se(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL,
 
 \item{PhiWeight}{Weight matrix for the factor correlations. Defaults to NULL.}
 
+\item{blocks}{Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.}
+
+\item{blocks_list}{List containing the columns to which applying the rotation criterion.}
+
+\item{block_weights}{Vector of weights for each block of factors.}
+
+\item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
+
 \item{gamma}{\eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).}
 
 \item{k}{\eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.}
@@ -43,6 +53,12 @@ se(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL,
 \item{epsilon}{\eqn{\epsilon} parameter for the geomin criterion. Defaults to 0.01.}
 
 \item{w}{\eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.}
+
+\item{alpha}{\eqn{\alpha} parameter for the Tian and Liu penalization. Defaults to 1.}
+
+\item{normalize}{Kaiser normalization. Defaults to FALSE.}
+
+\item{penalization}{Available penalizations: "TL" and "TLM". Defaults to none.}
 
 \item{type}{Type of random deviates: "normal", "elliptical" or "general".}
 

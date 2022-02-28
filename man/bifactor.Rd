@@ -5,8 +5,9 @@
 \title{Fit an exploratory bi-factor or generalized bi-factor model.}
 \usage{
 bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD", projection = "oblq",
-PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, oblq_blocks = NULL,
-init_Target = NULL, method = "minres", maxit = 20L,
+PhiTarget = NULL, PhiWeight = NULL,
+blocks = NULL, blocks_list = NULL, block_weights = NULL,
+oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L,
 cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
 efa_control = NULL, rot_control = NULL,
 SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE)
@@ -26,7 +27,11 @@ SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE)
 
 \item{PhiWeight}{Weight matrix for the factor correlations. Defaults to NULL.}
 
-\item{blocks}{Vector with the number of factors for which seperately applying the roation criterion. Defaults to NULL.}
+\item{blocks}{Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.}
+
+\item{blocks_list}{List containing the columns to which applying the rotation criterion.}
+
+\item{block_weights}{Vector of weights for each block of factors.}
 
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
