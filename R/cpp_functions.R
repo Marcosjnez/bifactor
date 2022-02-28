@@ -21,7 +21,7 @@
 #'
 #' @export
 random_orth <- function(p, q) {
-  .Call(`_bifactordev_random_orth`, p, q)
+  .Call(`_bifactor_random_orth`, p, q)
 }
 
 #' @title
@@ -47,7 +47,7 @@ random_orth <- function(p, q) {
 #'
 #' @export
 random_oblq <- function(p, q) {
-  .Call(`_bifactordev_random_oblq`, p, q)
+  .Call(`_bifactor_random_oblq`, p, q)
 }
 
 #' @title
@@ -78,7 +78,7 @@ random_oblq <- function(p, q) {
 #'
 #' @export
 random_poblq <- function(p, q, oblq_blocks) {
-  .Call(`_bifactordev_random_poblq`, p, q, oblq_blocks)
+  .Call(`_bifactor_random_poblq`, p, q, oblq_blocks)
 }
 
 #' @title
@@ -103,7 +103,7 @@ random_poblq <- function(p, q, oblq_blocks) {
 #'
 #' @export
 retr_orth <- function(X) {
-  .Call(`_bifactordev_retr_orth`, X)
+  .Call(`_bifactor_retr_orth`, X)
 }
 
 #' @title
@@ -128,7 +128,7 @@ retr_orth <- function(X) {
 #'
 #' @export
 retr_oblq <- function(X) {
-  .Call(`_bifactordev_retr_oblq`, X)
+  .Call(`_bifactor_retr_oblq`, X)
 }
 
 #' @title
@@ -159,7 +159,7 @@ retr_oblq <- function(X) {
 #'
 #' @export
 retr_poblq <- function(X, oblq_blocks) {
-  .Call(`_bifactordev_retr_poblq`, X, oblq_blocks)
+  .Call(`_bifactor_retr_poblq`, X, oblq_blocks)
 }
 
 #' @title
@@ -216,7 +216,7 @@ retr_poblq <- function(X, oblq_blocks) {
 #'
 #' @export
 sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
-  .Call(`_bifactordev_sl`, R, n_generals, n_groups, first_efa, second_efa)
+  .Call(`_bifactor_sl`, R, n_generals, n_groups, first_efa, second_efa)
 }
 
 #' @title
@@ -278,7 +278,7 @@ sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
 #'
 #' @export
 rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, penalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
-  .Call(`_bifactordev_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, penalization, rot_control, random_starts, cores)
+  .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, penalization, rot_control, random_starts, cores)
 }
 
 #' @title
@@ -372,7 +372,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' @export
 efast <- function(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalize = FALSE, penalization = "none", gamma = 0, epsilon = 1e-02, k = 0, w = 1, alpha = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactordev_efast`, R, n_factors, method, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalize, penalization, gamma, epsilon, k, w, alpha, random_starts, cores, init, efa_control, rot_control)
+  .Call(`_bifactor_efast`, R, n_factors, method, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalize, penalization, gamma, epsilon, k, w, alpha, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
@@ -401,7 +401,7 @@ efast <- function(R, n_factors, method = "minres", rotation = "oblimin", project
 #'
 #' @export
 get_target <- function(loadings, Phi = NULL, cutoff = 0) {
-  .Call(`_bifactordev_get_target`, loadings, Phi, cutoff)
+  .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
 }
 
 #' @title
@@ -503,7 +503,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' @export
 bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", projection = "oblq", PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactordev_bifactor`, R, n_generals, n_groups, bifactor_method, projection, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
+  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, projection, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, SL_first_efa, SL_second_efa, verbose)
 }
 
 #' @title
@@ -537,7 +537,7 @@ bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", project
 #'
 #' @export
 asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
-  .Call(`_bifactordev_asymp_cov`, R, X, eta, type)
+  .Call(`_bifactor_asymp_cov`, R, X, eta, type)
 }
 
 #' @title
@@ -596,7 +596,7 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
 #'
 #' @export
 se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, method = "minres", projection = "oblq", rotation = "oblimin", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, gamma = 0, k = 0, epsilon = 0.01, w = 1, alpha = 1, normalize = FALSE, penalization = "none", type = "normal", eta = 1) {
-  .Call(`_bifactordev_se`, n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, gamma, k, epsilon, w, alpha, normalize, penalization, type, eta)
+  .Call(`_bifactor_se`, n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, gamma, k, epsilon, w, alpha, normalize, penalization, type, eta)
 }
 
 #' @title
@@ -634,7 +634,7 @@ se <- function(n, fit = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL, met
 #'
 #' @export
 parallel <- function(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactordev_parallel`, X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores)
+  .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 #' @title
@@ -667,5 +667,5 @@ parallel <- function(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALS
 #'
 #' @export
 cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactordev_cv_eigen`, X, N, hierarchical, efa, cores)
+  .Call(`_bifactor_cv_eigen`, X, N, hierarchical, efa, cores)
 }
