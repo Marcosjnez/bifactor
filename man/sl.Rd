@@ -44,7 +44,7 @@ lambda <- sim$lambda
 Target <- ifelse(lambda > 0, 1, 0)
 
 # Target rotation for the first-order efa and oblimin for the second-order efa:
-first <- list(rotation = "target", projection = "oblq", Target = Target)
+first <- list(rotation = "target", projection = "oblq", Target = Target[, -c(1:2)])
 second <- list(rotation = "oblimin", projection = "oblq", gamma = 0)
 
 SL <- sl(sim$R, n_generals = 2, n_groups = 6, first, second)

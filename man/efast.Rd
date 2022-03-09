@@ -98,12 +98,12 @@ If a Heywood case is encountered, then \code{method =} "minrank" is automaticall
 
 \dontrun{
 # Simulate data:
-sim <- sim_factor(n_generals = 2, groups_per_general = 5, items_per_group = 6)
+sim <- sim_factor(n_generals = 0, groups_per_general = 5, items_per_group = 6)
 scores <- MASS::mvrnorm(1e3, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
 # Fit efa:
-efa <- efast(s, n_factors = 12, method = "minres", rotation = "oblimin",
+efa <- efast(s, n_factors = 5, method = "minres", rotation = "oblimin",
 projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 }
 
