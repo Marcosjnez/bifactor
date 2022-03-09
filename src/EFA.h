@@ -265,7 +265,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                  bool normalize, std::string penalization,
-                 double gamma, double epsilon, double k, double w, double alpha,
+                 double gamma, arma::vec epsilon, arma::vec k, double w, double alpha,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -388,7 +388,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["w"] = w;
   modelInfo["alpha"] = alpha;
   modelInfo["normalize"] = normalize;
-  modelInfo["penalization"] = x.penalization;
+  modelInfo["penalization"] = penalization;
   modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
@@ -421,7 +421,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                  bool normalize, std::string penalization,
-                 double gamma, double epsilon, double k, double w, double alpha,
+                 double gamma, arma::vec epsilon, arma::vec k, double w, double alpha,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -542,7 +542,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["w"] = w;
   modelInfo["alpha"] = alpha;
   modelInfo["normalize"] = normalize;
-  modelInfo["penalization"] = x.penalization;
+  modelInfo["penalization"] = penalization;
   modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;

@@ -87,6 +87,24 @@ public:
 };
 
 /*
+ * none
+ */
+
+class none: public base_criterion {
+
+public:
+
+  void F(arguments& x) {}
+
+  void gLP(arguments& x) {}
+
+  void hLP(arguments& x) {}
+
+  void dgLP(arguments& x) {}
+
+};
+
+/*
  * Crawford-Ferguson family
  */
 
@@ -97,8 +115,8 @@ public:
   void F(arguments& x){
 
     x.L2 = x.L % x.L;
-    double ff1 = (1-x.k) * arma::accu(x.L2 % (x.L2 * x.N)) / 4;
-    double ff2 = x.k * arma::accu(x.L2 % (x.M * x.L2)) / 4;
+    double ff1 = (1-x.k[0]) * arma::accu(x.L2 % (x.L2 * x.N)) / 4;
+    double ff2 = x.k[0] * arma::accu(x.L2 % (x.M * x.L2)) / 4;
 
     x.f = ff1 + ff2;
 
@@ -106,8 +124,8 @@ public:
 
   void gLP(arguments& x){
 
-    x.f1 = (1-x.k) * x.L % (x.L2 * x.N);
-    x.f2 = x.k * x.L % (x.M * x.L2);
+    x.f1 = (1-x.k[0]) * x.L % (x.L2 * x.N);
+    x.f2 = x.k[0] * x.L % (x.M * x.L2);
     x.gL = x.f1 + x.f2;
 
   }
@@ -116,12 +134,12 @@ public:
 
     arma::mat Ip(x.p, x.p, arma::fill::eye);
     arma::mat c1 = arma::kron(x.N.t(), Ip) * arma::diagmat(arma::vectorise(2*x.L));
-    arma::mat gf1 = (1-x.k)*arma::diagmat(arma::vectorise(x.L)) * c1 +
+    arma::mat gf1 = (1-x.k[0])*arma::diagmat(arma::vectorise(x.L)) * c1 +
       arma::diagmat(arma::vectorise(x.L2 * x.N));
 
     arma::mat Iq(x.q, x.q, arma::fill::eye);
     arma::mat c2 = arma::kron(Iq, x.M) * arma::diagmat(arma::vectorise(2*x.L));
-    arma::mat gf2 = x.k*arma::diagmat(arma::vectorise(x.L)) * c2 +
+    arma::mat gf2 = x.k[0]*arma::diagmat(arma::vectorise(x.L)) * c2 +
       arma::diagmat(arma::vectorise(x.M * x.L2));
     x.hL = gf1 + gf2;
 
@@ -130,8 +148,8 @@ public:
   void dgLP(arguments& x) {
 
     arma::mat dL2 = 2 * x.dL % x.L;
-    arma::mat df1 = (1-x.k) * x.dL % (x.L2 * x.N) + (1-x.k) * x.L % (dL2 * x.N);
-    arma::mat df2 = x.k * x.dL % (x.M * x.L2) + x.k * x.L % (x.M * dL2);
+    arma::mat df1 = (1-x.k[0]) * x.dL % (x.L2 * x.N) + (1-x.k[0]) * x.L % (dL2 * x.N);
+    arma::mat df2 = x.k[0] * x.dL % (x.M * x.L2) + x.k[0] * x.L % (x.M * dL2);
 
     x.dgL = df1 + df2;
 
@@ -274,8 +292,9 @@ public:
 
   void F(arguments& x) {
 
+    x.q2 = 2/(x.q + 0.0);
     x.L2 = x.L % x.L;
-    x.L2 += x.epsilon;
+    x.L2 += x.epsilon[0];
     x.term = arma::exp(arma::sum(arma::log(x.L2), 1) / x.q);
 
     x.f = arma::accu(x.term);
@@ -311,7 +330,7 @@ public:
 
   void dgLP(arguments& x) {
 
-    arma::mat c1 = (x.epsilon - x.L % x.L) / (x.L2 % x.L2) % x.dL;
+    arma::mat c1 = (x.epsilon[0] - x.L % x.L) / (x.L2 % x.L2) % x.dL;
     c1.each_col() %= x.term;
     arma::mat c2 = x.LoL2;
     arma::vec term2 = x.q2 * x.term % arma::sum(x.LoL2 % x.dL, 1);
@@ -417,8 +436,8 @@ public:
     x.Li[x.i] = x.L.cols(indexes);
     x.Li2[x.i] = x.Li[x.i] % x.Li[x.i];
     x.Ni[x.i] = x.N(indexes, indexes);
-    double ff1 = (1-x.k) * arma::accu(x.Li2[x.i] % (x.Li2[x.i] * x.Ni[x.i])) / 4;
-    double ff2 = x.k * arma::accu(x.Li2[x.i] % (x.M * x.Li2[x.i])) / 4;
+    double ff1 = (1-x.k[x.i]) * arma::accu(x.Li2[x.i] % (x.Li2[x.i] * x.Ni[x.i])) / 4;
+    double ff2 = x.k[x.i] * arma::accu(x.Li2[x.i] % (x.M * x.Li2[x.i])) / 4;
 
     x.f += (ff1 + ff2) * x.block_weights[x.i];
 
@@ -427,8 +446,8 @@ public:
   void gLP(arguments& x) {
 
     arma::uvec indexes = x.blocks_list[x.i];
-    arma::mat f1 = (1-x.k) * x.Li[x.i] % (x.Li2[x.i] * x.Ni[x.i]);
-    arma::mat f2 = x.k * x.Li[x.i] % (x.M * x.Li2[x.i]);
+    arma::mat f1 = (1-x.k[x.i]) * x.Li[x.i] % (x.Li2[x.i] * x.Ni[x.i]);
+    arma::mat f2 = x.k[x.i] * x.Li[x.i] % (x.M * x.Li2[x.i]);
     x.gL.cols(indexes) += (f1 + f2) * x.block_weights[x.i];
 
   }
@@ -449,12 +468,12 @@ public:
 
     arma::mat Ip(x.p, x.p, arma::fill::eye);
     arma::mat c1 = arma::kron(x.Ni[x.i].t(), Ip) * arma::diagmat(arma::vectorise(2*x.Li[x.i]));
-    arma::mat gf1 = (1-x.k)*arma::diagmat(arma::vectorise(x.Li[x.i])) * c1 +
+    arma::mat gf1 = (1-x.k[x.i])*arma::diagmat(arma::vectorise(x.Li[x.i])) * c1 +
       arma::diagmat(arma::vectorise(x.L2[x.i] * x.Ni[x.i]));
 
     arma::mat Iq(x.q, x.q, arma::fill::eye);
     arma::mat c2 = arma::kron(Iq, x.M) * arma::diagmat(arma::vectorise(2*x.Li[x.i]));
-    arma::mat gf2 = x.k*arma::diagmat(arma::vectorise(x.Li[x.i])) * c2 +
+    arma::mat gf2 = x.k[x.i]*arma::diagmat(arma::vectorise(x.Li[x.i])) * c2 +
       arma::diagmat(arma::vectorise(x.M * x.L2[x.i]));
     x.hL(indexes, indexes) += (gf1 + gf2) * x.block_weights[x.i];
 
@@ -465,9 +484,9 @@ public:
     arma::uvec indexes = x.blocks_list[x.i];
     arma::mat dLi = x.dL.cols(indexes);
     arma::mat dLi2 = 2 * dLi % x.Li[x.i];
-    arma::mat df1 = (1-x.k) * dLi % (x.Li2[x.i] * x.Ni[x.i]) +
-      (1-x.k) * x.Li[x.i] % (dLi2 * x.Ni[x.i]);
-    arma::mat df2 = x.k * dLi % (x.M * x.Li2[x.i]) + x.k * x.Li[x.i] % (x.M * dLi2);
+    arma::mat df1 = (1-x.k[x.i]) * dLi % (x.Li2[x.i] * x.Ni[x.i]) +
+      (1-x.k[x.i]) * x.Li[x.i] % (dLi2 * x.Ni[x.i]);
+    arma::mat df2 = x.k[x.i] * dLi % (x.M * x.Li2[x.i]) + x.k[x.i] * x.Li[x.i] % (x.M * dLi2);
 
     x.dgL.cols(indexes) += (df1 + df2) * x.block_weights[x.i];
 
@@ -666,24 +685,30 @@ public:
 
   void F(arguments& x) {
 
-      arma::uvec indexes = x.blocks_list[x.i];
-      x.Li[x.i] = x.L.cols(indexes);
-      x.Li2[x.i] = x.Li[x.i] % x.Li[x.i];
-      x.Li2[x.i] += x.epsilon;
-      x.termi[x.i] = arma::exp(arma::sum(arma::log(x.Li2[x.i]), 1) / x.q);
+    arma::uvec indexes = x.blocks_list[x.i];
+    int q = indexes.size();
+    x.q2 = 2/(q + 0.0);
 
-      x.f += arma::accu(x.termi[x.i]) * x.block_weights[x.i];
+    x.Li[x.i] = x.L.cols(indexes);
+    x.Li2[x.i] = x.Li[x.i] % x.Li[x.i];
+    x.Li2[x.i] += x.epsilon[x.i];
+    x.termi[x.i] = arma::exp(arma::sum(arma::log(x.Li2[x.i]), 1) / q);
+
+    x.f += arma::accu(x.termi[x.i]) * x.block_weights[x.i];
 
   }
 
   void gLP(arguments& x) {
 
-      arma::uvec indexes = x.blocks_list[x.i];
-      x.LoLi2[x.i] = x.Li[x.i] / x.Li2[x.i];
-      x.termi[x.i] = arma::exp(arma::sum(arma::log(x.Li2[x.i]), 1) / x.q);
-      arma::mat gLi = x.LoLi2[x.i] * x.q2;
-      gLi.each_col() %= x.termi[x.i];
-      x.gL.cols(indexes) += gLi * x.block_weights[x.i];
+    arma::uvec indexes = x.blocks_list[x.i];
+    int q = indexes.size();
+    x.q2 = 2/(q + 0.0);
+
+    x.LoLi2[x.i] = x.Li[x.i] / x.Li2[x.i];
+    x.termi[x.i] = arma::exp(arma::sum(arma::log(x.Li2[x.i]), 1) / q);
+    arma::mat gLi = x.LoLi2[x.i] * x.q2;
+    gLi.each_col() %= x.termi[x.i];
+    x.gL.cols(indexes) += gLi * x.block_weights[x.i];
 
   }
 
@@ -691,6 +716,9 @@ public:
 
     arma::uvec indexes;
     arma::uvec block_indexes = x.blocks_list[x.i];
+    int q = indexes.size();
+    x.q2 = 2/(q + 0.0);
+
     int n_blocks = block_indexes.size();
     for(int j=0; j < n_blocks; ++j) {
 
@@ -701,36 +729,91 @@ public:
 
     }
 
-      arma::mat cx = x.q2 * x.LoLi2[x.i];
+    arma::mat cx = x.q2 * x.LoLi2[x.i];
 
-      arma::mat c1 = x.q2*(arma::vectorise(x.Li2[x.i]) - arma::vectorise(2*x.Li[x.i] % x.Li[x.i])) /
-        arma::vectorise(x.Li2[x.i] % x.Li2[x.i]);
-      arma::mat gcx = arma::diagmat(c1);
-      arma::mat c2 = (1/x.Li2[x.i]) % (2*x.Li[x.i]) / x.q;
-      c2.each_col() %= x.termi[x.i];
-      arma::mat gterm = cbind_diag(c2);
-      arma::mat v = gterm.t() * cx;
-      x.hL(indexes, indexes) = gcx;
-      arma::mat term2 = x.termi[x.i];
-      for(int i=0; i < (x.q-1); ++i) term2 = arma::join_cols(term2, x.termi[x.i]);
-      arma::mat hL = x.hL(indexes, indexes);
-      hL.each_col() %= term2;
-      hL += kdiag(v);
-      x.hL(indexes, indexes) += hL * x.block_weights[x.i];
+    arma::mat c1 = x.q2*(arma::vectorise(x.Li2[x.i]) - arma::vectorise(2*x.Li[x.i] % x.Li[x.i])) /
+      arma::vectorise(x.Li2[x.i] % x.Li2[x.i]);
+    arma::mat gcx = arma::diagmat(c1);
+    arma::mat c2 = (1/x.Li2[x.i]) % (2*x.Li[x.i]) / q;
+    c2.each_col() %= x.termi[x.i];
+    arma::mat gterm = cbind_diag(c2);
+    arma::mat v = gterm.t() * cx;
+    x.hL(indexes, indexes) = gcx;
+    arma::mat term2 = x.termi[x.i];
+    for(int i=0; i < (q-1); ++i) term2 = arma::join_cols(term2, x.termi[x.i]);
+    arma::mat hL = x.hL(indexes, indexes);
+    hL.each_col() %= term2;
+    hL += kdiag(v);
+    x.hL(indexes, indexes) += hL * x.block_weights[x.i];
 
   }
 
   void dgLP(arguments& x) {
 
-      arma::uvec indexes = x.blocks_list[x.i];
-      arma::mat dLi = x.dL.cols(indexes);
-      arma::mat c1 = (x.epsilon - x.Li[x.i] % x.Li[x.i]) / (x.Li2[x.i] % x.Li2[x.i]) % dLi;
-      c1.each_col() %= x.termi[x.i];
-      arma::mat c2 = x.LoLi2[x.i];
-      arma::vec termi2 = x.q2 * x.termi[x.i] % arma::sum(x.LoLi2[x.i] % dLi, 1);
-      c2.each_col() %= termi2;
+    arma::uvec indexes = x.blocks_list[x.i];
+    int q = indexes.size();
+    x.q2 = 2/(q + 0.0);
 
-      x.dgL.cols(indexes) += x.q2 * (c1 + c2) * x.block_weights[x.i];
+    arma::mat dLi = x.dL.cols(indexes);
+    arma::mat c1 = (x.epsilon[x.i] - x.Li[x.i] % x.Li[x.i]) / (x.Li2[x.i] % x.Li2[x.i]) % dLi;
+    c1.each_col() %= x.termi[x.i];
+    arma::mat c2 = x.LoLi2[x.i];
+    arma::vec termi2 = x.q2 * x.termi[x.i] % arma::sum(x.LoLi2[x.i] % dLi, 1);
+    c2.each_col() %= termi2;
+
+    x.dgL.cols(indexes) += x.q2 * (c1 + c2) * x.block_weights[x.i];
+
+  }
+
+};
+
+/*
+ * Repeated Target
+ */
+
+class rep_target: public base_criterion {
+
+public:
+  void F(arguments& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.f1i[x.i] = x.Weighti[x.i] % (x.Li[x.i] - x.Targeti[x.i]);
+
+    x.f += 0.5*arma::accu(x.f1 % x.f1);
+
+  }
+
+  void gLP(arguments& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.gL.cols(indexes) += x.Weighti[x.i] % x.f1i[x.i];
+
+  }
+
+  void hLP(arguments& x) {
+
+    arma::uvec indexes;
+    arma::uvec block_indexes = x.blocks_list[x.i];
+
+    int n_blocks = block_indexes.size();
+    for(int j=0; j < n_blocks; ++j) {
+
+      int end = block_indexes[j] * x.p + x.p - 1;
+      int start = end - x.p + 1;
+      arma::uvec add = consecutive(start, end+1);
+      indexes = arma::join_cols(indexes, add);
+
+    }
+
+    arma::mat W2 = x.Weighti[x.i] % x.Weighti[x.i];
+    x.hL(indexes, indexes) += arma::diagmat(arma::vectorise(W2));
+
+  }
+
+  void dgLP(arguments& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.dgL.cols(indexes) += x.Weight2 % x.dL;
 
   }
 
@@ -978,7 +1061,7 @@ base_criterion* choose_rep_criterion(std::string rotation, std::string projectio
 
   if (rotation == "target") {
 
-    criterion = new target();
+    criterion = new rep_target();
 
   }  else if(rotation == "xtarget") {
 
@@ -1009,6 +1092,8 @@ base_criterion* choose_rep_criterion(std::string rotation, std::string projectio
     criterion = new rep_varimin();
 
   } else if(rotation == "none") {
+
+    criterion = new none();
 
   } else {
 

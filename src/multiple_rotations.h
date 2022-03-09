@@ -97,6 +97,32 @@ arma::mat zeros(arma::mat X, std::vector<arma::uvec> indexes) {
 
 }
 
+arma::vec new_k(std::vector<std::string> x, std::string y, arma::vec k) {
+
+  // Resize gamma, k, epsilon and w
+
+  int k_size = k.size();
+  int x_size = x.size();
+
+  std::vector<int> id; // Setup storage for found IDs
+
+  for(int i =0; i < x.size(); i++) // Loop through input
+    if(x[i] == y) {// check if input matches target
+      id.push_back(i);
+    }
+
+    arma::uvec indexes = arma::conv_to<arma::uvec>::from(id);
+    std::vector<double> ks = arma::conv_to<std::vector<double>>::from(k);
+
+    if(k_size < x_size) {
+      ks.resize(x_size, k.back());
+      k = arma::conv_to<arma::vec>::from(ks);
+      k(indexes) = k(arma::span(0, indexes.size()-1));
+    }
+
+    return k; // send locations to R (c++ index shift!)
+}
+
 void check_rotate(arguments& x,
                   Rcpp::Nullable<arma::mat> nullable_Target,
                   Rcpp::Nullable<arma::mat> nullable_Weight,
@@ -109,6 +135,8 @@ void check_rotate(arguments& x,
                   Rcpp::Nullable<Rcpp::List> nullable_rot_control,
                   int& rot_maxit, double& rot_eps,
                   int random_starts, int cores) {
+
+  x.n_rotations = x.rotations.size();
 
   // Create a list of column indexes for each block of factors:
 
@@ -128,8 +156,6 @@ void check_rotate(arguments& x,
       for(int i=0; i < x.blocks_list.size(); ++i) x.blocks_list[i] -= 1;
     }
 
-    // Resize rotation to match the length of blocks:
-
     x.n_blocks = x.blocks_list.size();
 
     if(nullable_block_weights.isNull()) {
@@ -148,23 +174,24 @@ void check_rotate(arguments& x,
 
     x.Li.resize(x.n_blocks), x.Li2.resize(x.n_blocks), x.Ni.resize(x.n_blocks),
     x.HLi2.resize(x.n_blocks), x.LoLi2.resize(x.n_blocks), x.termi.resize(x.n_blocks),
-    x.IgCL2Ni.resize(x.n_blocks);
-    int n_rotations = x.rotations.size();
+    x.IgCL2Ni.resize(x.n_blocks), x.f1i.resize(x.n_blocks), x.Weighti.resize(x.n_blocks),
+    x.Targeti.resize(x.n_blocks);
 
-    if(n_rotations == 1) {
+  // Resize rotation to match the length of blocks:
+
+    if(x.n_rotations == 1) {
 
       x.rotations.resize(x.n_blocks, x.rotations[0]);
 
     } else {
 
-      if(n_rotations != x.n_blocks) Rcpp::stop("The number of rotation criteria and blocks does not match");
+      if(x.n_rotations != x.n_blocks) Rcpp::stop("The number of rotation criteria and blocks does not match. \n Provide either one rotation criteria for all the blocks or one for each block");
 
     }
 
   } else {
 
-    int n_rotations = x.rotations.size();
-    if(n_rotations > 1) Rcpp::stop("Use the blocks argument to specify the number of factors to which apply each rotation criteria");
+    if(x.n_rotations > 1) Rcpp::stop("Multiple rotation criteria but no blocks were specified \n Provide one block for each rotation criteria");
 
   }
 
@@ -244,12 +271,12 @@ void check_rotate(arguments& x,
     if (nullable_Weight.isNotNull()) {
       x.Weight = Rcpp::as<arma::mat>(nullable_Weight);
     } else {
-      x.Weight = 1 - x.Target;
+      x.Weight = 1-x.Target;
     }
     if (nullable_PhiWeight.isNotNull()) {
       x.Phi_Weight = Rcpp::as<arma::mat>(nullable_PhiWeight);
     } else {
-      x.Phi_Weight = 1 - x.Phi_Target;
+      x.Phi_Weight = 1-x.Phi_Target;
     }
 
     if(arma::size(x.Target) != arma::size(x.lambda) ||
@@ -268,13 +295,13 @@ void check_rotate(arguments& x,
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "geomin") != x.rotations.end()) {
 
-    if(x.epsilon <= 0) {
+    if(x.epsilon.min() <= 0) {
 
       Rcpp::stop("epsilon must be positive");
 
     }
 
-    x.q2 = 2/(x.q + 0.0);
+    x.epsilon = new_k(x.rotations, "geomin", x.epsilon);
 
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "oblimin") != x.rotations.end()) {
@@ -295,16 +322,12 @@ void check_rotate(arguments& x,
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "cf") != x.rotations.end()) {
 
-    if(x.k < 0 || x.k > 1) {
-
-      Rcpp::stop("k must be a scalar between 0 and 1");
-
-    }
-
     x.N.set_size(x.q, x.q); x.N.ones();
     x.N.diag(0).zeros();
     x.M.set_size(x.p, x.p); x.M.ones();
     x.M.diag(0).zeros();
+
+    x.k = new_k(x.rotations, "cf", x.k);
 
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "varimax") != x.rotations.end()) {
@@ -388,7 +411,8 @@ void check_rotate(arguments& x,
 
 Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
                   std::string projection,
-                  double gamma, double epsilon, double k, double w, double alpha,
+                  double gamma, arma::vec epsilon, arma::vec k,
+                  double w, double alpha,
                   Rcpp::Nullable<arma::mat> nullable_Target,
                   Rcpp::Nullable<arma::mat> nullable_Weight,
                   Rcpp::Nullable<arma::mat> nullable_PhiTarget,

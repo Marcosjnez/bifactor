@@ -189,7 +189,8 @@ std::vector<arma::uvec> increment(arma::uvec oblq_indexes, int p) {
 typedef struct arguments{
 
   int p, q;
-  double w, gamma, epsilon, k, f, q2, a = 1e6;
+  double w = 1, gamma = 0, a = 10, f, q2;
+  arma::vec k = {0}, epsilon = {0.01};
 
   arma::mat lambda, T, L, Phi, Inv_T, dL, dP, Inv_T_dt, dT, g,
   gL, gP, dg, dgL, dgP, hL, hP, d_constr, d_constr_temp, rg, A,
@@ -204,11 +205,12 @@ typedef struct arguments{
   arma::uvec oblq_indexes, blocks_vector; // REMOVE blocks_vector?
   std::vector<arma::uvec> list_oblq_indexes, blocks_list;
   arma::vec block_weights;
-  int n_blocks, i, n_loads;
+  int n_blocks = 1, n_rotations = 1, i, n_loads;
 
-  std::vector<std::string> rotations;
-  std::string projection;
-  std::vector<arma::mat> Li, Li2, Ni, HLi2, LoLi2, IgCL2Ni;
+  std::vector<std::string> rotations = {"oblimin"};
+  std::string projection = "oblq";
+  std::vector<arma::mat> Li, Li2, Ni, HLi2, LoLi2, IgCL2Ni,
+  f1i, Weighti, Targeti;
   std::vector<arma::vec> termi;
 
 } args;

@@ -28,162 +28,98 @@ bool is_duplicate(arma::cube Targets, arma::mat Target, int length) {
 
 }
 
-void pass_to_efast(Rcpp::List efa_args,
-                   std::string& method, std::vector<std::string>& rotation,
-                   std::string& projection,
-                   Rcpp::Nullable<arma::mat>& nullable_Target,
-                   Rcpp::Nullable<arma::mat>& nullable_Weight,
-                   Rcpp::Nullable<arma::mat>& nullable_PhiTarget,
-                   Rcpp::Nullable<arma::mat>& nullable_PhiWeight,
-                   Rcpp::Nullable<arma::uvec>& nullable_blocks,
-                   Rcpp::Nullable<std::vector<arma::uvec>>& nullable_blocks_list,
-                   Rcpp::Nullable<arma::vec>& nullable_block_weights,
-                   Rcpp::Nullable<arma::uvec>& nullable_oblq_blocks,
-                   bool& normalize, std::string& penalization,
-                   double& gamma, double& epsilon,
-                   double& k, double& w, double& alpha,
-                   int& random_starts, int& cores,
-                   Rcpp::Nullable<arma::vec>& nullable_init,
-                   Rcpp::Nullable<Rcpp::List>& nullable_efa_control,
-                   Rcpp::Nullable<Rcpp::List>& nullable_rot_control) {
+typedef struct arguments_efast{
+
+  int p, q;
+  std::string method = "minres", projection = "oblq";
+  std::vector<std::string> rotation = {"oblimin"};
+  Rcpp::Nullable<arma::mat> nullable_Target = R_NilValue, nullable_Weight = R_NilValue,
+    nullable_PhiTarget = R_NilValue, nullable_PhiWeight = R_NilValue;
+  Rcpp::Nullable<arma::uvec> nullable_blocks = R_NilValue;
+  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list = R_NilValue;
+  Rcpp::Nullable<arma::vec> nullable_block_weights = R_NilValue;
+  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks = R_NilValue;
+  bool normalize = false;
+  std::string penalization = "none";
+  double gamma = 0, w = 1, a = 1;
+  arma::vec k = {0}, epsilon = {0.01};
+  int random_starts = 10L, cores = 1L;
+  Rcpp::Nullable<arma::vec> nullable_init = R_NilValue;
+  Rcpp::Nullable<Rcpp::List> nullable_efa_control = R_NilValue,
+  nullable_rot_control = R_NilValue;
+
+} args_efast;
+
+void pass_to_efast(Rcpp::List efa_args, arguments_efast& x) {
 
   if (efa_args.containsElementNamed("method")) {
-    std::string method_ = efa_args["method"];
-    method = method_;
-  } else {
-    method = "minres";
+    std::string method_ = efa_args["method"]; x.method = method_;
   }
   if(efa_args.containsElementNamed("rotation")) {
-    std::vector<std::string> rotation_ = efa_args["rotation"];
-    rotation = rotation_;
-  } else{
-    rotation = {"oblimin"};
+    std::vector<std::string> rotation_ = efa_args["rotation"]; x.rotation = rotation_;
   }
   if(efa_args.containsElementNamed("projection")) {
-    std::string projection_ = efa_args["projection"];
-    projection = projection_;
-  } else{
-    projection = "oblq";
+    std::string projection_ = efa_args["projection"]; x.projection = projection_;
   }
   if(efa_args.containsElementNamed("init")) {
-    Rcpp::Nullable<arma::vec> init_ = efa_args["init"];
-    nullable_init = init_;
-  } else{
-    nullable_init = R_NilValue;
+    Rcpp::Nullable<arma::vec> init_ = efa_args["init"]; x.nullable_init = init_;
   }
   if (efa_args.containsElementNamed("Target")) {
-    Rcpp::Nullable<arma::mat> Target_ = efa_args["Target"];
-    nullable_Target = Target_;
-  } else{
-    nullable_Target = R_NilValue;
+    Rcpp::Nullable<arma::mat> Target_ = efa_args["Target"]; x.nullable_Target = Target_;
   }
   if (efa_args.containsElementNamed("Weight")) {
-    Rcpp::Nullable<arma::mat> Weight_ = efa_args["Weight"];
-    nullable_Weight = Weight_;
-  } else{
-    nullable_Weight = R_NilValue;
+    Rcpp::Nullable<arma::mat> Weight_ = efa_args["Weight"]; x.nullable_Weight = Weight_;
   }
   if (efa_args.containsElementNamed("PhiTarget")) {
-    Rcpp::Nullable<arma::mat> PhiTarget_ = efa_args["PhiTarget"];
-    nullable_PhiTarget = PhiTarget_;
-  } else{
-    nullable_PhiTarget = R_NilValue;
+    Rcpp::Nullable<arma::mat> PhiTarget_ = efa_args["PhiTarget"]; x.nullable_PhiTarget = PhiTarget_;
   }
   if (efa_args.containsElementNamed("PhiWeight")) {
-    Rcpp::Nullable<arma::mat> PhiWeight_ = efa_args["PhiWeight"];
-    nullable_PhiWeight = PhiWeight_;
-  } else{
-    nullable_PhiWeight = R_NilValue;
+    Rcpp::Nullable<arma::mat> PhiWeight_ = efa_args["PhiWeight"]; x.nullable_PhiWeight = PhiWeight_;
   }
   if (efa_args.containsElementNamed("blocks")) {
-    Rcpp::Nullable<arma::uvec> blocks_ = efa_args["blocks"];
-    nullable_blocks = blocks_;
-  } else{
-    nullable_blocks = R_NilValue;
+    Rcpp::Nullable<arma::uvec> blocks_ = efa_args["blocks"]; x.nullable_blocks = blocks_;
   }
   if (efa_args.containsElementNamed("blocks_list")) {
-    Rcpp::Nullable<arma::uvec> blocks_list_ = efa_args["blocks_list"];
-    nullable_blocks = blocks_list_;
-  } else{
-    nullable_blocks_list = R_NilValue;
+    Rcpp::Nullable<arma::uvec> blocks_list_ = efa_args["blocks_list"]; x.nullable_blocks = blocks_list_;
   }
   if (efa_args.containsElementNamed("block_weights")) {
-    Rcpp::Nullable<arma::vec> block_weights_ = efa_args["block_weights"];
-    nullable_block_weights = block_weights_;
-  } else{
-    nullable_block_weights = R_NilValue;
+    Rcpp::Nullable<arma::vec> block_weights_ = efa_args["block_weights"]; x.nullable_block_weights = block_weights_;
   }
   if (efa_args.containsElementNamed("oblq_blocks")) {
-    Rcpp::Nullable<arma::uvec> oblq_blocks_ = efa_args["oblq_blocks"];
-    nullable_oblq_blocks = oblq_blocks_;
-  } else{
-    nullable_oblq_blocks = R_NilValue;
+    Rcpp::Nullable<arma::uvec> oblq_blocks_ = efa_args["oblq_blocks"]; x.nullable_oblq_blocks = oblq_blocks_;
   }
   if (efa_args.containsElementNamed("normalize")) {
-    bool normalize_ = efa_args["normalize"];
-    normalize = normalize_;
-  } else{
-    normalize = false;
+    bool normalize_ = efa_args["normalize"]; x.normalize = normalize_;
   }
   if (efa_args.containsElementNamed("penalization")) {
-    std::string penalization_ = efa_args["penalization"];
-    penalization = penalization_;
-  } else{
-    penalization = "none";
+    std::string penalization_ = efa_args["penalization"]; x.penalization = penalization_;
   }
   if (efa_args.containsElementNamed("gamma")) {
-    double gamma_ = efa_args["gamma"];
-    gamma = gamma_;
-  } else{
-    gamma = 0;
+    double gamma_ = efa_args["gamma"]; x.gamma = gamma_;
   }
   if (efa_args.containsElementNamed("epsilon")) {
-    double epsilon_ = efa_args["epsilon"];
-    epsilon = epsilon_;
-  } else{
-    epsilon = 0.01;
+    arma::vec epsilon_ = efa_args["epsilon"]; x.epsilon = epsilon_;
   }
   if (efa_args.containsElementNamed("k")) {
-    double k_ = efa_args["k"];
-    k = k_;
-  } else{
-    k = 0;
+    arma::vec k_ = efa_args["k"]; x.k = k_;
   }
   if (efa_args.containsElementNamed("w")) {
-    double w_ = efa_args["w"];
-    w = w_;
-  } else{
-    w = 1;
+    double w_ = efa_args["w"]; x.w = w_;
   }
   if (efa_args.containsElementNamed("alpha")) {
-    double alpha_ = efa_args["alpha"];
-    alpha = alpha_;
-  } else{
-    alpha = 1;
+    double alpha_ = efa_args["alpha"]; x.a = alpha_;
   }
   if (efa_args.containsElementNamed("random_starts")) {
-    int random_starts_ = efa_args["random_starts"];
-    random_starts = random_starts_;
-  } else{
-    random_starts = 10;
+    int random_starts_ = efa_args["random_starts"]; x.random_starts = random_starts_;
   }
   if (efa_args.containsElementNamed("cores")) {
-    int cores_ = efa_args["cores"];
-    cores = cores_;
-  } else{
-    cores = 1;
+    int cores_ = efa_args["cores"]; x.cores = cores_;
   }
   if (efa_args.containsElementNamed("efa_control")) {
-    Rcpp::Nullable<Rcpp::List> efa_control_ = efa_args["efa_control"];
-    nullable_efa_control = efa_control_;
-  } else{
-    nullable_efa_control = R_NilValue;
+    Rcpp::Nullable<Rcpp::List> efa_control_ = efa_args["efa_control"]; x.nullable_efa_control = efa_control_;
   }
   if (efa_args.containsElementNamed("rot_control")) {
-    Rcpp::Nullable<Rcpp::List> rot_control_ = efa_args["rot_control"];
-    nullable_rot_control = rot_control_;
-  } else{
-    nullable_rot_control = R_NilValue;
+    Rcpp::Nullable<Rcpp::List> rot_control_ = efa_args["rot_control"]; x.nullable_rot_control = rot_control_;
   }
 
 }
@@ -206,79 +142,33 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // Arguments to pass to first efa in SL:
 
-  std::vector<std::string> rotation_1;
-  std::string method_1, projection_1, penalization_1;
-  Rcpp::Nullable<arma::vec> nullable_init_1;
-  Rcpp::Nullable<arma::mat> nullable_Target_1, nullable_Weight_1,
-  nullable_PhiTarget_1, nullable_PhiWeight_1;
-  Rcpp::Nullable<arma::uvec> nullable_blocks_1;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list_1;
-  Rcpp::Nullable<arma::vec> nullable_block_weights_1;
-  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks_1;
-  bool normalize_1;
-  double gamma_1, epsilon_1, k_1, w_1, alpha_1;
-  int random_starts_1, cores_1;
-  Rcpp::Nullable<Rcpp::List> nullable_efa_control_1, nullable_rot_control_1;
+  arguments_efast x1;
 
   // Check inputs:
 
-  pass_to_efast(first,
-                method_1, rotation_1, projection_1,
-                nullable_Target_1, nullable_Weight_1,
-                nullable_PhiTarget_1, nullable_PhiWeight_1,
-                nullable_blocks_1, nullable_blocks_list_1,
-                nullable_block_weights_1,
-                nullable_oblq_blocks_1, normalize_1, penalization_1,
-                gamma_1, epsilon_1, k_1, w_1, alpha_1,
-                random_starts_1, cores_1,
-                nullable_init_1,
-                nullable_efa_control_1,
-                nullable_rot_control_1);
+  pass_to_efast(first, x1);
 
   // Arguments to pass to second efa in SL:
 
-  std::vector<std::string> rotation_2;
-  std::string method_2, projection_2, penalization_2;
-  Rcpp::Nullable<arma::vec> nullable_init_2;
-  Rcpp::Nullable<arma::mat> nullable_Target_2, nullable_Weight_2,
-  nullable_PhiTarget_2, nullable_PhiWeight_2;
-  Rcpp::Nullable<arma::uvec> nullable_blocks_2;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list_2;
-  Rcpp::Nullable<arma::vec> nullable_block_weights_2;
-  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks_2;
-  bool normalize_2;
-  double gamma_2, epsilon_2, k_2, w_2, alpha_2;
-  int random_starts_2, cores_2;
-  Rcpp::Nullable<Rcpp::List> nullable_efa_control_2, nullable_rot_control_2;
+  arguments_efast x2;
 
   // Check inputs:
 
-  pass_to_efast(second,
-                method_2, rotation_2, projection_2,
-                nullable_Target_2, nullable_Weight_2,
-                nullable_PhiTarget_2, nullable_PhiWeight_2,
-                nullable_blocks_2, nullable_blocks_list_2,
-                nullable_block_weights_2,
-                nullable_oblq_blocks_2, normalize_2, penalization_2,
-                gamma_2, epsilon_2, k_2, w_2, alpha_2,
-                random_starts_2, cores_2,
-                nullable_init_2,
-                nullable_efa_control_2,
-                nullable_rot_control_2);
+  pass_to_efast(second, x2);
 
   // First efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, method_1, rotation_1, projection_1,
-                                     nullable_Target_1, nullable_Weight_1,
-                                     nullable_PhiTarget_1, nullable_PhiWeight_1,
-                                     nullable_blocks_1, nullable_blocks_list_1,
-                                     nullable_block_weights_1,
-                                     nullable_oblq_blocks_1,
-                                     normalize_1, penalization_1,
-                                     gamma_1, epsilon_1, k_1, w_1, alpha_1,
-                                     random_starts_1, cores_1,
-                                     nullable_init_1,
-                                     nullable_efa_control_1, nullable_rot_control_1);
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.method, x1.rotation, x1.projection,
+                                     x1.nullable_Target, x1.nullable_Weight,
+                                     x1.nullable_PhiTarget, x1.nullable_PhiWeight,
+                                     x1.nullable_blocks, x1.nullable_blocks_list,
+                                     x1.nullable_block_weights,
+                                     x1.nullable_oblq_blocks,
+                                     x1.normalize, x1.penalization,
+                                     x1.gamma, x1.epsilon, x1.k, x1.w, x1.a,
+                                     x1.random_starts, x1.cores,
+                                     x1.nullable_init,
+                                     x1.nullable_efa_control, x1.nullable_rot_control);
 
   Rcpp::List result;
   Rcpp::List efa_model_rotation = first_order_efa["rotation"];
@@ -289,17 +179,17 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   if ( n_generals == 1 ) {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, method_2, rotation_none, "none",
-                                  nullable_Target_2, nullable_Weight_2,
-                                  nullable_PhiTarget_2, nullable_PhiWeight_2,
-                                  nullable_blocks_2, nullable_blocks_list_2,
-                                  nullable_block_weights_2,
-                                  nullable_oblq_blocks_2,
-                                  normalize_2, penalization_2,
-                                  gamma_2, epsilon_2, k_2, w_2, alpha_2,
-                                  random_starts_2, cores_2,
-                                  nullable_init_2,
-                                  nullable_efa_control_2, nullable_rot_control_2);
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.method, rotation_none, "none",
+                                  x2.nullable_Target, x2.nullable_Weight,
+                                  x2.nullable_PhiTarget, x2.nullable_PhiWeight,
+                                  x2.nullable_blocks, x2.nullable_blocks_list,
+                                  x2.nullable_block_weights,
+                                  x2.nullable_oblq_blocks,
+                                  x2.normalize, x2.penalization,
+                                  x2.gamma, x2.epsilon, x2.k, x2.w, x2.a,
+                                  x2.random_starts, x2.cores,
+                                  x2.nullable_init,
+                                  x2.nullable_efa_control, x2.nullable_rot_control);
 
     arma::mat loadings_2 = efa_result["loadings"];
     arma::vec uniquenesses_2 = efa_result["uniquenesses"];
@@ -328,17 +218,17 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   } else {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, method_2, rotation_2, projection_2,
-                                  nullable_Target_2, nullable_Weight_2,
-                                  nullable_PhiTarget_2, nullable_PhiWeight_2,
-                                  nullable_blocks_2, nullable_blocks_list_2,
-                                  nullable_block_weights_2,
-                                  nullable_oblq_blocks_2,
-                                  normalize_2, penalization_2,
-                                  gamma_2, epsilon_2, k_2, w_2, alpha_2,
-                                  random_starts_2, cores_2,
-                                  nullable_init_2,
-                                  nullable_efa_control_2, nullable_rot_control_2);
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.method, x2.rotation, x2.projection,
+                                  x2.nullable_Target, x2.nullable_Weight,
+                                  x2.nullable_PhiTarget, x2.nullable_PhiWeight,
+                                  x2.nullable_blocks, x2.nullable_blocks_list,
+                                  x2.nullable_block_weights,
+                                  x2.nullable_oblq_blocks,
+                                  x2.normalize, x2.penalization,
+                                  x2.gamma, x2.epsilon, x2.k, x2.w, x2.a,
+                                  x2.random_starts, x2.cores,
+                                  x2.nullable_init,
+                                  x2.nullable_efa_control, x2.nullable_rot_control);
 
     Rcpp::List efa_result_rotation = efa_result["rotation"];
     arma::mat loadings_2 = efa_result_rotation["loadings"];

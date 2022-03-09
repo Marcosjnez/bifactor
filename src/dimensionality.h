@@ -333,32 +333,9 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
 
   // Arguments to pass to efa:
 
-  std::vector<std::string> rotation;
-  std::string method, projection, penalization;
-  Rcpp::Nullable<arma::vec> nullable_init;
-  Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
-  nullable_PhiTarget, nullable_PhiWeight;
-  Rcpp::Nullable<arma::uvec> nullable_blocks;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list;
-  Rcpp::Nullable<arma::vec> nullable_block_weights;
-  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
-  bool normalize;
-  double gamma, epsilon, k, w, alpha;
-  int random_starts, cores_2 = 1;
-  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_rot_control;
+  arguments_efast x;
 
-  pass_to_efast(efa,
-                method, rotation, projection,
-                nullable_Target, nullable_Weight,
-                nullable_PhiTarget, nullable_PhiWeight,
-                nullable_blocks, nullable_blocks_list,
-                nullable_block_weights,
-                nullable_oblq_blocks, normalize, penalization,
-                gamma, epsilon, k, w, alpha,
-                random_starts, cores_2,
-                nullable_init,
-                nullable_efa_control,
-                nullable_rot_control);
+  pass_to_efast(efa, x);
 
   arma::uvec unique = arma::unique(dims(arma::find(dims > 1))); // unique elements greater than 1
   int unique_size = unique.size();
@@ -368,17 +345,17 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
 
   for(int i=0; i < unique_size; ++i) {
 
-      Rcpp::List fit = efast(S, unique[i], method, rotation, projection,
-                             nullable_Target, nullable_Weight,
-                             nullable_PhiTarget, nullable_PhiWeight,
-                             nullable_blocks, nullable_blocks_list,
-                             nullable_block_weights,
-                             nullable_oblq_blocks,
-                             normalize, penalization,
-                             gamma, epsilon, k, w, alpha,
-                             random_starts, cores_2,
-                             nullable_init, nullable_efa_control,
-                             nullable_rot_control);
+      Rcpp::List fit = efast(S, unique[i], x.method, x.rotation, x.projection,
+                             x.nullable_Target, x.nullable_Weight,
+                             x.nullable_PhiTarget, x.nullable_PhiWeight,
+                             x.nullable_blocks, x.nullable_blocks_list,
+                             x.nullable_block_weights,
+                             x.nullable_oblq_blocks,
+                             x.normalize, x.penalization,
+                             x.gamma, x.epsilon, x.k, x.w, x.a,
+                             x.random_starts, x.cores,
+                             x.nullable_init, x.nullable_efa_control,
+                             x.nullable_rot_control);
 
       Rcpp::List rot = fit["rotation"];
       arma::mat Phi = rot["Phi"];
@@ -574,46 +551,23 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
 
   // Arguments to pass to efa:
 
-  std::vector<std::string> rotation;
-  std::string method, projection, penalization;
-  Rcpp::Nullable<arma::vec> nullable_init;
-  Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
-  nullable_PhiTarget, nullable_PhiWeight;
-  Rcpp::Nullable<arma::uvec> nullable_blocks;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list;
-  Rcpp::Nullable<arma::vec> nullable_block_weights;
-  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks;
-  bool normalize;
-  double gamma, epsilon, k, w, alpha;
-  int random_starts, cores_2 = 0;
-  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_rot_control;
+  arguments_efast x;
 
-  pass_to_efast(efa,
-                method, rotation, projection,
-                nullable_Target, nullable_Weight,
-                nullable_PhiTarget, nullable_PhiWeight,
-                nullable_blocks, nullable_blocks_list,
-                nullable_block_weights,
-                nullable_oblq_blocks, normalize, penalization,
-                gamma, epsilon, k, w, alpha,
-                random_starts, cores_2,
-                nullable_init,
-                nullable_efa_control,
-                nullable_rot_control);
+  pass_to_efast(efa, x);
 
   // efa:
 
-  Rcpp::List fit = efast(S, dim, method, rotation, projection,
-                         nullable_Target, nullable_Weight,
-                         nullable_PhiTarget, nullable_PhiWeight,
-                         nullable_blocks, nullable_blocks_list,
-                         nullable_block_weights,
-                         nullable_oblq_blocks,
-                         normalize, penalization,
-                         gamma, epsilon, k, w, alpha,
-                         random_starts, cores_2,
-                         nullable_init,
-                         nullable_efa_control, nullable_rot_control);
+  Rcpp::List fit = efast(S, dim, x.method, x.rotation, x.projection,
+                         x.nullable_Target, x.nullable_Weight,
+                         x.nullable_PhiTarget, x.nullable_PhiWeight,
+                         x.nullable_blocks, x.nullable_blocks_list,
+                         x.nullable_block_weights,
+                         x.nullable_oblq_blocks,
+                         x.normalize, x.penalization,
+                         x.gamma, x.epsilon, x.k, x.w, x.a,
+                         x.random_starts, x.cores,
+                         x.nullable_init, x.nullable_efa_control,
+                         x.nullable_rot_control);
 
   Rcpp::List rot = fit["rotation"];
   arma::mat Phi = rot["Phi"];

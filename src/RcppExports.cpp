@@ -98,7 +98,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rotate
-Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector rotation, std::string projection, double gamma, double epsilon, double k, double w, double alpha, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, std::string penalization, Rcpp::Nullable<Rcpp::List> rot_control, int random_starts, int cores);
+Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector rotation, std::string projection, double gamma, arma::vec epsilon, arma::vec k, double w, double alpha, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, std::string penalization, Rcpp::Nullable<Rcpp::List> rot_control, int random_starts, int cores);
 RcppExport SEXP _bifactor_rotate(SEXP loadingsSEXP, SEXP rotationSEXP, SEXP projectionSEXP, SEXP gammaSEXP, SEXP epsilonSEXP, SEXP kSEXP, SEXP wSEXP, SEXP alphaSEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP blocksSEXP, SEXP blocks_listSEXP, SEXP block_weightsSEXP, SEXP oblq_blocksSEXP, SEXP penalizationSEXP, SEXP rot_controlSEXP, SEXP random_startsSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -107,8 +107,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type rotation(rotationSEXP);
     Rcpp::traits::input_parameter< std::string >::type projection(projectionSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type k(kSEXP);
     Rcpp::traits::input_parameter< double >::type w(wSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Target(TargetSEXP);
@@ -128,7 +128,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // efast
-Rcpp::List efast(arma::mat R, int n_factors, std::string method, Rcpp::CharacterVector rotation, std::string projection, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, bool normalize, std::string penalization, double gamma, double epsilon, double k, double w, double alpha, int random_starts, int cores, Rcpp::Nullable<arma::vec> init, Rcpp::Nullable<Rcpp::List> efa_control, Rcpp::Nullable<Rcpp::List> rot_control);
+Rcpp::List efast(arma::mat R, int n_factors, std::string method, Rcpp::CharacterVector rotation, std::string projection, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, bool normalize, std::string penalization, double gamma, arma::vec epsilon, arma::vec k, double w, double alpha, int random_starts, int cores, Rcpp::Nullable<arma::vec> init, Rcpp::Nullable<Rcpp::List> efa_control, Rcpp::Nullable<Rcpp::List> rot_control);
 RcppExport SEXP _bifactor_efast(SEXP RSEXP, SEXP n_factorsSEXP, SEXP methodSEXP, SEXP rotationSEXP, SEXP projectionSEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP blocksSEXP, SEXP blocks_listSEXP, SEXP block_weightsSEXP, SEXP oblq_blocksSEXP, SEXP normalizeSEXP, SEXP penalizationSEXP, SEXP gammaSEXP, SEXP epsilonSEXP, SEXP kSEXP, SEXP wSEXP, SEXP alphaSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP initSEXP, SEXP efa_controlSEXP, SEXP rot_controlSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -149,8 +149,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< std::string >::type penalization(penalizationSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type k(kSEXP);
     Rcpp::traits::input_parameter< double >::type w(wSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
@@ -224,38 +224,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // se
-Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> fit, Rcpp::Nullable<arma::mat> R, Rcpp::Nullable<arma::mat> Lambda, Rcpp::Nullable<arma::mat> Phi, Rcpp::Nullable<arma::mat> X, std::string method, std::string projection, Rcpp::CharacterVector rotation, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> Weight, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, double gamma, double k, double epsilon, double w, double alpha, bool normalize, std::string penalization, std::string type, double eta);
-RcppExport SEXP _bifactor_se(SEXP nSEXP, SEXP fitSEXP, SEXP RSEXP, SEXP LambdaSEXP, SEXP PhiSEXP, SEXP XSEXP, SEXP methodSEXP, SEXP projectionSEXP, SEXP rotationSEXP, SEXP TargetSEXP, SEXP WeightSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP blocksSEXP, SEXP blocks_listSEXP, SEXP block_weightsSEXP, SEXP oblq_blocksSEXP, SEXP gammaSEXP, SEXP kSEXP, SEXP epsilonSEXP, SEXP wSEXP, SEXP alphaSEXP, SEXP normalizeSEXP, SEXP penalizationSEXP, SEXP typeSEXP, SEXP etaSEXP) {
+Rcpp::List se(Rcpp::Nullable<Rcpp::List> fit, Rcpp::Nullable<int> n, Rcpp::Nullable<arma::mat> X, std::string type, double eta);
+RcppExport SEXP _bifactor_se(SEXP fitSEXP, SEXP nSEXP, SEXP XSEXP, SEXP typeSEXP, SEXP etaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type fit(fitSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type R(RSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Lambda(LambdaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type n(nSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type X(XSEXP);
-    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
-    Rcpp::traits::input_parameter< std::string >::type projection(projectionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type rotation(rotationSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Target(TargetSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Weight(WeightSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiTarget(PhiTargetSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiWeight(PhiWeightSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::uvec> >::type blocks(blocksSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<std::vector<arma::uvec>> >::type blocks_list(blocks_listSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type block_weights(block_weightsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::uvec> >::type oblq_blocks(oblq_blocksSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< double >::type w(wSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< bool >::type normalize(normalizeSEXP);
-    Rcpp::traits::input_parameter< std::string >::type penalization(penalizationSEXP);
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
-    rcpp_result_gen = Rcpp::wrap(se(n, fit, R, Lambda, Phi, X, method, projection, rotation, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, gamma, k, epsilon, w, alpha, normalize, penalization, type, eta));
+    rcpp_result_gen = Rcpp::wrap(se(fit, n, X, type, eta));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -307,7 +286,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_get_target", (DL_FUNC) &_bifactor_get_target, 3},
     {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 24},
     {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
-    {"_bifactor_se", (DL_FUNC) &_bifactor_se, 26},
+    {"_bifactor_se", (DL_FUNC) &_bifactor_se, 5},
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 9},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {NULL, NULL, 0}

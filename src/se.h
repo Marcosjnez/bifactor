@@ -1,113 +1,62 @@
 #include "method_derivatives.h"
 
-Rcpp::List se(int n, Rcpp::Nullable<Rcpp::List> nullable_fit,
-              Rcpp::Nullable<arma::mat> nullable_S,
-              Rcpp::Nullable<arma::mat> nullable_Lambda,
-              Rcpp::Nullable<arma::mat> nullable_Phi,
+Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
+              Rcpp::Nullable<int> nullable_n,
               Rcpp::Nullable<arma::mat> nullable_X,
-              std::string method,
-              std::string projection,
-              Rcpp::CharacterVector char_rotation,
-              Rcpp::Nullable<arma::mat> nullable_Target,
-              Rcpp::Nullable<arma::mat> nullable_Weight,
-              Rcpp::Nullable<arma::mat> nullable_PhiTarget,
-              Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-              Rcpp::Nullable<arma::uvec> nullable_blocks,
-              Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
-              Rcpp::Nullable<arma::vec> nullable_block_weights,
-              Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-              double gamma, double k, double epsilon, double w, double alpha,
-              bool normalize, std::string penalization,
               std::string type, double eta) {
 
-  std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
+  int n;
+
+  if(nullable_n.isNull()) {
+    Rcpp::stop("Please, specify the sample size");
+  } else{
+    n = Rcpp::as<int>(nullable_n);
+  }
 
   arguments x;
-  x.rotations = rotation;
-  x.projection = projection;
   int rot_maxit = 1L, random_starts = 1L, cores = 1L;
   double rot_eps = 0.05;
 
-  if(nullable_fit.isNotNull()) {
+  // Overwrite x according to modelInfo:
 
-    Rcpp::List fit = nullable_fit.get();
-    Rcpp::List modelInfo = fit["modelInfo"];
-    Rcpp::List rot = fit["rotation"];
-    Rcpp::List efa = fit["efa"];
+  Rcpp::List fit = nullable_fit.get();
+  Rcpp::List modelInfo = fit["modelInfo"];
+  Rcpp::List rot = fit["rotation"];
+  arma::mat L_ = rot["loadings"]; x.L = L_;
+  Rcpp::List efa = fit["efa"];
+  std::string projection_ = modelInfo["projection"]; x.projection = projection_;
+  std::vector<std::string> rotation_ = modelInfo["rotation"]; x.rotations = rotation_;
 
-    std::string projection_ = modelInfo["projection"]; x.projection = projection_;
-    std::vector<std::string> rotation_ = modelInfo["rotation"]; x.rotations = rotation_;
+  arma::mat lambda_ = efa["loadings"]; x.lambda = lambda_;
+  x.p = x.lambda.n_rows;
+  x.q = x.lambda.n_cols;
+  x.lambda.set_size(x.p, x.q);
+  x.Phi.set_size(x.q, x.q); x.Phi.eye();
+  arma::mat T_ = rot["T"]; x.T = T_;
+  arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
+  double gamma_ = modelInfo["gamma"]; x.gamma = gamma_;
+  arma::vec k_ = modelInfo["k"]; x.k = k_;
+  arma::vec epsilon_ = modelInfo["epsilon"]; x.epsilon = epsilon_;
+  double w_ = modelInfo["w"]; x.w = w_;
+  double alpha_ = modelInfo["alpha"]; x.a = alpha_;
+  std::string penalization_ = modelInfo["penalization"]; x.penalization = penalization_;
 
-    // Overwrite x according to modelInfo
+  arma::mat S_ = modelInfo["R"]; x.S = S_;
+  std::string method = modelInfo["method"];
+  Rcpp::Nullable<arma::mat> Target_ = modelInfo["Target"];
+  Rcpp::Nullable<arma::mat> Weight_ = modelInfo["Weight"];
+  Rcpp::Nullable<arma::mat> PhiTarget_ = modelInfo["PhiTarget"];
+  Rcpp::Nullable<arma::mat> PhiWeight_ = modelInfo["PhiWeight"];
+  Rcpp::Nullable<arma::uvec> blocks_ = modelInfo["blocks"];
+  Rcpp::Nullable<std::vector<arma::uvec>> blocks_list_ = modelInfo["blocks_list"];
+  Rcpp::Nullable<arma::vec> block_weights_ = modelInfo["block_weights"];
+  Rcpp::Nullable<arma::uvec> oblq_blocks_ = modelInfo["oblq_blocks"];
 
-    arma::mat lambda_ = efa["loadings"]; x.lambda = lambda_;
-    arma::mat T_ = rot["T"]; x.T = T_;
-    arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
-    double gamma_ = modelInfo["gamma"]; x.gamma = gamma_;
-    double k_ = modelInfo["k"]; x.k = k_;
-    double epsilon_ = modelInfo["epsilon"]; x.epsilon = epsilon_;
-    double w_ = modelInfo["w"]; x.w = w_;
-    double alpha_ = modelInfo["alpha"]; x.a = alpha_;
-    std::string penalization_ = modelInfo["penalization"];
-    x.penalization = penalization_;
-
-    x.p = x.lambda.n_rows;
-    x.q = x.lambda.n_cols;
-
-    arma::mat S_ = modelInfo["R"]; x.S = S_;
-    std::string method_ = modelInfo["method"]; method = method_;
-    Rcpp::Nullable<arma::mat> Target_ = modelInfo["Target"];
-    Rcpp::Nullable<arma::mat> Weight_ = modelInfo["Weight"];
-    Rcpp::Nullable<arma::mat> PhiTarget_ = modelInfo["PhiTarget"];
-    Rcpp::Nullable<arma::mat> PhiWeight_ = modelInfo["PhiWeight"];
-    Rcpp::Nullable<arma::uvec> blocks_ = modelInfo["blocks"];
-    Rcpp::Nullable<std::vector<arma::uvec>> blocks_list_ = modelInfo["blocks_list"];
-    Rcpp::Nullable<arma::vec> block_weights_ = modelInfo["block_weights"];
-    Rcpp::Nullable<arma::uvec> oblq_blocks_ = modelInfo["oblq_blocks"];
-
-    check_rotate(x,
-                 Target_, Weight_, PhiTarget_, PhiWeight_,
-                 blocks_, blocks_list_, block_weights_, oblq_blocks_,
-                 R_NilValue, rot_maxit, rot_eps,
-                 random_starts, cores);
-
-  } else {
-
-    // Overwrite x according to inputs
-
-    x.gamma = gamma, x.k = k, x.epsilon = epsilon, x.w = w, x.a = alpha;
-    x.penalization = penalization;
-
-    if(nullable_S.isNotNull()) {
-      x.S = Rcpp::as<arma::mat>(nullable_S);
-    } else {
-      Rcpp::stop("Either provide the sample correlation R or a model fit via the fit argument");
-    }
-    if(nullable_Lambda.isNotNull()) {
-      x.L = Rcpp::as<arma::mat>(nullable_Lambda);
-      x.lambda = x.L; // FIX
-    } else {
-      Rcpp::stop("Either provide loadings or a model fit via the fit argument");
-    }
-    if(nullable_Phi.isNotNull()) {
-      x.Phi = Rcpp::as<arma::mat>(nullable_Phi);
-    } else {
-      if(x.projection == "oblq") {
-        Rcpp::stop("Either provide Phi or a model fit via the fit argument");
-      }
-    }
-
-    x.p = x.L.n_rows;
-    x.q = x.L.n_cols;
-
-    check_rotate(x,
-                 nullable_Target, nullable_Weight,
-                 nullable_PhiTarget, nullable_PhiWeight,
-                 nullable_blocks, nullable_blocks_list, nullable_block_weights,
-                 nullable_oblq_blocks,
-                 R_NilValue, rot_maxit, rot_eps, random_starts, cores);
-
-  }
+  check_rotate(x,
+               Target_, Weight_, PhiTarget_, PhiWeight_,
+               blocks_, blocks_list_, block_weights_, oblq_blocks_,
+               R_NilValue, rot_maxit, rot_eps,
+               random_starts, cores);
 
   base_manifold* manifold = choose_manifold(x.projection);
   base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
