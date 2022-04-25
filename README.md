@@ -22,7 +22,7 @@ Delete the clang4,6,7 binary and the prior version of gfortran installed:
     sudo rm -rf /usr/local/gfortran
     sudo rm -rf /usr/local/bin/gfortran
 
-Remove the gfortran install receipts (run after the above commands):
+Remove the gfortran install receipts:
 
     sudo rm /private/var/db/receipts/com.gnu.gfortran.bom
     sudo rm /private/var/db/receipts/com.gnu.gfortran.plist
