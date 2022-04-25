@@ -24,18 +24,18 @@ Delete the clang4,6,7 binary and the prior version of gfortran installed:
 
 Remove the gfortran install receipts (run after the above commands):
 
-   sudo rm /private/var/db/receipts/com.gnu.gfortran.bom
-   sudo rm /private/var/db/receipts/com.gnu.gfortran.plist
+    sudo rm /private/var/db/receipts/com.gnu.gfortran.bom
+    sudo rm /private/var/db/receipts/com.gnu.gfortran.plist
 
 Remove the clang4 installer receipt:
 
-   sudo rm /private/var/db/receipts/com.rbinaries.clang4.bom
-   sudo rm /private/var/db/receipts/com.rbinaries.clang4.plist
+    sudo rm /private/var/db/receipts/com.rbinaries.clang4.bom
+    sudo rm /private/var/db/receipts/com.rbinaries.clang4.plist
 
 Remove the Makevars file and the Renviron file:
    
-   rm ~/.R/Makevars
-   rm ~/.Renviron
+    rm ~/.R/Makevars
+    rm ~/.Renviron
 
 Install Homebrew from the terminal:
 
