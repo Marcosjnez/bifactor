@@ -59,13 +59,13 @@ Install `libomp`, `llvm` and `gettext` from the terminal:
 
 Download and install `gfortran` from https://github.com/fxcoudert/gfortran-for-macOS/releases for your macOS version.
 
-Create the directory ~/.R/:
+Create the directory ~/.R/, if it does not exist:
 
-    sudo mkdir .R
+    sudo mkdir ~/.R
 
 Create a file named Makevars in this directory:
 
-    sudo touch .R/Makevars
+    sudo touch ~/.R/Makevars
 
 Open the Makevars file and paste the following lines in it:
 
@@ -78,6 +78,10 @@ Open the Makevars file and paste the following lines in it:
     LDFLAGS=-L/usr/local/opt/gettext/lib -L$(LOC)/lib -Wl,-rpath,$(LOC)/lib
     CPPFLAGS=-I/usr/local/opt/gettext/include -I$(LOC)/include
     -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
+
+The Makevars file can be opened and edited from the R console:
+
+    file.edit("~/.R/Makevars")
 
 Install `Rcpp` and `RcppArmadillo` from the R console:
 
