@@ -54,8 +54,8 @@ Install `xcode`, if not installed:
 Install `libomp`, `llvm` and `gettext` from the terminal:
 
     brew install libomp
-    brew install llvm
     brew install gettext
+    brew install llvm
 
 Download and install `gfortran` from https://github.com/fxcoudert/gfortran-for-macOS/releases for your macOS version.
 
