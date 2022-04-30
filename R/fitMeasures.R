@@ -15,8 +15,8 @@ fitMeasures <- function(efa) {
   imp_cor <- cov2cor(efa$rotation$Rhat)[lower.tri(efa$modelInfo$R)]
   srmr <- sqrt(sum({obs_cor - imp_cor}^2)/{{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
   # Comparative fit indices
-  aic <- chisq + {2 * {df}}
-  bic <- chisq + {log(efa$modelInfo$n_obs) * {{{efa$modelInfo$t*{efa$modelInfo$t+1}}/2}-df}}
+  aic <- chisq + {2 * efa$modelInfo$t}
+  bic <- chisq + {log(efa$modelInfo$n_obs) * efa$modelInfo$t}
   ecvi <- {chisq/{efa$modelInfo$n_obs-1}} + {2*{efa$modelInfo$t/{efa$modelInfo$n_obs-1}}}
   
   # Results
