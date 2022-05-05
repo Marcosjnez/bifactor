@@ -1,4 +1,5 @@
-#include "bifactor.h"
+// deprecated
+// #include "bifactor.h"
 
 double log_lik_ratio(arma::mat R, arma::mat R_hat, int n) {
   // for maximum_likelihood (pag.58 Bartholomew 2011)

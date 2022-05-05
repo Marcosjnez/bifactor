@@ -1,4 +1,13 @@
-#include "se.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
+// #include "structures.h"
+// #include "auxiliary_manifolds.h"
+// #include "se.h"
 
 bool contains(std::vector<std::string> chars, std::string object) {
 
@@ -308,7 +317,7 @@ Rcpp::List pa(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quanti
 Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quantile,
                     bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA,
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
-                    int cores){
+                    int cores) {
 
   Rcpp::List first_order = pa(X, n_boot, nullable_quantile, mean, replace, nullable_PA);
 
@@ -346,13 +355,15 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
   for(int i=0; i < unique_size; ++i) {
 
       Rcpp::List fit = efast(S, unique[i], x.method, x.rotation, x.projection,
+                             x.nullable_nobs,
                              x.nullable_Target, x.nullable_Weight,
                              x.nullable_PhiTarget, x.nullable_PhiWeight,
                              x.nullable_blocks, x.nullable_blocks_list,
                              x.nullable_block_weights,
                              x.nullable_oblq_blocks,
-                             x.normalize, x.penalization,
-                             x.gamma, x.epsilon, x.k, x.w, x.a,
+                             x.normalization, x.between_blocks,
+                             x.gamma, x.epsilon, x.k, x.w,
+                             x.alpha, x.a, x.b,
                              x.random_starts, x.cores,
                              x.nullable_init, x.nullable_efa_control,
                              x.nullable_rot_control);
@@ -558,13 +569,15 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   // efa:
 
   Rcpp::List fit = efast(S, dim, x.method, x.rotation, x.projection,
+                         x.nullable_nobs,
                          x.nullable_Target, x.nullable_Weight,
                          x.nullable_PhiTarget, x.nullable_PhiWeight,
                          x.nullable_blocks, x.nullable_blocks_list,
                          x.nullable_block_weights,
                          x.nullable_oblq_blocks,
-                         x.normalize, x.penalization,
-                         x.gamma, x.epsilon, x.k, x.w, x.a,
+                         x.normalization, x.between_blocks,
+                         x.gamma, x.epsilon, x.k, x.w,
+                         x.alpha, x.a, x.b,
                          x.random_starts, x.cores,
                          x.nullable_init, x.nullable_efa_control,
                          x.nullable_rot_control);

@@ -4,8 +4,7 @@
 \alias{se}
 \title{Standard errors for rotated factor loadings, factor correlations and uniquenesses.}
 \usage{
-se(fit = NULL, n = NULL, R = NULL, Lambda = NULL, Phi = NULL, X = NULL,
-type = "normal", eta = 1)
+se(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1)
 }
 \arguments{
 \item{fit}{Optional \code{efast} model.}

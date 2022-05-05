@@ -1,3 +1,10 @@
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
 arma::vec sdp_cpp(arma::mat Cov) {
 
   Rcpp::Environment Rcsdp("package:Rcsdp");
@@ -78,12 +85,21 @@ Rcpp::List principal_axis(arma::vec psi, arma::mat R, int n_factors,
 
   } while (criteria > rel_tol && iteration < efa_max_iter);
 
+  bool convergence = false;
+  if(criteria < rel_tol) {
+    convergence = true;
+  }
   arma::mat Rhat = ww;
   Rhat.diag().ones();
+  arma::mat residuals = R - Rhat;
+  double f = 0.5*arma::accu(residuals % residuals);
 
+  result["convergence"] = convergence;
+  result["f"] = f;
   result["loadings"] = w;
   result["uniquenesses"] = psi;
   result["Rhat"] = Rhat;
+  result["residuals"] = residuals;
   result["iterations"] = iteration;
 
   return result;

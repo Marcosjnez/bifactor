@@ -1,40 +1,18 @@
-#include "multiple_rotations.h"
-#include "EFA_fit.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
 
-void check_efa(arma::mat R, int n_factors, Rcpp::Nullable<arma::vec> nullable_init,
-               arma::vec& init, Rcpp::Nullable<Rcpp::List> nullable_efa_control,
-               int& efa_maxit, int& lmm, double& efa_factr) {
-
-  if(R.n_rows < n_factors) Rcpp::stop("Too many factors");
-
-  if (nullable_init.isNotNull()) {
-    init = Rcpp::as<arma::vec>(nullable_init);
-  } else {
-    init = 1/arma::diagvec(arma::inv_sympd(R));
-  }
-
-  Rcpp::List efa_control;
-
-  if (nullable_efa_control.isNotNull()) {
-    efa_control = Rcpp::as<Rcpp::List>(efa_control);
-  }
-  if(efa_control.containsElementNamed("maxit") ){
-    efa_maxit = efa_control["maxit"];
-  } else {
-    efa_maxit = 1e3;
-  }
-  if(efa_control.containsElementNamed("factr")) {
-    efa_factr = efa_control["factr"];
-  } else {
-    efa_factr = 1e07;
-  }
-  if(efa_control.containsElementNamed("lmm")) {
-    lmm = efa_control["lmm"];
-  } else {
-    lmm = 5;
-  }
-
-}
+// #include <Rcpp/Benchmark/Timer.h>
+// #include "structures.h"
+// #include "manifolds.h"
+// #include "multiple_rotations.h"
+// #include "NPF.h"
+// #include "criteria.h"
+// #include "EFA_fit.h"
+// #include "checks.h"
 
 Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
                int efa_max_iter, double efa_factr, int lmm) {
@@ -132,6 +110,8 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
     arma::vec uniquenesses_temp = pa_result["uniquenesses"];
     arma::mat Rhat_temp = pa_result["Rhat"];
 
+    result["f"] = pa_result["f"];
+    result["convergence"] = pa_result["convergence"];
     w = w_temp;
     uniquenesses = uniquenesses_temp;
     Rhat = Rhat_temp;
@@ -185,7 +165,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
   return result;
 }
 
-Rcpp::List rotate_efa(arguments x, base_manifold *manifold, base_criterion *criterion,
+Rcpp::List rotate_efa(arguments_rotate x, base_manifold *manifold, base_criterion *criterion,
                       int random_starts, int cores, double eps, int maxit) {
 
   arma::vec xf(random_starts);
@@ -198,10 +178,12 @@ Rcpp::List rotate_efa(arguments x, base_manifold *manifold, base_criterion *crit
 #pragma omp parallel for
   for (int i=0; i < random_starts; ++i) {
 
-    arguments args = x;
-    args.T = random_orth(args.q, args.q);
+    arguments_rotate args = x;
 
-    x2[i] = NPF(args, manifold, criterion, eps, maxit);
+    args.T = random_orth(args.q, args.q);
+    // args.T = arma::mat(args.q, args.q, arma::fill::eye);
+
+    x2[i] = NPF(args, manifold, criterion, x.rot_eps, x.rot_maxit);
 
     xf[i] = std::get<3>(x2[i]);
 
@@ -256,6 +238,7 @@ Rcpp::List rotate_efa(arguments x, base_manifold *manifold, base_criterion *crit
 Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::CharacterVector char_rotation,
                  std::string projection,
+                 Rcpp::Nullable<int> nullable_nobs,
                  Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
@@ -264,8 +247,9 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                 bool normalize, std::string penalization,
-                 double gamma, arma::vec epsilon, arma::vec k, double w, double alpha,
+                 std::string normalization, std::string between_blocks,
+                 arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
+                 double alpha, double a, double b,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -277,45 +261,17 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   // Create defaults:
 
-  int rot_maxit, efa_maxit, lmm;
-  double rot_eps, efa_eps, efa_factr;
+  int efa_maxit, lmm;
+  double efa_eps, efa_factr;
   arma::vec init;
 
-  // Structure of arguments:
-
-  arguments x;
-  x.p = R.n_rows, x.q = n_factors;
-  x.lambda.set_size(x.p, x.q);
-  x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.a = alpha;
-  x.penalization = penalization;
-  x.rotations = rotation;
-  x.projection = projection;
-
-  // Check inputs and compute constants for rotation criteria:
-
-  check_rotate(x,
-               nullable_Target, nullable_Weight,
-               nullable_PhiTarget, nullable_PhiWeight,
-               nullable_blocks,
-               nullable_blocks_list,
-               nullable_block_weights,
-               nullable_oblq_blocks,
-               nullable_rot_control,
-               rot_maxit, rot_eps,
-               random_starts, cores);
+  // Check EFA inputs:
 
   check_efa(R, n_factors, nullable_init, init,
             nullable_efa_control,
             efa_maxit, lmm, efa_factr);
 
-  // Select one manifold:
-  base_manifold* manifold = choose_manifold(x.projection);
-  // Select one specific criteria or mixed criteria:
-  base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
-
   Rcpp::List result;
-
   Rcpp::List efa_result = efa(init, R, n_factors, method, efa_maxit, efa_factr, lmm);
 
   bool heywood = efa_result["Heywood"];
@@ -329,66 +285,39 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   }
 
-  efa_result["Heywood"] = heywood;
-  arma::mat loadings = efa_result["loadings"];
-  x.lambda = loadings;
+  int p = R.n_cols;
+  int q = n_factors;
+  double df_null = p*(p-1)/2;
+  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
 
-  Rcpp::List rotation_result;
-
-  arma::vec weigths;
-  if (normalize) {
-
-    weigths = sqrt(sum(loadings % loadings, 1));
-    loadings.each_col() /= weigths;
-
+  double f_null;
+  if(method == "minres" || method == "pa") {
+    f_null = 0.5*(arma::accu(R % R) - R.n_cols);
+  } else if(method == "ml") {
+    f_null = -arma::log_det_sympd(R);
+  } else if(method == "minrank") {
+    f_null = 0;
   }
-
-  if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
-
-    return efa_result;
-
-  } else {
-
-    rotation_result = rotate_efa(x, manifold, criterion,
-                                 random_starts, cores, rot_eps, rot_maxit);
-
-  }
-
-  arma::mat L = rotation_result["loadings"];
-  arma::mat Phi = rotation_result["Phi"];
-
-  if (normalize) {
-
-    L.each_col() %= weigths;
-
-  }
-
-  arma::mat Rhat = L * Phi * L.t();
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
-
-  arma::vec uniquenesses = 1 - arma::diagvec(Rhat);
-
-  rotation_result["uniquenesses"] = uniquenesses;
-
-  Rhat.diag().ones();
-  rotation_result["Rhat"] = Rhat;
-  rotation_result["residuals"] = R - Rhat;
-
-  result["efa"] = efa_result;
-  result["rotation"] = rotation_result;
 
   Rcpp::List modelInfo;
   modelInfo["method"] = method;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
+  modelInfo["n_vars"] = R.n_cols;
+  modelInfo["n_factors"] = n_factors;
+  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["df"] = df;
+  modelInfo["df_null"] = df_null;
+  modelInfo["f_null"] = f_null;
   modelInfo["k"] = k;
   modelInfo["gamma"] = gamma;
   modelInfo["epsilon"] = epsilon;
   modelInfo["w"] = w;
   modelInfo["alpha"] = alpha;
-  modelInfo["normalize"] = normalize;
-  modelInfo["penalization"] = penalization;
+  modelInfo["a"] = a;
+  modelInfo["b"] = b;
+  modelInfo["normalization"] = normalization;
+  modelInfo["between_blocks"] = between_blocks;
   modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
@@ -398,10 +327,87 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["blocks_list"] = nullable_blocks_list;
   modelInfo["block_weights"] = nullable_block_weights;
   modelInfo["oblq_blocks"] = nullable_oblq_blocks;
+
+  arma::mat loadings = efa_result["loadings"];
+
+  // Structure of rotation arguments:
+
+  arguments_rotate x;
+  x.lambda = loadings;
+  x.p = R.n_rows, x.q = n_factors;
+  // x.lambda.set_size(x.p, x.q);
+  x.Phi.set_size(x.q, x.q); x.Phi.eye();
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
+  x.a = a, x.b = b;
+  x.between_blocks = between_blocks;
+  x.rotations = rotation;
+  x.projection = projection;
+  x.nullable_Target = nullable_Target;
+  x.nullable_Weight = nullable_Weight;
+  x.nullable_PhiTarget = nullable_PhiTarget;
+  x.nullable_PhiWeight = nullable_PhiWeight;
+  x.nullable_blocks = nullable_blocks;
+  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_block_weights = nullable_block_weights;
+  x.nullable_blocks_list = nullable_blocks_list;
+  x.nullable_rot_control = nullable_rot_control;
+
+  // Check rotation inputs and compute constants for rotation criteria:
+
+  check_rotate(x, random_starts, cores);
+
+  // Select one manifold:
+  base_manifold* manifold = choose_manifold(x.projection);
+  // Select one specific criteria or mixed criteria:
+  base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+
+  Rcpp::List rotation_result;
+
+  arma::vec weigths;
+  if (normalization == "kaiser") {
+
+    weigths = sqrt(sum(x.lambda % x.lambda, 1));
+    x.lambda.each_col() /= weigths;
+
+  }
+
+  if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
+
+    result["efa"] = efa_result;
+    result["modelInfo"] = modelInfo;
+    timer.step("elapsed");
+    result["elapsed"] = timer;
+
+    return result;
+
+  } else {
+
+    rotation_result = rotate_efa(x, manifold, criterion,
+                                 random_starts, cores, x.rot_eps, x.rot_maxit);
+
+  }
+
+  arma::mat L = rotation_result["loadings"];
+  arma::mat Phi = rotation_result["Phi"];
+
+  if (normalization == "kaiser") {
+
+    L.each_col() %= weigths;
+
+  }
+
+  rotation_result["loadings"] = L;
+  rotation_result["Phi"] = Phi;
+  rotation_result["Rhat"] = efa_result["Rhat"];
+  rotation_result["uniquenesses"] = efa_result["uniquenesses"];
+  rotation_result["Rhat"] = efa_result["Rhat"];
+  rotation_result["residuals"] = efa_result["residuals"];
+
+  result["efa"] = efa_result;
+  result["rotation"] = rotation_result;
   result["modelInfo"] = modelInfo;
 
   timer.step("elapsed");
-
   result["elapsed"] = timer;
 
   result.attr("class") = "efa";
@@ -412,6 +418,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  std::vector<std::string> rotation,
                  std::string projection,
+                 Rcpp::Nullable<int> nullable_nobs,
                  Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
@@ -420,8 +427,9 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
                  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                 bool normalize, std::string penalization,
-                 double gamma, arma::vec epsilon, arma::vec k, double w, double alpha,
+                 std::string normalization, std::string between_blocks,
+                 arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
+                 double alpha, double a, double b,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -431,45 +439,17 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   // Create defaults:
 
-  int rot_maxit, efa_maxit, lmm;
-  double rot_eps, efa_eps, efa_factr;
+  int efa_maxit, lmm;
+  double efa_eps, efa_factr;
   arma::vec init;
 
-  // Structure of arguments:
-
-  arguments x;
-  x.p = R.n_rows, x.q = n_factors;
-  x.lambda.set_size(x.p, x.q);
-  x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.a = alpha;
-  x.penalization = penalization;
-  x.rotations = rotation;
-  x.projection = projection;
-
-  // Check inputs and compute constants for rotation criteria:
-
-  check_rotate(x,
-               nullable_Target, nullable_Weight,
-               nullable_PhiTarget, nullable_PhiWeight,
-               nullable_blocks,
-               nullable_blocks_list,
-               nullable_block_weights,
-               nullable_oblq_blocks,
-               nullable_rot_control,
-               rot_maxit, rot_eps,
-               random_starts, cores);
+// Check EFA inputs:
 
   check_efa(R, n_factors, nullable_init, init,
             nullable_efa_control,
             efa_maxit, lmm, efa_factr);
 
-  // Select one manifold:
-  base_manifold* manifold = choose_manifold(x.projection);
-  // Select one specific criteria or mixed criteria:
-  base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
-
   Rcpp::List result;
-
   Rcpp::List efa_result = efa(init, R, n_factors, method, efa_maxit, efa_factr, lmm);
 
   bool heywood = efa_result["Heywood"];
@@ -483,66 +463,39 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   }
 
-  efa_result["Heywood"] = heywood;
-  arma::mat loadings = efa_result["loadings"];
-  x.lambda = loadings;
+  int p = R.n_cols;
+  int q = n_factors;
+  double df_null = p*(p-1)/2;
+  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
 
-  Rcpp::List rotation_result;
-
-  arma::vec weigths;
-  if (normalize) {
-
-    weigths = sqrt(sum(loadings % loadings, 1));
-    loadings.each_col() /= weigths;
-
+  double f_null;
+  if(method == "minres" || method == "pa") {
+    f_null = 0.5*(arma::accu(R % R) - R.n_cols);
+  } else if(method == "ml") {
+    f_null = -arma::log_det_sympd(R);
+  } else if(method == "minrank") {
+    f_null = 0;
   }
-
-  if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
-
-    return efa_result;
-
-  } else {
-
-    rotation_result = rotate_efa(x, manifold, criterion,
-                                 random_starts, cores, rot_eps, rot_maxit);
-
-  }
-
-  arma::mat L = rotation_result["loadings"];
-  arma::mat Phi = rotation_result["Phi"];
-
-  if (normalize) {
-
-    L.each_col() %= weigths;
-
-  }
-
-  arma::mat Rhat = L * Phi * L.t();
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
-
-  arma::vec uniquenesses = 1 - arma::diagvec(Rhat);
-
-  rotation_result["uniquenesses"] = uniquenesses;
-
-  Rhat.diag().ones();
-  rotation_result["Rhat"] = Rhat;
-  rotation_result["residuals"] = R - Rhat;
-
-  result["efa"] = efa_result;
-  result["rotation"] = rotation_result;
 
   Rcpp::List modelInfo;
   modelInfo["method"] = method;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
+  modelInfo["n_vars"] = R.n_cols;
+  modelInfo["n_factors"] = n_factors;
+  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["df"] = df;
+  modelInfo["df_null"] = df_null;
+  modelInfo["f_null"] = f_null;
   modelInfo["k"] = k;
   modelInfo["gamma"] = gamma;
   modelInfo["epsilon"] = epsilon;
   modelInfo["w"] = w;
   modelInfo["alpha"] = alpha;
-  modelInfo["normalize"] = normalize;
-  modelInfo["penalization"] = penalization;
+  modelInfo["a"] = a;
+  modelInfo["b"] = b;
+  modelInfo["normalization"] = normalization;
+  modelInfo["between_blocks"] = between_blocks;
   modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
@@ -552,10 +505,87 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["blocks_list"] = nullable_blocks_list;
   modelInfo["block_weights"] = nullable_block_weights;
   modelInfo["oblq_blocks"] = nullable_oblq_blocks;
+
+  arma::mat loadings = efa_result["loadings"];
+
+  // Structure of rotation arguments:
+
+  arguments_rotate x;
+  x.lambda = loadings;
+  x.p = R.n_rows, x.q = n_factors;
+  // x.lambda.set_size(x.p, x.q);
+  x.Phi.set_size(x.q, x.q); x.Phi.eye();
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
+    x.a = a, x.b = b;
+  x.between_blocks = between_blocks;
+  x.rotations = rotation;
+  x.projection = projection;
+  x.nullable_Target = nullable_Target;
+  x.nullable_Weight = nullable_Weight;
+  x.nullable_PhiTarget = nullable_PhiTarget;
+  x.nullable_PhiWeight = nullable_PhiWeight;
+  x.nullable_blocks = nullable_blocks;
+  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_block_weights = nullable_block_weights;
+  x.nullable_blocks_list = nullable_blocks_list;
+  x.nullable_rot_control = nullable_rot_control;
+
+  // Check inputs and compute constants for rotation criteria:
+
+  check_rotate(x, random_starts, cores);
+
+  // Select one manifold:
+  base_manifold* manifold = choose_manifold(x.projection);
+  // Select one specific criteria or mixed criteria:
+  base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+
+  Rcpp::List rotation_result;
+
+  arma::vec weigths;
+  if (normalization == "kaiser") {
+
+    weigths = sqrt(sum(x.lambda % x.lambda, 1));
+    x.lambda.each_col() /= weigths;
+
+  }
+
+  if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
+
+    result["efa"] = efa_result;
+    result["modelInfo"] = modelInfo;
+    timer.step("elapsed");
+    result["elapsed"] = timer;
+
+    return result;
+
+  } else {
+
+    rotation_result = rotate_efa(x, manifold, criterion,
+                                 random_starts, cores, x.rot_eps, x.rot_maxit);
+
+  }
+
+  arma::mat L = rotation_result["loadings"];
+  arma::mat Phi = rotation_result["Phi"];
+
+  if (normalization == "kaiser") {
+
+    L.each_col() %= weigths;
+
+  }
+
+  rotation_result["loadings"] = L;
+  rotation_result["Phi"] = Phi;
+  rotation_result["Rhat"] = efa_result["Rhat"];
+  rotation_result["uniquenesses"] = efa_result["uniquenesses"];
+  rotation_result["Rhat"] = efa_result["Rhat"];
+  rotation_result["residuals"] = efa_result["residuals"];
+
+  result["efa"] = efa_result;
+  result["rotation"] = rotation_result;
   result["modelInfo"] = modelInfo;
 
   timer.step("elapsed");
-
   result["elapsed"] = timer;
 
   result.attr("class") = "efa";

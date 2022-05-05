@@ -5,10 +5,10 @@
 \title{Fast rotation algorithm for factor analysis.}
 \usage{
 rotate(loadings, rotation = "oblimin", projection = "oblq",
-gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1,
+gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL,
-penalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
+between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
 }
 \arguments{
 \item{loadings}{Unrotated loading matrix.}
@@ -25,7 +25,11 @@ penalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
 
 \item{w}{\eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1.}
 
-\item{alpha}{\eqn{\alpha} parameter for the Tian and Liu penalization. Defaults to 1.}
+\item{alpha}{\eqn{\alpha} parameter for the Tian and Liu between_blocks. Defaults to 1.}
+
+\item{a}{Discrimination parameter for simplix rotation. Defaults to 30.}
+
+\item{b}{Difficulty parameter for simplix rotation. Defaults to 0.36.}
 
 \item{Target}{Target matrix for the loadings. Defaults to NULL.}
 
@@ -43,7 +47,7 @@ penalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
 
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
-\item{penalization}{Available penalizations: "TL" and "TLM". Defaults to none.}
+\item{between_blocks}{Available between_blocks: "TL" and "TLM". Defaults to none.}
 
 \item{rot_control}{List of control parameters for the rotation algorithm. Defaults to NULL.}
 

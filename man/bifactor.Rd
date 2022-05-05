@@ -4,13 +4,14 @@
 \alias{bifactor}
 \title{Fit an exploratory bi-factor or generalized bi-factor model.}
 \usage{
-bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD", projection = "oblq",
+bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
+projection = "oblq",
 PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, blocks_list = NULL, block_weights = NULL,
 oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L,
 cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
 efa_control = NULL, rot_control = NULL,
-SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE)
+first_efa = NULL, second_efa = NULL, verbose = TRUE)
 }
 \arguments{
 \item{R}{Correlation matrix.}
@@ -19,7 +20,7 @@ SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE)
 
 \item{n_groups}{Number of group factors to extract.}
 
-\item{bifactor_method}{"GSLiD" and "SL" (Schmid-Leiman) Defaults to "GSLiD".}
+\item{bifactor_method}{"GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".}
 
 \item{projection}{Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".}
 
@@ -49,15 +50,15 @@ SL_first_efa = NULL, SL_second_efa = NULL, verbose = TRUE)
 
 \item{cores}{Number of cores for parallel execution of multiple rotations. Defaults to 1L.}
 
-\item{init}{Initial uniquenesses values for exploratory factor analsyis estimation. Defaults to NULL.}
+\item{init}{Initial uniquenesses values for exploratory factor analysis estimation. Defaults to NULL.}
 
 \item{efa_control}{List of control parameters for efa fitting. Defaults to NULL.}
 
 \item{rot_control}{List of control parameters for the rotation algorithm. Defaults to NULL.}
 
-\item{SL_first_efa}{List of arguments to pass to \code{efast} to perform the first-order solution for the Schmid-Leiman method. Defaults to NULL.}
+\item{first_efa}{List of arguments to pass to \code{efast} to perform the first-order solution for the Schmid-Leiman method. Defaults to NULL.}
 
-\item{SL_second_efa}{List of arguments to pass to \code{efast} to perform the second-order solution for the Schmid-Leiman method. Defaults to NULL.}
+\item{second_efa}{List of arguments to pass to \code{efast} to perform the second-order solution for the Schmid-Leiman method. Defaults to NULL.}
 
 \item{verbose}{Print the convergence progress information. Defaults to TRUE.}
 }

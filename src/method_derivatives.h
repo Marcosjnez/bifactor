@@ -1,4 +1,12 @@
-#include "asymptotic_cov.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
+// #include "auxiliary_manifolds.h"
+// #include "asymptotic_cov.h"
 
 /*
  * Derivatives for minres:
@@ -12,11 +20,12 @@
 arma::mat gLRhat(arma::mat Lambda, arma::mat Phi) {
 
   int p = Lambda.n_rows;
+  int q = Lambda.n_cols;
   arma::mat I(p, p, arma::fill::eye);
   arma::mat LP = Lambda * Phi;
   arma::mat g1 = arma::kron(LP, I);
   arma::mat g21 = arma::kron(I, LP);
-  arma::mat g2 = g21 * dxt(Lambda);
+  arma::mat g2 = g21 * dxt(p, q);
   arma::mat g = g1 + g2;
 
   return g;
@@ -25,9 +34,10 @@ arma::mat gLRhat(arma::mat Lambda, arma::mat Phi) {
 
 arma::mat gPRhat(arma::mat Lambda, arma::mat Phi) {
 
+  int q = Phi.n_cols;
   arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
   arma::mat g1 = arma::kron(Lambda, Lambda);
-  arma::mat g2 = g1 * dxt(Phi);
+  arma::mat g2 = g1 * dxt(q, q);
   arma::mat g_temp = g1 + g2;
   arma::mat g = g_temp.cols(indexes);
 
@@ -104,7 +114,7 @@ arma::mat hessian_LambdaPhi(arma::mat S, arma::mat Lambda,
   arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
   arma::mat h1 = 2*arma::kron(LambdaPhi.t(), I1) * gPRhat(Lambda, Phi);
   arma::mat h21 = -2*arma::kron(I2, residuals * Lambda);
-  arma::mat h22 = h21 + h21 * dxt(Phi);
+  arma::mat h22 = h21 + h21 * dxt(q, q);
   arma::mat h2 = h22.cols(indexes);
   arma::mat h = h1 + h2;
 
@@ -205,7 +215,7 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
     h1 = LambdaPhitxI1 * gPR;
     arma::mat h21 = -2*arma::kron(I2, residuals * Lambda);
-    arma::mat h22 = h21 + h21 * dxt(Phi);
+    arma::mat h22 = h21 + h21 * dxt(q, q);
     h2 = h22.cols(indexes);
     h_LambdaPhi = h1 + h2;
 
@@ -307,7 +317,7 @@ arma::mat gLS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
   arma::mat LambdaPhi = Lambda * Phi;
   arma::mat I(p, p, arma::fill::eye);
   arma::mat g1 = -2*arma::kron(LambdaPhi.t(), I);
-  arma::mat g2 = g1 * dxt(S);
+  arma::mat g2 = g1 * dxt(p, p);
   arma::mat g_temp = g1 + g2;
   arma::mat g = g_temp.cols(indexes);
 
@@ -317,11 +327,12 @@ arma::mat gLS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 
 arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 
+  int p = S.n_rows;
   arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
   arma::uvec indexes2 = trimatl_ind(arma::size(S), -1);
 
   arma::mat g1 = -2*arma::kron(Lambda.t(), Lambda.t());
-  arma::mat g2 = g1 * dxt(S);
+  arma::mat g2 = g1 * dxt(p, p);
   arma::mat g_temp = g1 + g2;
   arma::mat g = g_temp(indexes1, indexes2);
 
@@ -345,7 +356,7 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
   arma::mat LambdaPhi = Lambda * Phi;
   arma::mat I(p, p, arma::fill::eye);
   arma::mat g1 = -2*arma::kron(LambdaPhi.t(), I);
-  arma::mat g2 = g1 * dxt(S);
+  arma::mat g2 = g1 * dxt(p, p);
   arma::mat g_temp = g1 + g2;
   arma::mat g = g_temp.cols(indexes2);
 
@@ -360,7 +371,7 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
   } else if(projection == "oblq") {
 
     arma::mat d1 = -2*arma::kron(Lambda.t(), Lambda.t());
-    arma::mat d2 = d1 * dxt(S);
+    arma::mat d2 = d1 * dxt(p, p);
     arma::mat d_temp = d1 + d2;
     arma::mat d = d_temp(indexes1, indexes2);
     gd = arma::join_cols(g, d);
@@ -456,7 +467,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
     arma::mat I2(q, q, arma::fill::eye);
 
-    arma::mat dxtPhi = dxt(Phi);
+    arma::mat dxtPhi = dxt(q, q);
     h1 = LPtxI * dRi_res_Ri_dP;
     arma::mat h21 = arma::kron(I2, Ri_res_Ri * Lambda);
     arma::mat h22 = h21 * dxtPhi;
@@ -569,7 +580,7 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
   Rhat.diag().ones();
   arma::mat Rhat_inv = arma::inv_sympd(Rhat);
   arma::mat dRi_res_Ri_dS = -2*arma::kron(Rhat_inv, Rhat_inv);
-  arma::mat dxtS = dxt(S);
+  arma::mat dxtS = dxt(p, p);
   dRi_res_Ri_dS += dRi_res_Ri_dS * dxtS;
   arma::mat g_temp = arma::kron(LambdaPhi.t(), I1) * dRi_res_Ri_dS;
   arma::mat g = g_temp.cols(indexes2);

@@ -1,4 +1,11 @@
-#include "fit_indices.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
+// #include "auxiliary_manifolds.h"
 
 arma::mat asymptotic_general(arma::mat X) {
 
@@ -38,7 +45,7 @@ arma::mat asymptotic_general(arma::mat X) {
 
   arma::mat Gamma = Theta - p * p.t();
 
-  arma::mat Ms = dxt(P)*0.5;
+  arma::mat Ms = dxt(q, q)*0.5;
   Ms.diag() += 0.5;
   arma::mat I(q, q, arma::fill::eye);
   arma::mat Kd(qq, q, arma::fill::zeros);
@@ -65,7 +72,7 @@ arma::mat asymptotic_normal(arma::mat P) {
   int q = P.n_rows;
   int qq = q*q;
 
-  arma::mat Ms = dxt(P)*0.5;
+  arma::mat Ms = dxt(q, q)*0.5;
   Ms.diag() += 0.5;
   arma::mat I(q, q, arma::fill::eye);
   arma::mat Kd(qq, q, arma::fill::zeros);

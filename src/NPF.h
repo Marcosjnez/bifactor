@@ -1,4 +1,15 @@
-#include "criteria.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
+// #include "structures.h"
+// #include "auxiliary_manifolds.h"
+// #include "manifold.h"
+// #include "auxiliary_criteria.h"
+// #include "criteria.h"
 
 std::vector<int> subvector(std::vector<int> v, int lower, int upper) {
 
@@ -16,9 +27,9 @@ std::vector<std::vector<int>> subvectors(std::vector<std::vector<int>> v, int lo
 
 }
 
-// Gram-Schmidt process:
-
 arma::mat gram(arma::mat X) {
+
+  // Gram-Schmidt process:
 
   int n = X.n_rows;
   int k = X.n_cols;
@@ -40,9 +51,9 @@ arma::mat gram(arma::mat X) {
 
 }
 
-// Solution to quadratic interpolation:
-
 double root_quad(double a, double b, double c) {
+
+  // Solution to quadratic interpolation:
 
   double res = 0.5 * (- b + sqrt(b * b - 4 * a * c) ) / a;
 
@@ -52,93 +63,93 @@ double root_quad(double a, double b, double c) {
 
 // Conjugate-gradient method to solve the Riemannian Newton equation:
 
-void tcg(base_manifold *manifold, base_criterion *criterion, arguments x, 
+void tcg(base_manifold *manifold, base_criterion *criterion, arguments_rotate x,
          arma::mat& dir, bool& att_bnd, double ng, arma::vec c, double rad) {
 
   /*
    * Truncated conjugate gradient sub-solver for the trust-region sub-problem
    * From Liu (Algorithm 4; 2020)
    */
-  
+
   dir.zeros();
   arma::mat dir0;
-  
+
   double alpha, rr0, tau, beta, dHd;
   x.dT = -x.rg; // Initial search direction
   arma::mat r = x.dT; // Initial residual
   double rr = ng * ng;
   double tol = ng * std::min(pow(ng, c[0]), c[1]);
-  
+
   int iter = 0;
-  
+
   do{
-    
+
     // Differential of L and P
     manifold->dLP(x);
-    
+
     // Differential of the gradient of L and P
     criterion->dgLP(x);
-    
+
     // Differential of g
     manifold->dgrad(x);
-    
+
     // Riemannian hessian
     manifold->hess(x);
-    
+
     dHd = arma::accu(x.dT % x.dH);
-    
+
     if(dHd <= 0) {
-      
+
       tau = root_quad(arma::accu(x.dT % x.dT), 2 * arma::accu(dir % x.dT),
                       arma::accu(dir % dir) - rad * rad); // Solve equation 39
       dir = dir + tau * x.dT;
       att_bnd = true;
-      
+
       break;
-      
+
     }
-    
+
     rr0 = rr;
     alpha = rr0 / dHd;
     dir0 = dir;
     dir = dir + alpha * x.dT; // update proposal
-    
+
     if (sqrt(arma::accu(dir % dir)) >= rad) {
-      
+
       tau = root_quad(arma::accu(x.dT % x.dT), 2 * arma::accu(dir0 % x.dT),
                       arma::accu(dir0 % dir0) - rad * rad); // Solve equation 39
       dir = dir0 + tau * x.dT;
       att_bnd = true;
-      
+
       break;
-      
+
     }
-    
+
     r = r - alpha * x.dH; // update gradient
     rr = arma::accu(r % r);
-    
+
     if (sqrt(rr) < tol) {
-      
+
       att_bnd = false;
       break;
-      
+
     }
-    
+
     beta = rr / rr0;
     x.dT = r + beta * x.dT;
     iter = iter + 1;
-    
+
   } while (iter < 5);
-  
+
 }
 
-// Trust-region Riemannian Newton algorithm:
+// Riemannian Newton Trust-region algorithm:
 
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> TRN;
 
-TRN NPF(arguments x, base_manifold *manifold, base_criterion *criterion,
+TRN NPF(arguments_rotate x, base_manifold *manifold, base_criterion *criterion,
         double eps, int max_iter) {
-  
+
   /*
    * Riemannian trust-region algorithm
    * From Liu (Algorithm 2; 2020)
@@ -150,14 +161,23 @@ TRN NPF(arguments x, base_manifold *manifold, base_criterion *criterion,
   // Objective
   criterion->F(x); // update x.f, x.L2, x.IgCL2N, x.term, x.f1 and x.f2
 
+  // Rcpp::Rcout << "x.f = " << x.f << std::endl;
+
   // Gradient wrt L
   criterion->gLP(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
+
+  // Rcpp::Rcout << "x.gL = " << x.gL << std::endl;
 
   // Gradient wtr T
   manifold->grad(x); // update x.g
 
   // Riemannian gradient
   manifold->proj(x); // update x.rg and x.A
+
+  // Differential of the gradient of L and P
+  // criterion->dgLP(x); // update dgL and dgP
+
+  // Rcpp::Rcout << "x.dgL = " << x.dgL << std::endl;
 
   double ng = sqrt(arma::accu(x.rg % x.rg));
 
@@ -182,9 +202,9 @@ TRN NPF(arguments x, base_manifold *manifold, base_criterion *criterion,
   int iteration = 0;
   double goa, preddiff;
 
-  arguments new_x;
+  arguments_rotate new_x;
   arma::mat dir(x.q, x.q);
-  
+
   do {
 
     if (ng < eps) break;

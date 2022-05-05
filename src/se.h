@@ -1,4 +1,16 @@
-#include "method_derivatives.h"
+/*
+ * Author: Marcos Jimenez
+ * email: marcosjnezhquez@gmail.com
+ * Modification date: 18/03/2022
+ *
+ */
+
+// #include "structures.h"
+// #include "checks.h"
+// #include "manifolds.h"
+// #include "criteria.h"
+// #include "multiple_rotations.h"
+// #include "method_derivatives.h"
 
 Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
               Rcpp::Nullable<int> nullable_n,
@@ -13,9 +25,8 @@ Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
     n = Rcpp::as<int>(nullable_n);
   }
 
-  arguments x;
-  int rot_maxit = 1L, random_starts = 1L, cores = 1L;
-  double rot_eps = 0.05;
+  arguments_rotate x;
+  int random_starts = 1L, cores = 1L;
 
   // Overwrite x according to modelInfo:
 
@@ -34,29 +45,37 @@ Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   arma::mat T_ = rot["T"]; x.T = T_;
   arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
-  double gamma_ = modelInfo["gamma"]; x.gamma = gamma_;
+  arma::vec gamma_ = modelInfo["gamma"]; x.gamma = gamma_;
   arma::vec k_ = modelInfo["k"]; x.k = k_;
   arma::vec epsilon_ = modelInfo["epsilon"]; x.epsilon = epsilon_;
   double w_ = modelInfo["w"]; x.w = w_;
-  double alpha_ = modelInfo["alpha"]; x.a = alpha_;
-  std::string penalization_ = modelInfo["penalization"]; x.penalization = penalization_;
+  double alpha_ = modelInfo["alpha"]; x.alpha = alpha_;
+  double a_ = modelInfo["a"]; x.a = a_;
+  double b_ = modelInfo["b"]; x.b = b_;
+  std::string between_blocks_ = modelInfo["between_blocks"]; x.between_blocks = between_blocks_;
 
   arma::mat S_ = modelInfo["R"]; x.S = S_;
   std::string method = modelInfo["method"];
   Rcpp::Nullable<arma::mat> Target_ = modelInfo["Target"];
+  x.nullable_Target = Target_;
   Rcpp::Nullable<arma::mat> Weight_ = modelInfo["Weight"];
+  x.nullable_Weight = Weight_;
   Rcpp::Nullable<arma::mat> PhiTarget_ = modelInfo["PhiTarget"];
+  x.nullable_PhiTarget = PhiTarget_;
   Rcpp::Nullable<arma::mat> PhiWeight_ = modelInfo["PhiWeight"];
+  x.nullable_PhiWeight = PhiWeight_;
   Rcpp::Nullable<arma::uvec> blocks_ = modelInfo["blocks"];
+  x.nullable_blocks = blocks_;
   Rcpp::Nullable<std::vector<arma::uvec>> blocks_list_ = modelInfo["blocks_list"];
+  x.nullable_blocks_list = blocks_list_;
   Rcpp::Nullable<arma::vec> block_weights_ = modelInfo["block_weights"];
+  x.nullable_block_weights = block_weights_;
   Rcpp::Nullable<arma::uvec> oblq_blocks_ = modelInfo["oblq_blocks"];
+  x.nullable_oblq_blocks = oblq_blocks_;
+  Rcpp::Nullable<arma::uvec> rot_control_ = modelInfo["oblq_blocks"];
+  x.nullable_rot_control = R_NilValue;
 
-  check_rotate(x,
-               Target_, Weight_, PhiTarget_, PhiWeight_,
-               blocks_, blocks_list_, block_weights_, oblq_blocks_,
-               R_NilValue, rot_maxit, rot_eps,
-               random_starts, cores);
+  check_rotate(x, random_starts, cores);
 
   base_manifold* manifold = choose_manifold(x.projection);
   base_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
