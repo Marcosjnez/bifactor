@@ -9,8 +9,10 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101) 
   }
   
   ### Pattern matrix with communalities, uniqueness, and complexity
-  lambda <- efa$rotation$loadings[,order(colSums(efa$rotation$loadings^2), decreasing=T)]
+  ordering <- order(colSums(efa$rotation$loadings^2), decreasing=T)
+  lambda <- efa$rotation$loadings
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
+  lambda <- lambda[,ordering]
   if(is.null(colnames(efa$modelInfo$R))) {
     rownames(lambda) <- paste("item_",sprintf(paste("%0",nchar(nrow(lambda)),"d",sep=""),1:nrow(lambda)),sep="")
   } else {
@@ -37,8 +39,7 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101) 
                      "Proportion Explained", "Cumulative Proportion")
   
   ### Factor correlations
-  Phi    <- efa$rotation$Phi[order(colSums(efa$rotation$loadings^2), decreasing=T),
-                             order(colSums(efa$rotation$loadings^2), decreasing=T)] 
+  Phi    <- efa$rotation$Phi[ordering, ordering] 
   rownames(Phi) <- colnames(Phi) <- colnames(lambda)
   
   ### Fit statistics
@@ -87,11 +88,11 @@ print.efa <- function(efa, nobs=NULL) {
       nobs <- efa$modelInfo$n_obs
     }
   }
+  ordering <- order(colSums(efa$rotation$loadings^2), decreasing=T)
   fit  <- suppressWarnings(fitMeasures(efa, nobs))
-  Phi    <- efa$rotation$Phi[order(colSums(efa$rotation$loadings^2), decreasing=T),
-                             order(colSums(efa$rotation$loadings^2), decreasing=T)] 
+  Phi    <- efa$rotation$Phi[ordering, ordering] 
   rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$n_factors),"d",sep=""),
-                                                      1:efa$modelInfo$n_factors),sep="")
+                                                      ordering),sep="")
   # Print
   cat("Factor Analysis using method = ", efa$modelInfo$method, "\n", sep="")
   cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
