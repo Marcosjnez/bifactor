@@ -396,7 +396,7 @@ cudeck <- function(R, lambda, Phi, uniquenesses,
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
   if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
 
-  return(R_error)
+  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
 
 }
 yuan <- function(R, lambda, Phi, uniquenesses,
@@ -477,7 +477,7 @@ yuan <- function(R, lambda, Phi, uniquenesses,
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
   if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
 
-  return(R_error)
+  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
 
 }
 
@@ -716,17 +716,23 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
     if(error_method == "cudeck") {
 
-      R_error <- cudeck(R = R, lambda = lambda, Phi = Phi,
+      cudeck_ <- cudeck(R = R, lambda = lambda, Phi = Phi,
                         uniquenesses = uniquenesses,
                         fit = fit, misfit = misfit,
                         method = method, confirmatory = confirmatory)
+      R_error <- cudeck_$R_error
+      delta <- cudeck_$delta
+      misfit <- cudeck_$misfit
 
     } else if(error_method == "yuan") {
 
-      R_error <- yuan(R = R, lambda = lambda, Phi = Phi,
+      yuan_ <- yuan(R = R, lambda = lambda, Phi = Phi,
                       uniquenesses = uniquenesses,
                       fit = fit, misfit = misfit,
                       method = method, confirmatory = confirmatory)
+      R_error <- yuan_$R_error
+      delta <- yuan_$delta
+      misfit <- yuan_$misfit
 
     }
 
@@ -736,7 +742,8 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   }
 
-  return( list(lambda = lambda, Phi = Phi, R = R, R_error = R_error,
-               uniquenesses = uniquenesses, delta = delta) )
+  return( list(lambda = lambda, Phi = Phi, uniquenesses = uniquenesses,
+               R = R, R_error = R_error, fit = fit, delta = delta,
+               misfit = misfit) )
 
 }
