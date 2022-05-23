@@ -27,9 +27,9 @@ std::vector<std::vector<int>> subvectors(std::vector<std::vector<int>> v, int lo
 
 }
 
-arma::mat gram(arma::mat X) {
+// Gram-Schmidt process:
 
-  // Gram-Schmidt process:
+arma::mat gram(arma::mat X) {
 
   int n = X.n_rows;
   int k = X.n_cols;
@@ -143,7 +143,7 @@ void tcg(base_manifold *manifold, base_criterion *criterion, arguments_rotate x,
 
 }
 
-// Riemannian Newton Trust-region algorithm:
+// Newton Trust-region algorithm:
 
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> TRN;
 

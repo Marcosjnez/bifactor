@@ -442,8 +442,8 @@ arma::mat retr_oblq(arma::mat X) {
 
 arma::mat retr_poblq(arma::mat X, arma::uvec oblq_blocks) {
 
-  int n_factors = arma::accu(oblq_blocks);
-  if(n_factors > X.n_rows || n_factors > X.n_cols) Rcpp::stop("Too many factors declared in oblq_blocks");
+  int nfactors = arma::accu(oblq_blocks);
+  if(nfactors > X.n_rows || nfactors > X.n_cols) Rcpp::stop("Too many factors declared in oblq_blocks");
 
   std::vector<arma::uvec> list_oblq_blocks = vector_to_list2(oblq_blocks);
 
@@ -481,8 +481,8 @@ arma::mat random_oblq(int p, int q) {
 
 arma::mat random_poblq(int p, int q, arma::uvec oblq_blocks) {
 
-  int n_factors = arma::accu(oblq_blocks);
-  if(n_factors > p || n_factors > q) Rcpp::stop("Too many factors declared in oblq_blocks");
+  int nfactors = arma::accu(oblq_blocks);
+  if(nfactors > p || nfactors > q) Rcpp::stop("Too many factors declared in oblq_blocks");
 
   std::vector<arma::uvec> list_oblq_blocks = vector_to_list2(oblq_blocks);;
 

@@ -118,7 +118,7 @@ std::vector<arma::uvec> vector_to_list2(arma::uvec v){
 
 arma::vec orthogonalize(arma::mat X, arma::vec x, int k) {
 
-  // Make every column of X orthogonal to x
+  // Make x orthogonal to every column of X
 
   for(int i=0; i < k; ++i) {
 

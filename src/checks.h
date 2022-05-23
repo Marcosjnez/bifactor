@@ -376,11 +376,11 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
 }
 
-void check_efa(arma::mat R, int n_factors, Rcpp::Nullable<arma::vec> nullable_init,
+void check_efa(arma::mat R, int nfactors, Rcpp::Nullable<arma::vec> nullable_init,
                arma::vec& init, Rcpp::Nullable<Rcpp::List> nullable_efa_control,
                int& efa_maxit, int& lmm, double& efa_factr) {
 
-  if(R.n_rows < n_factors) Rcpp::stop("Too many factors");
+  if(R.n_rows < nfactors) Rcpp::stop("Too many factors");
 
   if (nullable_init.isNotNull()) {
     init = Rcpp::as<arma::vec>(nullable_init);

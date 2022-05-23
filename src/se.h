@@ -12,17 +12,21 @@
 // #include "multiple_rotations.h"
 // #include "method_derivatives.h"
 
-Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
-              Rcpp::Nullable<int> nullable_n,
+Rcpp::List se(Rcpp::List fit,
+              Rcpp::Nullable<int> nullable_nobs,
               Rcpp::Nullable<arma::mat> nullable_X,
               std::string type, double eta) {
 
-  int n;
+  Rcpp::List modelInfo = fit["modelInfo"];
+  Rcpp::Nullable<int> modelInfo_nobs = modelInfo["nobs"];
+  int nobs;
 
-  if(nullable_n.isNull()) {
+  if(modelInfo_nobs.isNotNull()) {
+    nobs = Rcpp::as<int>(modelInfo_nobs);
+  } else if(nullable_nobs.isNotNull()) {
+    nobs = Rcpp::as<int>(nullable_nobs);
+  } else {
     Rcpp::stop("Please, specify the sample size");
-  } else{
-    n = Rcpp::as<int>(nullable_n);
   }
 
   arguments_rotate x;
@@ -30,8 +34,6 @@ Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
 
   // Overwrite x according to modelInfo:
 
-  Rcpp::List fit = nullable_fit.get();
-  Rcpp::List modelInfo = fit["modelInfo"];
   Rcpp::List rot = fit["rotation"];
   arma::mat L_ = rot["loadings"]; x.L = L_;
   Rcpp::List efa = fit["efa"];
@@ -129,7 +131,7 @@ Rcpp::List se(Rcpp::Nullable<Rcpp::List> nullable_fit,
   arma::mat BB = B(x.S, x.L, x.Phi, nullable_X, method, x.projection,
                    type, eta);
   arma::mat VAR = A_inv * BB * A_inv;
-  arma::vec se = sqrt(arma::diagvec(VAR)/(n-1));
+  arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));
 
   arma::mat Lambda_se(x.p, x.q);
   arma::mat Phi_se(x.q, x.q);

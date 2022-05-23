@@ -464,7 +464,7 @@ arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> nullable_Phi,
 
 }
 
-void update_target(int n_generals, int n, int n_factors,
+void update_target(int n_generals, int n, int nfactors,
                    arma::mat loadings, arma::mat Phi, double cutoff,
                    arma::mat& new_Target) {
 
@@ -481,10 +481,10 @@ void update_target(int n_generals, int n, int n_factors,
   } else {
 
     arma::mat loadings_g = loadings(arma::span::all, arma::span(0, n_generals-1));
-    arma::mat loadings_s = loadings(arma::span::all, arma::span(n_generals, n_factors-1));
+    arma::mat loadings_s = loadings(arma::span::all, arma::span(n_generals, nfactors-1));
 
     arma::mat Phi_g = Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1));
-    arma::mat Phi_s = Phi(arma::span(n_generals, n_factors-1), arma::span(n_generals, n_factors-1));
+    arma::mat Phi_s = Phi(arma::span(n_generals, nfactors-1), arma::span(n_generals, nfactors-1));
 
     arma::mat new_Target_g = get_target(loadings_g, Phi_g, cutoff);
     arma::mat new_Target_s = get_target(loadings_s, Phi_s, cutoff);
@@ -594,6 +594,8 @@ Rcpp::List GSLiD(std::string projection,
 
   do{
 
+    Rcpp::checkUserInterrupt();
+
     old_Target = new_Target;
 
     rotation_result = rotate_efa(x, manifold, criterion, random_starts,
@@ -662,7 +664,7 @@ Rcpp::List GSLiD(std::string projection,
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
   // rotation_result["Targets"] = Targets;
   result["efa"] = efa_result;
-  result["bifactor"] = rotation_result;
+  result["GSLiD"] = rotation_result;
 
   return result;
 
@@ -728,8 +730,8 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
   SEXP blocks_vector_ = Rcpp::wrap(blocks_vector);
   x2.nullable_blocks = blocks_vector_;
 
-  int n_factors = n_generals + n_groups;
-  Rcpp::List final_efa = efast(R, n_factors, x2.method, x2.rotation,
+  int nfactors = n_generals + n_groups;
+  Rcpp::List final_efa = efast(R, nfactors, x2.method, x2.rotation,
                                x2.projection, x2.nullable_nobs,
                                x2.nullable_Target, x2.nullable_Weight,
                                x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -775,7 +777,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
   if(cutoff < 0) Rcpp::stop("cutoff must be nonnegative");
 
   int n = R.n_rows;
-  int n_factors = n_generals + n_groups;
+  int nfactors = n_generals + n_groups;
 
   Rcpp::List result, SL_result;
 
@@ -806,7 +808,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
       // Create the factor correlation matrix for the SL solution:
 
-      arma::mat new_Phi(n_factors, n_factors, arma::fill::eye);
+      arma::mat new_Phi(nfactors, nfactors, arma::fill::eye);
 
       if(n_generals > 1) {
 
@@ -825,7 +827,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
       // Create initial target:
 
       arma::mat Target;
-      update_target(n_generals, n, n_factors, loadings, new_Phi, cutoff, Target);
+      update_target(n_generals, n, nfactors, loadings, new_Phi, cutoff, Target);
       SEXP Target_ = Rcpp::wrap(Target);
       nullable_Target = Target_;
 

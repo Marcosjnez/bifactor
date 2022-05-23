@@ -14,7 +14,7 @@
 // #include "EFA_fit.h"
 // #include "checks.h"
 
-Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
+Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
                int efa_max_iter, double efa_factr, int lmm) {
 
   Rcpp::List result;
@@ -26,7 +26,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
 
   if (method == "minres") {
 
-    Rcpp::List optim_result = optim_rcpp(psi, R, n_factors, method, efa_max_iter, efa_factr, lmm);
+    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, method, efa_max_iter, efa_factr, lmm);
 
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
@@ -39,9 +39,9 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
 
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-    for(int i=0; i < n_factors; ++i) {
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+    for(int i=0; i < nfactors; ++i) {
       if(eigenvalues(i) < 0) eigenvalues(i) = 0;
     }
     arma::mat D = diagmat(sqrt(eigenvalues));
@@ -64,7 +64,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
 
   } else if (method == "ml") {
 
-    Rcpp::List optim_result = optim_rcpp(psi, R, n_factors, method, efa_max_iter, efa_factr, lmm);
+    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, method, efa_max_iter, efa_factr, lmm);
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
 
@@ -79,9 +79,9 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
 
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1)) - 1;
-    for(int i=0; i < n_factors; ++i) {
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1)) - 1;
+    for(int i=0; i < nfactors; ++i) {
       if(eigenvalues[i] < 0) eigenvalues[i] = 0;
     }
     arma::mat D = diagmat(sqrt(eigenvalues));
@@ -104,7 +104,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
 
   } else if (method == "pa") {
 
-    Rcpp::List pa_result = principal_axis(psi, R, n_factors, 1e-03, efa_max_iter);
+    Rcpp::List pa_result = principal_axis(psi, R, nfactors, 1e-03, efa_max_iter);
 
     arma::mat w_temp = pa_result["loadings"];
     arma::vec uniquenesses_temp = pa_result["uniquenesses"];
@@ -133,9 +133,9 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int n_factors, std::string method,
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
 
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-    for(int i=0; i < n_factors; ++i) {
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+    for(int i=0; i < nfactors; ++i) {
       if(eigenvalues(i) < 0) eigenvalues(i) = 0;
     }
     arma::mat D = arma::diagmat(sqrt(eigenvalues));
@@ -235,7 +235,7 @@ Rcpp::List rotate_efa(arguments_rotate x, base_manifold *manifold, base_criterio
 
 }
 
-Rcpp::List efast(arma::mat R, int n_factors, std::string method,
+Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  Rcpp::CharacterVector char_rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -267,12 +267,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   // Check EFA inputs:
 
-  check_efa(R, n_factors, nullable_init, init,
+  check_efa(R, nfactors, nullable_init, init,
             nullable_efa_control,
             efa_maxit, lmm, efa_factr);
 
   Rcpp::List result;
-  Rcpp::List efa_result = efa(init, R, n_factors, method, efa_maxit, efa_factr, lmm);
+  Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
 
   bool heywood = efa_result["Heywood"];
 
@@ -281,12 +281,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
 
-    efa_result = efa(init, R, n_factors, "minrank", efa_maxit, efa_factr, lmm);
+    efa_result = efa(init, R, nfactors, "minrank", efa_maxit, efa_factr, lmm);
 
   }
 
   int p = R.n_cols;
-  int q = n_factors;
+  int q = nfactors;
   double df_null = p*(p-1)/2;
   double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
 
@@ -304,7 +304,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
   modelInfo["n_vars"] = R.n_cols;
-  modelInfo["n_factors"] = n_factors;
+  modelInfo["nfactors"] = nfactors;
   modelInfo["nobs"] = nullable_nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
@@ -334,7 +334,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   arguments_rotate x;
   x.lambda = loadings;
-  x.p = R.n_rows, x.q = n_factors;
+  x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
@@ -415,7 +415,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 }
 
 // Do not export this (overloaded to support std::vector<std::string> rotation):
-Rcpp::List efast(arma::mat R, int n_factors, std::string method,
+Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  std::vector<std::string> rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -445,12 +445,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
 // Check EFA inputs:
 
-  check_efa(R, n_factors, nullable_init, init,
+  check_efa(R, nfactors, nullable_init, init,
             nullable_efa_control,
             efa_maxit, lmm, efa_factr);
 
   Rcpp::List result;
-  Rcpp::List efa_result = efa(init, R, n_factors, method, efa_maxit, efa_factr, lmm);
+  Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
 
   bool heywood = efa_result["Heywood"];
 
@@ -459,12 +459,12 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
 
-    efa_result = efa(init, R, n_factors, "minrank", efa_maxit, efa_factr, lmm);
+    efa_result = efa(init, R, nfactors, "minrank", efa_maxit, efa_factr, lmm);
 
   }
 
   int p = R.n_cols;
-  int q = n_factors;
+  int q = nfactors;
   double df_null = p*(p-1)/2;
   double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
 
@@ -482,7 +482,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
   modelInfo["n_vars"] = R.n_cols;
-  modelInfo["n_factors"] = n_factors;
+  modelInfo["nfactors"] = nfactors;
   modelInfo["nobs"] = nullable_nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
@@ -512,7 +512,7 @@ Rcpp::List efast(arma::mat R, int n_factors, std::string method,
 
   arguments_rotate x;
   x.lambda = loadings;
-  x.p = R.n_rows, x.q = n_factors;
+  x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,

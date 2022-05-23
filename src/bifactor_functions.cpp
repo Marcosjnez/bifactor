@@ -76,7 +76,7 @@ Rcpp::List rotate(arma::mat loadings,
                   int random_starts = 1, int cores = 1);
 
 // [[Rcpp::export]]
-Rcpp::List efast(arma::mat R, int n_factors, std::string method = "minres",
+Rcpp::List efast(arma::mat R, int nfactors, std::string method = "minres",
                  Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                  std::string projection = "oblq",
                  Rcpp::Nullable<int> nobs = R_NilValue,
@@ -126,8 +126,8 @@ arma::mat asymp_cov(arma::mat R,
                     double eta = 1, std::string type = "normal");
 
 // [[Rcpp::export]]
-Rcpp::List se(Rcpp::Nullable<Rcpp::List> fit = R_NilValue,
-              Rcpp::Nullable<int> n = R_NilValue,
+Rcpp::List se(Rcpp::List fit = R_NilValue,
+              Rcpp::Nullable<int> nobs = R_NilValue,
               Rcpp::Nullable<arma::mat> X = R_NilValue,
               std::string type = "normal", double eta = 1);
 

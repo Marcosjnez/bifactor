@@ -349,12 +349,14 @@ public:
 
   void hLP(arguments_rotate& x) {
 
-    arma::mat W2 = x.Weight % x.Weight;
-    x.hL = arma::diagmat(arma::vectorise(W2));
+    x.hL = arma::diagmat(arma::vectorise(x.Weight2));
 
-    arma::mat wPW2 = x.w * x.Phi_Weight % x.Phi_Weight;
+    arma::mat wPW2 = arma::diagmat(arma::vectorise(x.w*x.Phi_Weight2));
+    arma::mat hP = wPW2 + wPW2 * dxt(x.q, x.q);
     arma::uvec lower_indices = arma::trimatl_ind(arma::size(x.Phi), -1);
-    x.hP = arma::diagmat(wPW2(lower_indices));
+    x.hP = hP;
+    // x.hP = hP.cols(lower_indices);
+
 
   }
 
