@@ -7,13 +7,12 @@
 #' @usage
 #'
 #' ## S3 method for class 'efa'
-#' summary(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, ...)
+#' summary(efa, nobs=NULL, suppress=0, order=FALSE, ...)
 #'
 #' @param efa Object of class efa.
 #' @param nobs Sample size. Defaults to NULL.
 #' @param suppress Hide the loadings whose absolute magnitudes are smaller than this cutoff. Defaults to 0.
 #' @param order Order the columns of the pattern matrix according to the variance they account for. Defaults to FALSE.
-#' @param print.max Maximum number of rows to print. Defaults to 101.
 #' @param ... Arguments to be passed to or from other methods.
 #' @details \code{summary.efa}... to be explained
 #'
@@ -31,7 +30,7 @@
 #' Vithor R. Franco & Marcos Jiménez
 #'
 #' @export
-summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, ...) {
+summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, ...) {
   # Check if nobs was provided
   if(is.null(nobs)) {
     if(is.null(efa$modelInfo$nobs)) {
@@ -45,14 +44,15 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, 
   if(efa$modelInfo$rotation == "none") { # For efa without rotation
     lambda <- efa$efa$loadings
     Phi <- diag(ncol(lambda))
-    uniquenesses <- efa$efa$uniquenesses
+    uniquenesses <- c(efa$efa$uniquenesses)
+    ObjFn <- efa$efa$f
   } else { # For efa with rotation
     lambda <- efa$rotation$loadings
     Phi <- efa$rotation$Phi
-    uniquenesses <- efa$efa$uniquenesses
+    uniquenesses <- c(efa$rotation$uniquenesses)
+    ObjFn <- efa$rotation$f
   }
-
-  SSloads <- diag(Phi %*% t(lambda) %*% lambda)
+  SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
   ordering <- order(SSloads, decreasing=T)
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
   lambda <- lambda[,ordering]
@@ -63,18 +63,18 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, 
   }
   lambda <- lambda * {abs(lambda) > abs(suppress)}
   if(order) {
-    lambda  <- lambda[order(apply(abs(lambda), 1, which.max), decreasing=FALSE),]
+    orderItems <- apply(abs(lambda), 1, which.max)
+    lambda  <- lambda[order(orderItems, decreasing=FALSE),]
+    uniquenesses <- uniquenesses[order(orderItems, decreasing=FALSE)]
   }
-  h2     <- c(1 - uniquenesses)
-  u2     <- c(uniquenesses)
-  # Is this item complexity measure correct for oblique rotation?
-  com    <- {rowSums(efa$rotation$loadings ^ 2)^2}/rowSums(efa$rotation$loadings ^ 4)
+  h2     <- 1 - uniquenesses
+  u2     <- uniquenesses
+  com    <- {rowSums(lambda ^ 2)^2}/rowSums(lambda ^ 4)
   names(h2) <- names(u2) <- names(com) <- rownames(lambda)
   loadsM <- round(data.frame(lambda, h2, u2, com), 3)
 
   ### Variance accounted for
-  # SSloads <- colSums(lambda ^ 2) # For orthogonal factors
-  SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
+  SSloads <- sort(SSloads, decreasing=T)
   propVar <- SSloads/nrow(lambda)
   cumsVar <- cumsum(propVar)
   propExp <- propVar/sum(propVar)
@@ -84,6 +84,7 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, 
                      "Proportion Explained", "Cumulative Proportion")
 
   ### Factor correlations
+  Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- colnames(lambda)
 
   ### Fit statistics
@@ -107,7 +108,7 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, 
   cat("\n","The degrees of freedom for the null model are ", efa$modelInfo$df_null,
       " and the objective function was ", round(efa$modelInfo$f_null,2), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
-      " and the objective function was ", round(efa$rotation$f,2), "\n", sep="")
+      " and the objective function was ", round(ObjFn,2), "\n", sep="")
   if(!is.null(nobs)) {
     cat("The total number of observations was ", nobs, " with Unbiased Chi-squared = ",
         round(fit["chisq.unbiased"],1), " with prob < ", fit["pvalue.unbiased"] , sep="")
