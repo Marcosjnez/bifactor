@@ -46,7 +46,7 @@ arma::vec sdp_cpp(arma::mat Cov) {
 
 }
 
-Rcpp::List principal_axis(arma::vec psi, arma::mat R, int n_factors,
+Rcpp::List principal_axis(arma::vec psi, arma::mat R, int nfactors,
                     double rel_tol, int efa_max_iter) {
 
   Rcpp::List result;
@@ -68,9 +68,9 @@ Rcpp::List principal_axis(arma::vec psi, arma::mat R, int n_factors,
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
 
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-    for(int i=0; i < n_factors; ++i) {
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+    for(int i=0; i < nfactors; ++i) {
       if(eigenvalues[i] < 0) eigenvalues[i] = 0;
     }
     arma::mat D = diagmat(sqrt(eigenvalues));
@@ -106,7 +106,7 @@ Rcpp::List principal_axis(arma::vec psi, arma::mat R, int n_factors,
 
 }
 
-double ml_objective(arma::vec psi, arma::mat R, int n_factors, int n_items) {
+double ml_objective(arma::vec psi, arma::mat R, int nfactors, int n_items) {
 
   arma::mat sc = diagmat(1/sqrt(psi));
   arma::mat Sstar = sc * R * sc;
@@ -114,16 +114,16 @@ double ml_objective(arma::vec psi, arma::mat R, int n_factors, int n_items) {
   arma::vec eigval;
   eig_sym(eigval, Sstar);
 
-  arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
+  arma::vec e = eigval(arma::span(0, n_items - nfactors - 1));
 
   // double objective = -arma::accu(log(e) + 1/e - 1);
-  double objective = arma::accu(log(e) - e) + n_items - n_factors;
+  double objective = arma::accu(log(e) - e) + n_items - nfactors;
 
   return -objective;
 
 }
 
-arma::vec ml_gradient(arma::vec psi, arma::mat R, int n_factors, int n_items) {
+arma::vec ml_gradient(arma::vec psi, arma::mat R, int nfactors, int n_items) {
 
   arma::vec sqrt_psi = sqrt(psi);
   arma::mat sc = diagmat(1/sqrt_psi);
@@ -136,9 +136,9 @@ arma::vec ml_gradient(arma::vec psi, arma::mat R, int n_factors, int n_items) {
   arma::vec eigval2 = reverse(eigval);
   arma::mat eigvec2 = reverse(eigvec, 1);
 
-  arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-  arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1)) - 1;
-  for(int i=0; i < n_factors; ++i) {
+  arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+  arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1)) - 1;
+  for(int i=0; i < nfactors; ++i) {
     if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   }
   arma::mat D = diagmat(sqrt(eigenvalues));
@@ -153,7 +153,7 @@ arma::vec ml_gradient(arma::vec psi, arma::mat R, int n_factors, int n_items) {
   return gradient;
 }
 
-double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
+double minres_objective(arma::vec psi, arma::mat R, int nfactors) {
 
   int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
@@ -165,9 +165,9 @@ double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
   // arma::vec eigval2 = reverse(eigval);
   // arma::mat eigvec2 = reverse(eigvec, 1);
   //
-  // arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-  // arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-  // for(int i=0; i < n_factors; ++i) {
+  // arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+  // arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+  // for(int i=0; i < nfactors; ++i) {
   //   if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   // }
   // arma::mat D = diagmat(sqrt(eigenvalues));
@@ -179,14 +179,14 @@ double minres_objective(arma::vec psi, arma::mat R, int n_factors) {
   // double objective = 0.5*arma::accu(residuals % residuals);
 
   eig_sym(eigval, reduced_R);
-  arma::vec e = eigval(arma::span(0, n_items - n_factors - 1));
+  arma::vec e = eigval(arma::span(0, n_items - nfactors - 1));
   double objective = 0.5*arma::accu(e % e);
 
   return objective;
 
 }
 
-arma::vec minres_gradient(arma::vec psi, arma::mat R, int n_factors) {
+arma::vec minres_gradient(arma::vec psi, arma::mat R, int nfactors) {
 
   int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
@@ -198,9 +198,9 @@ arma::vec minres_gradient(arma::vec psi, arma::mat R, int n_factors) {
   // arma::vec eigval2 = reverse(eigval);
   // arma::mat eigvec2 = reverse(eigvec, 1);
   //
-  // arma::mat A = eigvec2(arma::span::all, arma::span(0, n_factors-1));
-  // arma::vec eigenvalues = eigval2(arma::span(0, n_factors-1));
-  // for(int i=0; i < n_factors; ++i) {
+  // arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
+  // arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+  // for(int i=0; i < nfactors; ++i) {
   //   if(eigenvalues[i] < 0) eigenvalues[i] = 0;
   // }
   // arma::mat D = diagmat(sqrt(eigenvalues));
@@ -210,15 +210,15 @@ arma::vec minres_gradient(arma::vec psi, arma::mat R, int n_factors) {
   // arma::mat residuals = R - ww - diagmat(psi);
   // arma::mat gradient = -diagvec(residuals);
 
-  arma::vec e_values = eigval(arma::span(0, n_items - n_factors - 1));
-  arma::mat e_vectors = eigvec(arma::span::all, arma::span(0, n_items - n_factors - 1));
+  arma::vec e_values = eigval(arma::span(0, n_items - nfactors - 1));
+  arma::mat e_vectors = eigvec(arma::span::all, arma::span(0, n_items - nfactors - 1));
   arma::mat gradient = -arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
 
   return gradient;
 
 }
 
-Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int n_factors, std::string method,
+Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int nfactors, std::string method,
                 int efa_max_iter, double efa_factr, int m) {
 
   Rcpp::Environment stats("package:stats");
@@ -244,7 +244,7 @@ Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int n_factors, std::string met
                     Rcpp::_["upper"] = 1,
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
-                    Rcpp::_["n_factors"] = n_factors);
+                    Rcpp::_["nfactors"] = nfactors);
   } else if (method == "ml") {
 
     results = optim(Rcpp::_["par"] = psi,
@@ -255,7 +255,7 @@ Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int n_factors, std::string met
                     Rcpp::_["upper"] = 1,
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
-                    Rcpp::_["n_factors"] = n_factors,
+                    Rcpp::_["nfactors"] = nfactors,
                     Rcpp::_["n_items"] = n_items);
 
   }
