@@ -1,7 +1,488 @@
+grid_search <- function(delta, G) {
+
+  n <- 1000
+  x <- seq(-1e3, 1e3, length.out = n)
+  y <- vector(length = n)
+  for(i in 1:n) y[i] <- root_ml(x[i], delta, G)
+
+  index <- which.min(y)
+  x <- seq(x[index-1], x[index+1], length.out = n)
+  for(i in 1:n) y[i] <- root_ml(x[i], delta, G)
+
+  index <- which.min(y)
+  x <- seq(x[index-1], x[index+1], length.out = n)
+  for(i in 1:n) y[i] <- root_ml(x[i], delta, G)
+
+  return(x[which.min(y)])
+
+}
+opt <- function(x, delta, G) {
+
+  # x <- stats::runif(1, 0, 1)
+  # det(diag(nrow(G)) + x*G)
+  root <- stats::optim(x, fn = root_ml, gr = groot_ml, method = "L-BFGS-B",
+                       lower = -Inf, upper = Inf, G = G, delta = delta)
+  k <- root$par
+
+  return(k)
+
+}
+opt_error <- function(x, delta, G) {
+
+  x <- tryCatch({opt(x, delta, G)}, error = return(x))
+  return(x)
+
+}
+f_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+
+  p <- nrow(S)
+  lambda_parameters <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_parameters]
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[-(1:lambda_parameters)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  Rhat <- Lambda %*% Phi %*% t(Lambda)
+  diag(Rhat) <- 1
+  res <- S - Rhat
+  f <- 0.5*sum(res*res)
+
+  return(f)
+
+}
+g_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+
+  p <- nrow(S)
+  lambda_parameters <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_parameters]
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[-(1:lambda_parameters)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  Rhat <- Lambda %*% Phi %*% t(Lambda)
+  diag(Rhat) <- 1
+  res <- S - Rhat
+
+  g1 <- (res %*% Lambda %*% Phi)[indexes_lambda]
+  g2 <- (t(Lambda) %*% res %*% Lambda)[indexes_phi]
+  g <- -2*c(g1, g2)
+
+  return(g)
+
+}
+f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+
+  p <- nrow(S)
+  lambda_p <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  u <- x[-(1:(lambda_p + phi_p))]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + diag(u)
+  f <- log(det(Rhat)) - ldetS + sum(S*solve(Rhat)) - p
+
+  return(f)
+
+}
+g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+
+  p <- nrow(S)
+  lambda_p <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  u <- x[-(1:(lambda_p + phi_p))]
+
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + diag(u)
+  Rhat_inv <- solve(Rhat)
+  Ri_res_Ri <- 2*Rhat_inv %*% (Rhat - S) %*% Rhat_inv
+
+  # Joreskog (page 10; 1965) Testing a simple structure in factor analysis
+  g <- c(c(Ri_res_Ri %*% Lambda %*% Phi)[indexes_lambda],
+         c(t(Lambda) %*% Ri_res_Ri %*% Lambda)[indexes_phi],
+         diag(Ri_res_Ri)*0.5) # omitting the sample size constant
+
+  return(g)
+
+}
+CFA <- function(S, target, targetphi, method = "minres") {
+
+  p <- nrow(target)
+  q <- ncol(target)
+  indexes_lambda <- which(target != 0)
+  indexes_phi <- which(targetphi != 0 & lower.tri(targetphi))
+  lambda_p <- length(indexes_lambda)
+  phi_p <- length(indexes_phi)
+  init <- 1/diag(solve(S))
+
+  if(method == "minres") {
+
+    x <- c(stats::runif(lambda_p), rep(0, phi_p))
+    ldetS <- NULL
+    f <- f_minres
+    g <- g_minres
+    lower <- c(rep(-Inf, lambda_p), rep(-1, phi_p))
+    upper <- c(rep(Inf, lambda_p), rep(1, phi_p))
+
+  } else if(method == "ml") {
+
+    x <- c(stats::runif(lambda_p), rep(0, phi_p), init)
+    ldetS <- log(det(S))
+    f <- f_ml
+    g <- g_ml
+    lower <- c(rep(-Inf, lambda_p), rep(-1, phi_p), rep(0, p))
+    upper <- c(rep(Inf, lambda_p), rep(1, phi_p + p))
+
+  }
+
+  cfa <- stats::nlminb(x, objective = f, gradient = g,
+                lower = lower, upper = upper,
+                S = S, ldetS = ldetS, q = q, indexes_lambda = indexes_lambda,
+                indexes_phi = indexes_phi,
+                control = list(iter.max = 1e4, eval.max = 1e4))
+
+  lambda_hat <- matrix(0, p, q)
+  lambda_hat[indexes_lambda] <- cfa$par[1:lambda_p]
+  phi_hat <- matrix(0, q, q)
+
+  if(method == "minres") {
+
+    phi_hat[indexes_phi] <- cfa$par[-(1:lambda_p)]
+    phi_hat <- phi_hat + t(phi_hat)
+    diag(phi_hat) <- 1
+
+  } else if(method == "ml") {
+
+    phi_hat[indexes_phi] <- cfa$par[(lambda_p+1):(lambda_p + phi_p)]
+    phi_hat <- t(phi_hat) + phi_hat
+    diag(phi_hat) <- 1
+    u <- cfa$par[-(1:(lambda_p + phi_p))]
+
+  }
+
+  S_hat <- lambda_hat %*% phi_hat %*% t(lambda_hat)
+  uniquenesses_hat <- 1 - diag(S_hat)
+  diag(S_hat) <- 1
+  residuals <- S - S_hat
+
+  df <- p*(p+1)/2 - (length(indexes_lambda) + length(indexes_phi) + p)
+
+  results <- list(f = cfa$objective, convergence = cfa$convergence,
+                  iterations = cfa$iterations, df = df,
+                  lambda = lambda_hat, phi = phi_hat,
+                  uniquenesses = uniquenesses_hat,
+                  model = S_hat, residuals = residuals)
+
+  return(results)
+
+}
+root_ml <- function(x, delta, G) {
+
+  I <- diag(nrow(G))
+  f <- x*sum(diag(G)) - log(det(I + x*G)) - delta
+
+  return(f^2)
+
+}
+groot_ml <- function(x, delta, G) {
+
+  I <- diag(nrow(G))
+  f <- x*sum(diag(G)) - log(det(I + x*G)) - delta
+  g <- sum(diag(G)) - sum(diag(solve(I + x*G) %*% G))
+  g <- 2*g*f
+
+  return(g)
+
+}
+dxt <- function(X) {
+
+  # derivative wrt transpose (just a permutation matrix)
+
+  p <- nrow(X)
+  q <- ncol(X)
+  pq <- p*q
+
+  res <- array(0, dim = c(pq, pq))
+  null <- matrix(0, p, q)
+
+  for(i in 1:pq) {
+    temp <- null
+    temp[i] <- 1
+    res[, i] <- c(t(temp))
+  }
+
+  return(res)
+
+}
+gLRhat <- function(Lambda, Phi) {
+
+  # derivative of Lambda wrt Rhat
+
+  p <- nrow(Lambda)
+  g1 <- (Lambda %*% Phi) %x% diag(p)
+  g21 <- diag(p) %x% (Lambda %*% Phi)
+  g2 <- g21 %*% dxt(Lambda)
+  g <- g1 + g2
+
+  return(g)
+
+}
+gPRhat <- function(Lambda, Phi) {
+
+  g1 <- Lambda %x% Lambda
+  g2 <- g1 %*% dxt(Phi)
+  g <- g1 + g2
+  g <- g[, which(lower.tri(Phi))]
+
+  return(g)
+
+}
+guRhat <- function(p) {
+
+  gu <- matrix(0, p*p, p)
+
+  for(i in 1:p) {
+
+    index <- (i-1)*p + i
+    gu[index, i] <- 1
+
+  }
+
+  return(gu)
+
+}
+cudeck <- function(R, lambda, Phi, uniquenesses,
+                   fit = "rmsr", misfit = "close",
+                   method = "ols", confirmatory = TRUE) {
+
+  # Method of Cudeck and Browne (1992):
+
+  p <- nrow(R)
+  q <- ncol(lambda)
+
+  tdiag <- TRUE
+
+  if(confirmatory) {
+
+    # Select the columns corresponding to estimated loadings (only works when
+    # not estimating correlations)
+    # if(!correlation) dS_dL <- dS_dL[, which(lambda > 0)]
+    npars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
+    dS_du <- guRhat(p)
+    dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
+    dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
+    gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
+
+  } else {
+
+    # dS_dP <- gPRhat(lambda, Phi)
+    # gS <- cbind(dS_dL, dS_dP, dS_du)
+    npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
+    dS_du <- guRhat(p)
+    dS_dL <- gLRhat(lambda, Phi)
+    # dS_dP <- gPRhat(lambda, Phi)
+    # gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
+    gS <- cbind(dS_dL, dS_du) # matrix of derivatives wrt the correlation model
+
+  }
+
+  df <- p*(p+1)/2 - npars # Degrees of freedom
+
+  if(method == "minres" || method == "ols") {
+
+    B <- -2*gS[lower.tri(R, diag = tdiag), ]
+    # B <- -2*lambda %*%
+
+  } else if(method == "ml") {
+
+    # K <- transition(p)
+    # MP_inv <- solve(t(K) %*% K) %*% t(K)
+    # D <- MP_inv %*% t(MP_inv)
+    indexes <- vector(length = p)
+    indexes[1] <- 1
+    for(i in 2:p) {
+      increment <- i
+      indexes[i] <- indexes[i-1]+increment
+    }
+    D <- matrix(0, p*(p+1)/2, p*(p+1)/2)
+    diag(D) <- 2
+    diag(D)[indexes] <- 1
+    R_inv <- solve(R)
+    vecs <- apply(gS, 2, FUN = function(x) -t(R_inv %*% matrix(x, p, p) %*% R_inv))
+    B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
+    B <- t(B)
+
+  }
+
+  # BtB <- t(B) %*% B
+  m <- p+1
+  U <- replicate(p, stats::runif(m, 0, 1))
+  A1 <- t(U) %*% U
+  sq <- diag(1/sqrt(diag(A1)))
+  A2 <- sq %*% A1 %*% sq
+  diag_u <- diag(sqrt(uniquenesses))
+  y <- diag_u %*% A2 %*% diag_u
+  y <- y[lower.tri(y, diag = tdiag)]
+  # y <- A2[lower.tri(A2, diag = tdiag)]
+  # y <- stats::runif(p*(p+1)/2, 0, 1)
+  # e <- qr.Q(qr(cbind(B, y)))[, ncol(B)+1]
+  # v <- MASS::ginv(BtB) %*% t(B) %*% y
+  # e <- y - B %*% v # equation 7
+  # B.qr <- qr(B)
+  # e <- qr.resid(B.qr, y)
+  e <- unname(stats::lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
+
+  if(fit == "rmsr") {
+    if(misfit == "close") {
+      r2 <- mean(1-uniquenesses)
+      misfit <- 0.05*r2
+    } else if(misfit == "acceptable") {
+      r2 <- mean(1-uniquenesses)
+      misfit <- 0.10*r2
+    }
+    delta <- misfit^2*0.5*p*(p-1)
+    # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
+  } else if(fit == "cfi") {
+    null_f <- 0.5*(sum(R^2) - p)
+    delta <- (1-misfit)*null_f
+  } else if(fit == "rmsea") {
+    delta <- misfit^2 * df
+  } else if(fit == "raw") {
+    delta <- misfit
+  }
+
+  if(method == "minres" || method == "ols") {
+
+    E <- matrix(0, p, p)
+    E[lower.tri(E, diag = tdiag)] <- e
+    E <- t(E) + E
+    diag(E) <- 0
+    k <- sqrt(2*delta/sum(E*E))
+    E <- k*E
+
+  } else if(method == "ml") {
+
+    E <- matrix(0, p, p)
+    E[upper.tri(R, diag = tdiag)] <- e
+    E <- t(E) + E
+    diag(E) <- 0
+    constant <- 1e-04 / sqrt(mean(E*E))
+    E <- constant*E # Fix this to avoid NAs
+    R_inv <- solve(R)
+    G <- R_inv %*% E
+    x <- suppressWarnings(grid_search(delta, G))
+    k <- opt(x, delta, G)
+    # limits <- c(-1e05, 1e05)
+    # k <- GSS(delta, G, limits)
+    # k <- grad_descend(delta, G)
+
+    E <- k*E
+
+  }
+
+  R_error <- R + E
+
+  # check for positiveness:
+  minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
+  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
+
+  return(R_error)
+
+}
+yuan <- function(R, lambda, Phi, uniquenesses,
+                 fit = "rmsr", misfit = "close",
+                 method = "minres", confirmatory = TRUE) {
+
+  p <- nrow(R)
+  q <- ncol(lambda)
+
+  tdiag <- TRUE
+
+  if(confirmatory) {
+
+    npars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
+
+  } else {
+
+    npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
+
+  }
+
+  df <- p*(p+1)/2 - npars # Degrees of freedom
+
+  if(fit == "rmsr") {
+    if(misfit == "close") {
+      r2 <- mean(1-uniquenesses)
+      misfit <- 0.05*r2
+    } else if(misfit == "acceptable") {
+      r2 <- mean(1-uniquenesses)
+      misfit <- 0.10*r2
+    }
+    delta <- misfit^2*0.5*p*(p-1)
+    # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
+  } else if(fit == "cfi") {
+    null_f <- 0.5*(sum(R^2) - p)
+    delta <- (1-misfit)*null_f
+  } else if(fit == "rmsea") {
+    delta <- misfit^2 * df
+  } else if(fit == "raw") {
+    delta <- misfit
+  }
+
+  p <- nrow(R)
+  L <- lambda + 1e-06
+  R1 <- R
+  R <- L %*% Phi %*% t(L); diag(R) <- 1
+  target <- ifelse(lambda != 0, 1, 0)
+  targetphi <- ifelse(Phi != 0, 1, 0)
+  fit <- CFA(R, target, targetphi, method = method)
+  Phat <- fit$model
+
+  # from delta to tau:
+  E <- R - Phat
+
+  if(method == "minres" || method == "ols") {
+
+    tau <- sqrt(2*delta/sum(E*E))
+    R_error <- Phat + tau*E
+
+  } else if(method == "ml") {
+
+    R_inv <- solve(R1)
+    constant <- 1e-04 / sqrt(mean(E*E))
+    E <- constant*E # Fix this to avoid NAs
+    G <- R_inv %*% E
+
+    tau <- suppressWarnings(grid_search(delta, G))
+    tau <- opt_error(tau, delta, G)
+    # limits <- c(-1e3, 1e3)
+    # tau <- GSS(delta, G, limits)
+    # tau <- grad_descend(delta, G)
+
+    R_error <- Phat + tau*E
+
+  }
+
+  # check for positiveness:
+  minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
+  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
+
+  return(R_error)
+
+}
+
 #' @title
-#'
 #' Simulate a bi-factor or generalized bifactor population structure.
-#'
 #' @description
 #'
 #' Simulate a bi-factor or generalized bifactor population structure with cross-loading, pure items and correlated factors.
@@ -12,7 +493,7 @@
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
 #' generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
-#' method = "minres", fit = "rmsr", misfit = 0)
+#' method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan")
 #'
 #' @param n_generals Number of general factors.
 #' @param groups_per_general Number of group factors per general factor.
@@ -27,6 +508,7 @@
 #' @param method Method used to generate population error: "minres" or "ml".
 #' @param fit Fit index to control the population error.
 #' @param misfit Misfit value to generate population error.
+#' @param error_method Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".
 #'
 #' @details \code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
 #' correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
@@ -55,88 +537,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
                        crossloadings = 0, pure = FALSE,
                        generals_rho = 0, groups_rho = 0,
                        confirmatory = TRUE, method = "minres",
-                       fit = "rmsr", misfit = 0) {
-
-  root_ml <- function(x, delta, G) {
-
-    I <- diag(nrow(G))
-    f <- x*sum(diag(G)) - log(det(I + x*G)) - delta
-
-    return(f^2)
-
-  }
-
-  groot_ml <- function(x, delta, G) {
-
-    I <- diag(nrow(G))
-    f <- x*sum(diag(G)) - log(det(I + x*G)) - delta
-    g <- sum(diag(G)) - sum(diag(solve(I + x*G) %*% G))
-    g <- 2*g*f
-
-    return(g)
-
-  }
-
-  dxt <- function(X) {
-
-    # derivative wrt transpose (just a permutation matrix)
-
-    p <- nrow(X)
-    q <- ncol(X)
-    pq <- p*q
-
-    res <- array(0, dim = c(pq, pq))
-    null <- matrix(0, p, q)
-
-    for(i in 1:pq) {
-      temp <- null
-      temp[i] <- 1
-      res[, i] <- c(t(temp))
-    }
-
-    return(res)
-
-  }
-
-  gLRhat <- function(Lambda, Phi) {
-
-    # derivative of Lambda wrt Rhat
-
-    p <- nrow(Lambda)
-    g1 <- (Lambda %*% Phi) %x% diag(p)
-    g21 <- diag(p) %x% (Lambda %*% Phi)
-    g2 <- g21 %*% dxt(Lambda)
-    g <- g1 + g2
-
-    return(g)
-
-  }
-
-  gPRhat <- function(Lambda, Phi) {
-
-    g1 <- Lambda %x% Lambda
-    g2 <- g1 %*% dxt(Phi)
-    g <- g1 + g2
-    g <- g[, which(lower.tri(Phi))]
-
-    return(g)
-
-  }
-
-  guRhat <- function(p) {
-
-    gu <- matrix(0, p*p, p)
-
-    for(i in 1:p) {
-
-      index <- (i-1)*p + i
-      gu[index, i] <- 1
-
-    }
-
-    return(gu)
-
-  }
+                       fit = "rmsr", misfit = 0, error_method = "cudeck") {
 
   ng <- n_generals
   condition <- n_generals == 0
@@ -148,22 +549,30 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   }
 
-  # loadings' range:
+  # Configure loadings:
 
-  if(loadings_g == "low") {
-    loadings_g. = c(.3, .5)
-  } else if(loadings_g == "medium") {
-    loadings_g. = c(.4, .6)
-  } else if(loadings_g == "high") {
-    loadings_g. = c(.5, .7)
+  if(is.numeric(loadings_g)) {
+    loadings_g. = loadings_g # custom loadings on the general factors
+  } else {
+    if(loadings_g == "low") {
+      loadings_g. = c(.3, .5)
+    } else if(loadings_g == "medium") {
+      loadings_g. = c(.4, .6)
+    } else if(loadings_g == "high") {
+      loadings_g. = c(.5, .7)
+    }
   }
 
-  if(loadings_s == "low") {
-    loadings_s. = c(.3, .5)
-  } else if(loadings_s == "medium") {
-    loadings_s. = c(.4, .6)
-  } else if(loadings_s == "high") {
-    loadings_s. = c(.5, .7)
+  if(is.numeric(loadings_s)) {
+    loadings_s. = loadings_s # custom loadings on the group factors
+  } else {
+    if(loadings_s == "low") {
+      loadings_s. = c(.3, .5)
+    } else if(loadings_s == "medium") {
+      loadings_s. = c(.4, .6)
+    } else if(loadings_s == "high") {
+      loadings_s. = c(.5, .7)
+    }
   }
 
   # Total number of group factors:
@@ -172,13 +581,13 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
   # Total number of items:
   n_items <- n_groups * items_per_group
 
-  # Number of items per general:
+  # Number of items per general factor:
   items_per_general <- n_items / n_generals
 
   # Total number of factors:
   n_factors <- n_generals + n_groups
 
-  # Initialize the loading matrix:
+  # Initialize the population loading matrix:
   lambda <- matrix(NA, nrow = n_items, ncol = n_factors)
 
   # Item loadings on the group factors:
@@ -194,7 +603,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   }
 
-  # Simulate item loadings on the general factors:
+  # Simulate item loadings on the general factors froma uniform distribution:
 
   for(i in 0:(n_generals-1)) {
 
@@ -207,7 +616,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   colnames(lambda) <- c(paste("G", 1:n_generals, sep = ""), paste("S", 1:n_groups, sep = ""))
 
-  # Pure items:
+  # Pure items on the general factors:
 
   if(pure) {
 
@@ -223,7 +632,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   }
 
-  # Cross-loadings:
+  # Cross-loadings on the group factors:
 
   if(crossloadings != 0) {
 
@@ -237,7 +646,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
       col_index <- col_index[-delete]
     }
 
-    # Insert cross-loadings and the recalibrate the general and group factors to maintain the previous communality:
+    # Insert cross-loadings and then recalibrate the loadings on the general and group factors to maintain the previous communality:
 
     for(i in 1:length(row_index)) {
 
@@ -277,7 +686,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   }
 
-  # Population correlation matrix:
+  # Population model correlation matrix:
 
   R <- lambda %*% Phi %*% t(lambda)
   uniquenesses <- 1 - diag(R)
@@ -289,137 +698,41 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
 
   if( any(uniquenesses < 0) ) {
 
-    warning("At least a communality greater than 1 found \n Resampling...")
+    warning("At least one communality greater than 1 was found \n Resampling...")
 
-    sim <- sim_factor(ng, groups_per_general, items_per_group,
-                        loadings_g, loadings_s, crossloadings, pure,
-                        generals_rho, groups_rho)
+    sim <- sim_factor(n_generals = ng, groups_per_general = groups_per_general,
+                      items_per_group = items_per_group,
+                      loadings_g = loadings_g, loadings_s = loadings_s,
+                      crossloadings = crossloadings, pure = pure,
+                      generals_rho = generals_rho, groups_rho = groups_rho)
 
     lambda = sim$lambda; R = sim$R; Phi = sim$Phi; uniquenesses = sim$uniquenesses
 
-  } else if(misfit != 0 & misfit != "zero") { # Population error?
+  }
 
-    p <- nrow(R)
-    q <- ncol(lambda)
+  # Add population error to the population model correlation matrix:
 
-    tdiag <- TRUE
-    dS_du <- guRhat(p)
+  if(misfit != 0 & misfit != "zero") { # Population error?
 
-    if(confirmatory){
+    if(error_method == "cudeck") {
 
-      # Select the columns corresponding to estimated loadings (only works when
-      # not estimating correlations)
-      # if(!correlation) dS_dL <- dS_dL[, which(lambda > 0)]
-      pars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
-      dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
-      dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
-      gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
+      R_error <- cudeck(R = R, lambda = lambda, Phi = Phi,
+                        uniquenesses = uniquenesses,
+                        fit = fit, misfit = misfit,
+                        method = method, confirmatory = confirmatory)
 
-    } else {
+    } else if(error_method == "yuan") {
 
-      # dS_dP <- gPRhat(lambda, Phi)
-      # gS <- cbind(dS_dL, dS_dP, dS_du)
-      pars <- p*q + p - 0.5*q*(q-1) # Bartholomew's book (Chapter 3.12.1; 3rd edition)
-      dS_dL <- gLRhat(lambda, Phi)
-      # dS_dP <- gPRhat(lambda, Phi)
-      # gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
-      gS <- cbind(dS_dL, dS_du) # matrix of derivatives wrt the correlation model
+      R_error <- yuan(R = R, lambda = lambda, Phi = Phi,
+                      uniquenesses = uniquenesses,
+                      fit = fit, misfit = misfit,
+                      method = method, confirmatory = confirmatory)
 
     }
 
-    df <- p*(p+1)/2 - pars
+  } else {
 
-    # Cudeck and Browne (1992):
-
-    if(method == "minres" || method == "ols") {
-
-      B <- -2*gS[lower.tri(R, diag = tdiag), ]
-      # B <- -2*lambda %*%
-
-    } else if(method == "ml") {
-
-      # K <- transition(p)
-      # MP_inv <- solve(t(K) %*% K) %*% t(K)
-      # D <- MP_inv %*% t(MP_inv)
-      indexes <- vector(length = p)
-      indexes[1] <- 1
-      for(i in 2:p) {
-        increment <- i
-        indexes[i] <- indexes[i-1]+increment
-      }
-      D <- matrix(0, p*(p+1)/2, p*(p+1)/2)
-      diag(D) <- 2
-      diag(D)[indexes] <- 1
-      R_inv <- solve(R)
-      vecs <- apply(gS, 2, FUN = function(x) -t(R_inv %*% matrix(x, p, p) %*% R_inv))
-      B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
-      B <- t(B)
-
-    }
-
-    # BtB <- t(B) %*% B
-    m <- p+1
-    U <- replicate(p, stats::runif(m, 0, 1))
-    A1 <- t(U) %*% U
-    sq <- diag(1/sqrt(diag(A1)))
-    A2 <- sq %*% A1 %*% sq
-    diag_u <- diag(sqrt(uniquenesses))
-    y <- diag_u %*% A2 %*% diag_u
-    y <- y[lower.tri(y, diag = tdiag)]
-    # y <- A2[lower.tri(A2, diag = tdiag)]
-    # y <- stats::runif(p*(p+1)/2, 0, 1)
-    # e <- qr.Q(qr(cbind(B, y)))[, ncol(B)+1]
-    # v <- MASS::ginv(BtB) %*% t(B) %*% y
-    # e <- y - B %*% v # equation 7
-    # B.qr <- qr(B)
-    # e <- qr.resid(B.qr, y)
-    e <- unname(stats::lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
-
-    if(fit == "rmsr") {
-      if(misfit == "close") {
-        r2 <- mean(1-uniquenesses)
-        misfit <- 0.05*r2
-      } else if(misfit == "acceptable") {
-        r2 <- mean(1-uniquenesses)
-        misfit <- 0.10*r2
-      }
-      delta <- misfit^2*0.5*p*(p-1)
-      # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
-    } else if(fit == "cfi") {
-      null_f <- 0.5*(sum(R^2) - p)
-      delta <- (1-misfit)*null_f
-    } else if(fit == "rmsea") {
-      delta <- misfit^2 * df
-    } else if(fit == "raw") {
-      delta <- misfit
-    }
-
-    if(method == "minres" || method == "ols") {
-
-      E <- matrix(0, p, p)
-      E[lower.tri(E, diag = tdiag)] <- e
-      E <- t(E) + E
-      diag(E) <- 0
-      k <- sqrt(2*delta/sum(E*E))
-      E <- k*E
-
-    } else if(method == "ml") {
-
-      E <- matrix(0, p, p)
-      E[upper.tri(R, diag = tdiag)] <- e
-      E <- t(E) + E
-      diag(E) <- 0
-      E <- 1e-04*E # Fix this to avoid NAs
-      G <- R_inv %*% E
-      x <- stats::runif(1, 0, 1)
-      root <- stats::optim(x, fn = root_ml, gr = groot_ml, method = "L-BFGS-B",
-                    lower = -Inf, upper = Inf, G = G, delta = delta)
-      k <- root$par
-      E <- k*E
-
-    }
-
-    R_error <- R + E
+    R_error <- R
 
   }
 

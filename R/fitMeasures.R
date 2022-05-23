@@ -1,31 +1,52 @@
+#' @title
+#' Compute fit measures for exploratory factor models.
+#' @description
+#'
+#' Compute fit measures for exploratory factor models.
+#'
+#' @usage
+#'
+#' fitMeasures(efa, nobs=NULL)
+#'
+#' @param efa Object of class efa.
+#' @param nobs Sample size. Defaults to NULL.
+#'
+#' @details \code{fitMeasures}... to be explained
+#'
+#' @return Vector of fit measures.
+#'
+#' @author
+#'
+#' Vithor R. Franco & Marcos Jiménez
+#'
+#' @export
 fitMeasures <- function(efa, nobs=NULL) {
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$n_obs)) {
+    if(is.null(efa$modelInfo$nobs)) {
       warning("Sample size was not provided. Most fit indices will not be computed.")
     } else {
-      n_obs <- efa$modelInfo$n_obs
+      nobs <- efa$modelInfo$nobs
     }
-  } else {
-    n_obs <- nobs
   }
-  
+
   # Basic measures
   p <- efa$modelInfo$n_vars
-  q <- efa$modelInfo$n_factors
-  correction <- if(is.null(nobs)) NULL else n_obs-1-1/6*(2*p+5)-2/3*q
+  q <- efa$modelInfo$nfactors
+  correction <- if(is.null(nobs)) NULL else nobs-1-1/6*(2*p+5)-2/3*q
   df_null <- efa$modelInfo$df_null
   df <- efa$modelInfo$df
   t <- df_null - df
-  chisq_null <- if(is.null(nobs)) NULL else {n_obs - 1} * efa$modelInfo$f_null
+  chisq_null <- if(is.null(nobs)) NULL else {nobs - 1} * efa$modelInfo$f_null
   chisq_null.unbiased <- if(is.null(nobs)) NULL else correction * efa$modelInfo$f_null
-  chisq <- if(is.null(nobs)) NULL else {n_obs - 1} * efa$rotation$f
-  pvalue <- if(is.null(nobs)) NULL else 1 - pchisq(chisq, df)
+  cat(chisq_null.unbiased, "\n")
+  chisq <- if(is.null(nobs)) NULL else {nobs - 1} * efa$efa$f
+  pvalue <- if(is.null(nobs)) NULL else 1 - stats::pchisq(chisq, df)
   #chisq_df <- chisq/df
   #chisq_df.unbiased <- chisq/df
-  chisq.unbiased <- if(is.null(nobs)) NULL else correction * efa$rotation$f
-  pvalue.unbiased <- if(is.null(nobs)) NULL else 1 - pchisq(chisq.unbiased, df)
-  
+  chisq.unbiased <- if(is.null(nobs)) NULL else correction * efa$efa$f
+  pvalue.unbiased <- if(is.null(nobs)) NULL else 1 - stats::pchisq(chisq.unbiased, df)
+
   # Incremental fit indices
   cfi <- if(is.null(nobs)) NULL else {
     {max(chisq_null-df_null,0)-max(chisq-df,0)}/max(chisq_null-df_null,0)
@@ -41,29 +62,29 @@ fitMeasures <- function(efa, nobs=NULL) {
     {{chisq_null.unbiased/df_null} - {chisq.unbiased/df}}/
       {chisq_null.unbiased/{df_null-1}}
   }
-  nfi <- {efa$modelInfo$f_null - efa$rotation$f}/efa$modelInfo$f_null
-  
+  nfi <- {efa$modelInfo$f_null - efa$efa$f}/efa$modelInfo$f_null
+
   # Absolute fit indices
   rmsea <- if(is.null(nobs)) NULL else {
-    sqrt(max(chisq-df,0)/{df*{n_obs-1}})
+    sqrt(max(chisq-df,0)/{df*{nobs-1}})
   }
   rmsea.unbiased <- if(is.null(nobs)) NULL else {
-    sqrt(max(chisq.unbiased-df,0)/{df*{n_obs-1}})
+    sqrt(max(chisq.unbiased-df,0)/{df*{nobs-1}})
   }
-  srmr <- sqrt(sum(efa$rotation$residuals[lower.tri(efa$rotation$residuals,diag=T)]^2)/
+  srmr <- sqrt(sum(efa$efa$residuals[lower.tri(efa$efa$residuals,diag=T)]^2)/
                  {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
-  lavsrc <- max(abs(efa$rotation$residuals))
-  
+  lavsrc <- max(abs(efa$efa$residuals))
+
   # Comparative fit indices
   aic           <- if(is.null(nobs)) NULL else chisq + {2 * t}
   aic.unbiased  <- if(is.null(nobs)) NULL else chisq.unbiased + {2 * t}
-  bic           <- if(is.null(nobs)) NULL else chisq + {log(n_obs) * t}
-  bic.unbiased  <- if(is.null(nobs)) NULL else chisq.unbiased + {log(n_obs) * t}
-  hq            <- if(is.null(nobs)) NULL else chisq + {2 * log(log(n_obs)) * t}
-  hq.unbiased   <- if(is.null(nobs)) NULL else chisq.unbiased + {2 * log(log(n_obs)) * t}
-  ecvi          <- if(is.null(nobs)) NULL else {chisq/{n_obs-1}} + {2*{t/{n_obs-1}}}
-  ecvi.unbiased <- if(is.null(nobs)) NULL else {chisq.unbiased/{n_obs-1}} + {2*{t/{n_obs-1}}}
-  
+  bic           <- if(is.null(nobs)) NULL else chisq + {log(nobs) * t}
+  bic.unbiased  <- if(is.null(nobs)) NULL else chisq.unbiased + {log(nobs) * t}
+  hq            <- if(is.null(nobs)) NULL else chisq + {2 * log(log(nobs)) * t}
+  hq.unbiased   <- if(is.null(nobs)) NULL else chisq.unbiased + {2 * log(log(nobs)) * t}
+  ecvi          <- if(is.null(nobs)) NULL else {chisq/{nobs-1}} + {2*{t/{nobs-1}}}
+  ecvi.unbiased <- if(is.null(nobs)) NULL else {chisq.unbiased/{nobs-1}} + {2*{t/{nobs-1}}}
+
   # Results
   Results <- c("chisq_null"=chisq_null, "chisq_null.unbiased"=chisq_null.unbiased,
                "df_null"=df_null, "chisq"=chisq, "pvalue"=pvalue,

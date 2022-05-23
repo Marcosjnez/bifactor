@@ -33,8 +33,8 @@ rotate <- function(loadings, rotation = as.character( c("oblimin")), projection 
     .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, rot_control, random_starts, cores)
 }
 
-efast <- function(R, n_factors, method = "minres", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-    .Call(`_bifactor_efast`, R, n_factors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalization, between_blocks, gamma, epsilon, k, w, alpha, a, b, random_starts, cores, init, efa_control, rot_control)
+efast <- function(R, nfactors, method = "minres", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+    .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalization, between_blocks, gamma, epsilon, k, w, alpha, a, b, random_starts, cores, init, efa_control, rot_control)
 }
 
 get_target <- function(loadings, Phi, cutoff = 0) {
@@ -49,8 +49,8 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
     .Call(`_bifactor_asymp_cov`, R, X, eta, type)
 }
 
-se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
-    .Call(`_bifactor_se`, fit, n, X, type, eta)
+se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
+    .Call(`_bifactor_se`, fit, nobs, X, type, eta)
 }
 
 parallel <- function(X, n_boot = 100L, quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {

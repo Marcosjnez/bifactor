@@ -1,0 +1,57 @@
+#' @title
+#' Print summary information from exploratory factor models.
+#' @description
+#'
+#' Print summary information from exploratory factor models.
+#'
+#' @usage
+#'
+#' ## S3 method for class 'efa'
+#' print(efa, nobs=NULL, ...)
+#'
+#' @param efa Object of class efa.
+#' @param nobs Sample size. Defaults to NULL.
+#' @param ... Arguments to be passed to or from other methods.
+#'
+#' @details \code{print.efa}... to be explained
+#'
+#' @return Matrix of variance accounted for the factors.
+#'
+#' @author
+#'
+#' Vithor R. Franco & Marcos Jiménez
+#'
+#' @export
+print.efa <- function(efa, nobs=NULL, ...) {
+  # Check if nobs was provided
+  if(is.null(nobs)) {
+    if(is.null(efa$modelInfo$nobs)) {
+      warning("Sample size was not provided. Chi-squared-based statistics will not be computed.")
+    } else {
+      nobs <- efa$modelInfo$nobs
+    }
+  }
+  ordering <- order(colSums(efa$rotation$loadings^2), decreasing=T)
+  fit  <- suppressWarnings(fitMeasures(efa, nobs))
+  Phi    <- efa$rotation$Phi[ordering, ordering]
+  rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
+                                                      ordering),sep="")
+  # Print
+  cat("Factor Analysis using method = ", efa$modelInfo$method, "\n", sep="")
+  cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
+  cat("\n","Goodness-of-fit and model misfit indices", sep="")
+  cat("\n","The standardized root mean square residual (SRMR) is ", round(fit["srmr"],3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit["lavsrc"],3), sep="")
+  cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
+      " and the objective function was ", round(efa$rotation$f,2), "\n", sep="")
+  if(!is.null(nobs)) {
+    cat("The total number of observations was ", nobs, " with Unbiased Chi-squared = ",
+        round(fit["chisq.unbiased"],1), " with prob < ", fit["pvalue.unbiased"], sep="")
+    cat("\n","Unbiased Tucker Lewis Index of factoring reliability = ", round(fit["tli.unbiased"],3), sep="")
+    cat("\n","Unbiased RMSEA index = ", round(fit["rmsea.unbiased"],3), sep="")
+    cat("\n","Unbiased AIC = ", round(fit["aic.unbiased"],1), sep="")
+    cat("\n","Unbiased BIC = ", round(fit["bic.unbiased"],1), sep="")
+    cat("\n","Unbiased HQ = ", round(fit["hq.unbiased"],1), "\n", sep="")
+  }
+  cat("\n","Factor correlations after rotation\n",sep=""); print(Phi)
+}

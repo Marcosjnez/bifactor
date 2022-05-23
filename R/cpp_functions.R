@@ -1,7 +1,5 @@
 #' @title
-#'
 #' Generate random orthogonal matrices.
-#'
 #' @description
 #'
 #' Generate random orthogonal matrices from a standard normal distribution. First, a matrix of random standard normal variables is simulated and then, the Q factor from the QR decomposition is returned.
@@ -25,9 +23,7 @@ random_orth <- function(p, q) {
 }
 
 #' @title
-#'
 #' Generate random oblique matrices.
-#'
 #' @description
 #'
 #' Generate random oblique matrices from a standard normal distribution.
@@ -51,9 +47,7 @@ random_oblq <- function(p, q) {
 }
 
 #' @title
-#'
 #' Generate a random partially oblique matrix.
-#'
 #' @description
 #'
 #' First, a matrix is simulated from a standard normal distribution. Second,the matrix is normalized and the Gram-Schmidt process is performed between the oblique blocks. Finally, the orthogonal blocks correspond to those columns of the Q matrix from the QR decomposition.
@@ -82,9 +76,7 @@ random_poblq <- function(p, q, oblq_blocks) {
 }
 
 #' @title
-#'
 #' Retraction of a matrix onto the orthogonal manifold.
-#'
 #' @description
 #'
 #' Transform a matrix into an orthogonal matrix.
@@ -107,9 +99,7 @@ retr_orth <- function(X) {
 }
 
 #' @title
-#'
 #' Retraction of a matrix onto the oblique manifold.
-#'
 #' @description
 #'
 #' Transform a matrix into an oblique matrix.
@@ -132,9 +122,7 @@ retr_oblq <- function(X) {
 }
 
 #' @title
-#'
 #' Retraction of a matrix onto the partially oblique manifold.
-#'
 #' @description
 #'
 #' Transform a matrix into a partially oblique matrix.
@@ -163,9 +151,7 @@ retr_poblq <- function(X, oblq_blocks) {
 }
 
 #' @title
-#'
 #' Schmid-Leiman Transformation.
-#'
 #' @description
 #'
 #' Schmid-Leiman transformation into a bi-factor or generalized bi-factor pattern.
@@ -220,9 +206,7 @@ sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
 }
 
 #' @title
-#'
 #' Fast rotation algorithm for factor analysis.
-#'
 #' @description
 #'
 #' Riemannian Newton Trust-Region algorithm to quickly perform (parallel) rotations with different random starting values.
@@ -284,16 +268,14 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 }
 
 #' @title
-#'
 #' Fast exploratory factor analysis.
-#'
 #' @description
 #'
 #' Fast exploratory factor analysis.
 #'
 #' @usage
 #'
-#' efast(R, n_factors, method = "minres",
+#' efast(R, nfactors, method = "minres",
 #' rotation = "oblimin", projection = "oblq", nobs = NULL,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, blocks_list = NULL, block_weights = NULL,
@@ -303,7 +285,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' init = NULL, efa_control = NULL, rot_control = NULL)
 #'
 #' @param R Correlation matrix.
-#' @param n_factors Number of common factors to extract.
+#' @param nfactors Number of common factors to extract.
 #' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".
 #' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique), "poblq" (partially oblique). Defaults to "oblq".
@@ -372,19 +354,17 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' s <- cor(scores)
 #'
 #' # Fit efa:
-#' efa <- efast(s, n_factors = 5, method = "minres", rotation = "oblimin",
+#' efa <- efast(s, nfactors = 5, method = "minres", rotation = "oblimin",
 #' projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 #'}
 #'
 #' @export
-efast <- function(R, n_factors, method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0, epsilon = 1e-02, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactor_efast`, R, n_factors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalization, between_blocks, gamma, epsilon, k, w, alpha, a, b, random_starts, cores, init, efa_control, rot_control)
+efast <- function(R, nfactors, method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0, epsilon = 1e-02, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+  .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalization, between_blocks, gamma, epsilon, k, w, alpha, a, b, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
-#'
 #' Get a target from a loading matrix.
-#'
 #' @description
 #'
 #' Get a target for the loading matrix using a custom or empirical cut-off.
@@ -411,9 +391,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 }
 
 #' @title
-#'
 #' Fit an exploratory bi-factor or generalized bi-factor model.
-#'
 #' @usage
 #'
 #' bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
@@ -514,9 +492,7 @@ bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", project
 }
 
 #' @title
-#'
 #' Asymptotic standard errors for correlation matrices.
-#'
 #' @usage
 #'
 #' asymp_cov(R, X = NULL, eta = 1, type = "normal")
@@ -548,9 +524,7 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
 }
 
 #' @title
-#'
 #' Standard errors for rotated factor loadings, factor correlations and uniquenesses.
-#'
 #' @usage
 #'
 #' se(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1)
@@ -581,9 +555,7 @@ se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
 }
 
 #' @title
-#'
 #' Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).
-#'
 #' @usage
 #'
 #' parallel(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE,
@@ -619,9 +591,7 @@ parallel <- function(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALS
 }
 
 #' @title
-#'
 #' Cross-validated eigenvalues.
-#'
 #' @usage
 #'
 #' cv_eigen(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L)
@@ -652,9 +622,7 @@ cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) 
 }
 
 #' @title
-#'
 #' Check the derivatives and differentials of rotation criteria.
-#'
 #' @usage
 #'
 #' check_deriv(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq",
