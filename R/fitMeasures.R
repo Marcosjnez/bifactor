@@ -31,6 +31,13 @@ fitMeasures <- function(efa, nobs=NULL) {
   }
 
   # Basic measures
+  if(efa$modelInfo$rotation == "none") { # For efa without rotation
+    ObjFn <- efa$efa$f
+    residuals <- efa$efa$residuals
+  } else { # For efa with rotation
+    ObjFn <- efa$rotation$f
+    residuals <- efa$rotation$residuals
+  }
   p <- efa$modelInfo$n_vars
   q <- efa$modelInfo$nfactors
   correction <- if(is.null(nobs)) NULL else nobs-1-1/6*(2*p+5)-2/3*q
@@ -39,12 +46,9 @@ fitMeasures <- function(efa, nobs=NULL) {
   t <- df_null - df
   chisq_null <- if(is.null(nobs)) NULL else {nobs - 1} * efa$modelInfo$f_null
   chisq_null.unbiased <- if(is.null(nobs)) NULL else correction * efa$modelInfo$f_null
-  cat(chisq_null.unbiased, "\n")
-  chisq <- if(is.null(nobs)) NULL else {nobs - 1} * efa$efa$f
+  chisq <- if(is.null(nobs)) NULL else {nobs - 1} * ObjFn
   pvalue <- if(is.null(nobs)) NULL else 1 - stats::pchisq(chisq, df)
-  #chisq_df <- chisq/df
-  #chisq_df.unbiased <- chisq/df
-  chisq.unbiased <- if(is.null(nobs)) NULL else correction * efa$efa$f
+  chisq.unbiased <- if(is.null(nobs)) NULL else correction * ObjFn
   pvalue.unbiased <- if(is.null(nobs)) NULL else 1 - stats::pchisq(chisq.unbiased, df)
 
   # Incremental fit indices
@@ -62,7 +66,7 @@ fitMeasures <- function(efa, nobs=NULL) {
     {{chisq_null.unbiased/df_null} - {chisq.unbiased/df}}/
       {chisq_null.unbiased/{df_null-1}}
   }
-  nfi <- {efa$modelInfo$f_null - efa$efa$f}/efa$modelInfo$f_null
+  nfi <- {efa$modelInfo$f_null - ObjFn}/efa$modelInfo$f_null
 
   # Absolute fit indices
   rmsea <- if(is.null(nobs)) NULL else {
@@ -71,9 +75,9 @@ fitMeasures <- function(efa, nobs=NULL) {
   rmsea.unbiased <- if(is.null(nobs)) NULL else {
     sqrt(max(chisq.unbiased-df,0)/{df*{nobs-1}})
   }
-  srmr <- sqrt(sum(efa$efa$residuals[lower.tri(efa$efa$residuals,diag=T)]^2)/
-                 {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
-  lavsrc <- max(abs(efa$efa$residuals))
+  srmr <- sqrt(sum(residuals[lower.tri(residuals,diag=T)]^2)/
+                   {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
+  lavsrc <- max(abs(residuals))
 
   # Comparative fit indices
   aic           <- if(is.null(nobs)) NULL else chisq + {2 * t}
