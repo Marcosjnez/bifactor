@@ -31,9 +31,18 @@ print.efa <- function(efa, nobs=NULL, ...) {
       nobs <- efa$modelInfo$nobs
     }
   }
-  ordering <- order(colSums(efa$rotation$loadings^2), decreasing=T)
-  fit  <- suppressWarnings(fitMeasures(efa, nobs))
-  Phi    <- efa$rotation$Phi[ordering, ordering]
+  if(efa$modelInfo$rotation == "none") { # For efa without rotation
+    lambda <- efa$efa$loadings
+    Phi <- diag(ncol(lambda))
+    ObjFn <- efa$efa$f
+  } else { # For efa with rotation
+    lambda <- efa$rotation$loadings
+    Phi <- efa$rotation$Phi
+    ObjFn <- efa$rotation$f
+  }
+  ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
+  fit <- suppressWarnings(fitMeasures(efa, nobs))
+  Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
                                                       ordering),sep="")
   # Print
@@ -43,7 +52,7 @@ print.efa <- function(efa, nobs=NULL, ...) {
   cat("\n","The standardized root mean square residual (SRMR) is ", round(fit["srmr"],3), sep="")
   cat("\n","The largest absolute value of standardized residual correlation is ", round(fit["lavsrc"],3), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
-      " and the objective function was ", round(efa$rotation$f,2), "\n", sep="")
+      " and the objective function was ", round(ObjFn,2), "\n", sep="")
   if(!is.null(nobs)) {
     cat("The total number of observations was ", nobs, " with Unbiased Chi-squared = ",
         round(fit["chisq.unbiased"],1), " with prob < ", fit["pvalue.unbiased"], sep="")
