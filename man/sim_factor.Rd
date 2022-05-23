@@ -8,7 +8,7 @@ sim_factor(n_generals, groups_per_general, items_per_group,
 loadings_g = "medium", loadings_s = "medium",
 crossloadings = 0, pure = FALSE,
 generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
-method = "minres", fit = "rmsr", misfit = 0)
+method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan")
 }
 \arguments{
 \item{n_generals}{Number of general factors.}
@@ -36,6 +36,8 @@ method = "minres", fit = "rmsr", misfit = 0)
 \item{fit}{Fit index to control the population error.}
 
 \item{misfit}{Misfit value to generate population error.}
+
+\item{error_method}{Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".}
 }
 \value{
 List with the following objects:

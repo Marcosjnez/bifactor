@@ -4,7 +4,7 @@
 \alias{efast}
 \title{Fast exploratory factor analysis.}
 \usage{
-efast(R, n_factors, method = "minres",
+efast(R, nfactors, method = "minres",
 rotation = "oblimin", projection = "oblq", nobs = NULL,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, blocks_list = NULL, block_weights = NULL,
@@ -16,7 +16,7 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 \arguments{
 \item{R}{Correlation matrix.}
 
-\item{n_factors}{Number of common factors to extract.}
+\item{nfactors}{Number of common factors to extract.}
 
 \item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".}
 
@@ -110,7 +110,7 @@ scores <- MASS::mvrnorm(1e3, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
 # Fit efa:
-efa <- efast(s, n_factors = 5, method = "minres", rotation = "oblimin",
+efa <- efast(s, nfactors = 5, method = "minres", rotation = "oblimin",
 projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 }
 
