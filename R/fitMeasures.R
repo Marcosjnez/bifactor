@@ -31,13 +31,15 @@ fitMeasures <- function(efa, nobs=NULL) {
   }
 
   # Basic measures
-  if(efa$modelInfo$rotation == "none") { # For efa without rotation
-    ObjFn <- efa$efa$f
-    residuals <- efa$efa$residuals
-  } else { # For efa with rotation
-    ObjFn <- efa$rotation$f
-    residuals <- efa$rotation$residuals
-  }
+  # if(efa$modelInfo$rotation == "none") { # For efa without rotation
+  #   ObjFn <- efa$efa$f
+  #   residuals <- efa$efa$residuals
+  # } else { # For efa with rotation
+  #   ObjFn <- efa$rotation$f
+  #   residuals <- efa$rotation$residuals
+  # }
+  ObjFn <- efa$efa$f
+  residuals <- efa$efa$residuals
   p <- efa$modelInfo$n_vars
   q <- efa$modelInfo$nfactors
   correction <- if(is.null(nobs)) NULL else nobs-1-1/6*(2*p+5)-2/3*q
@@ -57,7 +59,7 @@ fitMeasures <- function(efa, nobs=NULL) {
   }
   cfi.unbiased <- if(is.null(nobs)) NULL else {
     {max(chisq_null.unbiased-df_null,0)-max(chisq.unbiased-df,0)}/
-              max(chisq_null.unbiased-df_null,0)
+      max(chisq_null.unbiased-df_null,0)
   }
   tli <- if(is.null(nobs)) NULL else {
     {{chisq_null/df_null} - {chisq/df}}/{chisq_null/{df_null-1}}
@@ -76,7 +78,7 @@ fitMeasures <- function(efa, nobs=NULL) {
     sqrt(max(chisq.unbiased-df,0)/{df*{nobs-1}})
   }
   srmr <- sqrt(sum(residuals[lower.tri(residuals,diag=T)]^2)/
-                   {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
+                 {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
   lavsrc <- max(abs(residuals))
 
   # Comparative fit indices

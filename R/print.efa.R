@@ -38,7 +38,7 @@ print.efa <- function(efa, nobs=NULL, ...) {
   } else { # For efa with rotation
     lambda <- efa$rotation$loadings
     Phi <- efa$rotation$Phi
-    ObjFn <- efa$rotation$f
+    ObjFn <- efa$efa$f
   }
   ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
   fit <- suppressWarnings(fitMeasures(efa, nobs))
@@ -62,5 +62,7 @@ print.efa <- function(efa, nobs=NULL, ...) {
     cat("\n","Unbiased BIC = ", round(fit["bic.unbiased"],1), sep="")
     cat("\n","Unbiased HQ = ", round(fit["hq.unbiased"],1), "\n", sep="")
   }
-  cat("\n","Factor correlations after rotation\n",sep=""); print(Phi)
+  if(efa$modelInfo$rotation != "none" & efa$modelInfo$projection != "orth") {
+    cat("\n","Factor correlations after rotation\n",sep=""); print(Phi)
+  }
 }

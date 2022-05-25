@@ -50,7 +50,7 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, ...) {
     lambda <- efa$rotation$loadings
     Phi <- efa$rotation$Phi
     uniquenesses <- c(efa$rotation$uniquenesses)
-    ObjFn <- efa$rotation$f
+    ObjFn <- efa$efa$f
   }
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
   ordering <- order(SSloads, decreasing=T)
