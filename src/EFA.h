@@ -52,7 +52,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     uniquenesses = 1 - diagvec(ww);
 
     Rhat = ww;
-    Rhat.diag().ones();
+    Rhat.diag() = R.diag();
 
     bool convergence = false;
     int convergence_result = optim_result["convergence"];
@@ -92,7 +92,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     uniquenesses = 1 - diagvec(ww);
 
     Rhat = ww;
-    Rhat.diag().ones();
+    Rhat.diag() = R.diag();
 
     bool convergence = false;
     int convergence_result = optim_result["convergence"];
@@ -145,7 +145,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     uniquenesses = 1 - arma::diagvec(ww);
 
     Rhat = ww;
-    Rhat.diag().ones();
+    Rhat.diag() = R.diag();
 
   } else {
 
@@ -378,6 +378,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
     timer.step("elapsed");
     result["elapsed"] = timer;
 
+    result.attr("class") = "efa";
     return result;
 
   } else {
@@ -556,6 +557,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
     timer.step("elapsed");
     result["elapsed"] = timer;
 
+    result.attr("class") = "efa";
     return result;
 
   } else {

@@ -90,9 +90,9 @@ Rcpp::List principal_axis(arma::vec psi, arma::mat R, int nfactors,
     convergence = true;
   }
   arma::mat Rhat = ww;
-  Rhat.diag().ones();
+  Rhat.diag() = R.diag();
   arma::mat residuals = R - Rhat;
-  double f = 0.5*arma::accu(residuals % residuals);
+  double f = arma::accu(residuals % residuals);
 
   result["convergence"] = convergence;
   result["f"] = f;
@@ -180,7 +180,7 @@ double minres_objective(arma::vec psi, arma::mat R, int nfactors) {
 
   eig_sym(eigval, reduced_R);
   arma::vec e = eigval(arma::span(0, n_items - nfactors - 1));
-  double objective = 0.5*arma::accu(e % e);
+  double objective = arma::accu(e % e);
 
   return objective;
 
@@ -212,7 +212,7 @@ arma::vec minres_gradient(arma::vec psi, arma::mat R, int nfactors) {
 
   arma::vec e_values = eigval(arma::span(0, n_items - nfactors - 1));
   arma::mat e_vectors = eigvec(arma::span::all, arma::span(0, n_items - nfactors - 1));
-  arma::mat gradient = -arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
+  arma::mat gradient = -2*arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
 
   return gradient;
 
@@ -241,7 +241,7 @@ Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int nfactors, std::string meth
                     Rcpp::_["gr"] = Rcpp::InternalFunction(&minres_gradient),
                     Rcpp::_["method"] = "L-BFGS-B",
                     Rcpp::_["lower"] = 0.005,
-                    Rcpp::_["upper"] = 1,
+                    Rcpp::_["upper"] = arma::diagvec(R),
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
                     Rcpp::_["nfactors"] = nfactors);
@@ -252,7 +252,7 @@ Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int nfactors, std::string meth
                     Rcpp::_["gr"] = Rcpp::InternalFunction(&ml_gradient),
                     Rcpp::_["method"] = "L-BFGS-B",
                     Rcpp::_["lower"] = 0.005,
-                    Rcpp::_["upper"] = 1,
+                    Rcpp::_["upper"] = arma::diagvec(R),
                     Rcpp::_["control"] = control,
                     Rcpp::_["R"] = R,
                     Rcpp::_["nfactors"] = nfactors,
