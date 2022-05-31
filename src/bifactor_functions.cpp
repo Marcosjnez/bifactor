@@ -76,6 +76,7 @@ Rcpp::List rotate(arma::mat loadings,
                   Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
                   Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                   std::string between_blocks = "none",
+                  std::string normalization = "none",
                   Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
                   int random_starts = 1, int cores = 1);
 

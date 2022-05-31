@@ -268,6 +268,14 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   }
 
+  Rcpp::List modelInfo;
+  modelInfo["R"] = R;
+  modelInfo["n_generals"] = n_generals;
+  modelInfo["n_groups"] = n_groups;
+  modelInfo["nullable_nobs"] = nullable_nobs;
+  modelInfo["first_efa"] = first_efa;
+  modelInfo["second_efa"] = second_efa;
+
   result.attr("class") = "SL";
   return result;
 
@@ -868,6 +876,41 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
   }
 
+  int p = R.n_cols;
+  int q = nfactors;
+  double df_null = p*(p-1)/2;
+  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
+
+  double f_null;
+  if(method == "minres" || method == "pa") {
+    f_null = arma::accu(R % R) - R.n_cols;
+  } else if(method == "ml") {
+    f_null = -arma::log_det_sympd(R);
+  } else if(method == "minrank") {
+    f_null = 0;
+  }
+
+  Rcpp::List modelInfo;
+  modelInfo["R"] = R;
+  modelInfo["method"] = method;
+  modelInfo["projection"] = projection;
+  modelInfo["n_vars"] = R.n_cols;
+  modelInfo["nfactors"] = nfactors;
+  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["df"] = df;
+  modelInfo["df_null"] = df_null;
+  modelInfo["f_null"] = f_null;
+  modelInfo["w"] = w;
+  // modelInfo["normalization"] = normalization;
+  // modelInfo["between_blocks"] = between_blocks;
+  modelInfo["Target"] = nullable_Target;
+  // modelInfo["Weight"] = nullable_Weight;
+  modelInfo["PhiTarget"] = nullable_PhiTarget;
+  modelInfo["PhiWeight"] = nullable_PhiWeight;
+  modelInfo["blocks"] = nullable_blocks;
+  modelInfo["blocks_list"] = nullable_blocks_list;
+  modelInfo["block_weights"] = nullable_block_weights;
+  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
 
   timer.step("elapsed");
 

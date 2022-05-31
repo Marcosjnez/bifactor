@@ -153,6 +153,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   Rcpp::List modelInfo;
+  modelInfo["R"] = R;
   modelInfo["method"] = method;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
@@ -171,7 +172,6 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["b"] = b;
   modelInfo["normalization"] = normalization;
   modelInfo["between_blocks"] = between_blocks;
-  modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
   modelInfo["PhiTarget"] = nullable_PhiTarget;
@@ -332,6 +332,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   Rcpp::List modelInfo;
+  modelInfo["R"] = R;
   modelInfo["method"] = method;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
@@ -350,7 +351,6 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["b"] = b;
   modelInfo["normalization"] = normalization;
   modelInfo["between_blocks"] = between_blocks;
-  modelInfo["R"] = R;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
   modelInfo["PhiTarget"] = nullable_PhiTarget;

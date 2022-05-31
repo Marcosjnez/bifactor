@@ -27,6 +27,7 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
                   Rcpp::Nullable<arma::vec> nullable_block_weights,
                   Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
                   std::string between_blocks,
+                  std::string normalization,
                   Rcpp::Nullable<Rcpp::List> nullable_rot_control,
                   int random_starts, int cores) {
 
@@ -64,6 +65,14 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
   // Select the optimization rutine:
   rotation_optim* algorithm = choose_optim(x.optim);
+
+  arma::vec weigths;
+  if (normalization == "kaiser") {
+
+    weigths = sqrt(sum(x.lambda % x.lambda, 1));
+    x.lambda.each_col() /= weigths;
+
+  }
 
   arma::vec xf(random_starts);
   TRN x1;
@@ -119,6 +128,39 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
     Rcpp::warning("Failed rotation convergence");
 
   }
+
+  if (normalization == "kaiser") {
+
+    L.each_col() %= weigths;
+
+  }
+
+  Rcpp::List modelInfo;
+  modelInfo["loadings"] = loadings;
+  modelInfo["rotation"] = rotation;
+  modelInfo["projection"] = projection;
+  modelInfo["n_vars"] = loadings.n_rows;
+  modelInfo["nfactors"] = loadings.n_cols;
+  // modelInfo["df"] = df;
+  // modelInfo["df_null"] = df_null;
+  // modelInfo["f_null"] = f_null;
+  modelInfo["k"] = k;
+  modelInfo["gamma"] = gamma;
+  modelInfo["epsilon"] = epsilon;
+  modelInfo["w"] = w;
+  modelInfo["alpha"] = alpha;
+  modelInfo["a"] = a;
+  modelInfo["b"] = b;
+  modelInfo["normalization"] = normalization;
+  modelInfo["between_blocks"] = between_blocks;
+  modelInfo["Target"] = nullable_Target;
+  modelInfo["Weight"] = nullable_Weight;
+  modelInfo["PhiTarget"] = nullable_PhiTarget;
+  modelInfo["PhiWeight"] = nullable_PhiWeight;
+  modelInfo["blocks"] = nullable_blocks;
+  modelInfo["blocks_list"] = nullable_blocks_list;
+  modelInfo["block_weights"] = nullable_block_weights;
+  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
 
   Rcpp::List result;
   result["loadings"] = L;
