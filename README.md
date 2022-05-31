@@ -16,7 +16,7 @@ Using the `devtools` package:
 
 # Installation in macOS
 
-In order to install the `bifactor` package in macOS, you need to configure the toolchain. Try the following installer: https://github.com/rmacoslib/r-macos-rtools/releases/tag/v4.0.0.
+To install the `bifactor` package in macOS, you need to configure the C++ toolchain. Try the following installer: https://github.com/rmacoslib/r-macos-rtools/releases/tag/v4.0.0.
 
 If you cannot execute the installer, you may follow this tutorial: https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/.
 
