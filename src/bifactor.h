@@ -268,6 +268,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   }
 
+  result.attr("class") = "SL";
   return result;
 
 }
