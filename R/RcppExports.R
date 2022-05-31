@@ -25,8 +25,8 @@ retr_poblq <- function(X, oblq_blocks) {
     .Call(`_bifactor_retr_poblq`, X, oblq_blocks)
 }
 
-sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
-    .Call(`_bifactor_sl`, R, n_generals, n_groups, first_efa, second_efa)
+sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL) {
+    .Call(`_bifactor_sl`, R, n_generals, n_groups, nobs, first_efa, second_efa)
 }
 
 rotate <- function(loadings, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
@@ -41,8 +41,8 @@ get_target <- function(loadings, Phi, cutoff = 0) {
     .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
 }
 
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", projection = "oblq", PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-    .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, projection, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+    .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {

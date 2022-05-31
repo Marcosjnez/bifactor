@@ -158,11 +158,12 @@ retr_poblq <- function(X, oblq_blocks) {
 #'
 #' @usage
 #'
-#' sl(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL)
+#' sl(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL)
 #'
 #' @param R Correlation matrix.
 #' @param n_generals Number of general factors.
 #' @param n_groups Number of group factors.
+#' @param nobs Sample size. Defaults to NULL.
 #' @param first_efa Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.
 #' @param second_efa Arguments to pass to \code{efast} in the second-order factor extraction. See \code{efast} for the default arguments.
 #'
@@ -197,12 +198,12 @@ retr_poblq <- function(X, oblq_blocks) {
 #' first <- list(rotation = "target", projection = "oblq", Target = Target[, -c(1:2)])
 #' second <- list(rotation = "oblimin", projection = "oblq", gamma = 0)
 #'
-#' SL <- sl(sim$R, n_generals = 2, n_groups = 6, first, second)
+#' SL <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100, first, second)
 #'}
 #'
 #' @export
-sl <- function(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL) {
-  .Call(`_bifactor_sl`, R, n_generals, n_groups, first_efa, second_efa)
+sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL) {
+  .Call(`_bifactor_sl`, R, n_generals, n_groups, nobs, first_efa, second_efa)
 }
 
 #' @title
@@ -395,10 +396,10 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @usage
 #'
 #' bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-#' projection = "oblq",
+#' method = "minres", projection = "oblq", nobs = NULL,
 #' PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, blocks_list = NULL, block_weights = NULL,
-#' oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L,
+#' oblq_blocks = NULL, init_Target = NULL, maxit = 20L,
 #' cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
 #' efa_control = NULL, rot_control = NULL,
 #' first_efa = NULL, second_efa = NULL, verbose = TRUE)
@@ -411,11 +412,12 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @param n_generals Number of general factors to extract.
 #' @param n_groups Number of group factors to extract.
 #' @param bifactor_method "GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".
+#' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".
+#' @param nobs Sample size. Defaults to NULL.
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
 #' @param init_Target Initial target matrix for the loadings. Defaults to NULL.
-#' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".
 #' @param maxit Maximum number of iterations for the GSLiD algorithm. Defaults to 20L.
 #' @param cutoff Cut-off used to update the target matrix upon each iteration. Defaults to 0.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
@@ -481,14 +483,14 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' s <- cor(scores)
 #'
 #' # Fit an Generalized exploratory bi-factor model with GSLiD:
-#' GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, method = "minres",
-#' projection = "poblq", bifactor_method = "GSLiD", oblq_blocks = 3,
+#' GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
+#' method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
 #' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
 #'}
 #'
 #' @export
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", projection = "oblq", PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, projection, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, method, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 #' @title

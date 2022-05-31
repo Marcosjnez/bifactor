@@ -537,7 +537,7 @@ sim_factor <- function(n_generals, groups_per_general, items_per_group,
                        crossloadings = 0, pure = FALSE,
                        generals_rho = 0, groups_rho = 0,
                        confirmatory = TRUE, method = "minres",
-                       fit = "rmsr", misfit = 0, error_method = "cudeck") {
+                       fit = "rmsr", misfit = 0, error_method = "yuan") {
 
   ng <- n_generals
   condition <- n_generals == 0
