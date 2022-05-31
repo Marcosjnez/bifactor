@@ -5,7 +5,7 @@
 \title{Compute summaries, fit indices, and information criteria from exploratory factor models.}
 \usage{
 ## S3 method for class 'efa'
-summary(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, ...)
+summary(efa, nobs=NULL, suppress=0, order=FALSE, ...)
 }
 \arguments{
 \item{efa}{Object of class efa.}
@@ -15,8 +15,6 @@ summary(efa, nobs=NULL, suppress=0, order=FALSE, print.max=101, ...)
 \item{suppress}{Hide the loadings whose absolute magnitudes are smaller than this cutoff. Defaults to 0.}
 
 \item{order}{Order the columns of the pattern matrix according to the variance they account for. Defaults to FALSE.}
-
-\item{print.max}{Maximum number of rows to print. Defaults to 101.}
 
 \item{...}{Arguments to be passed to or from other methods.}
 }

@@ -5,10 +5,10 @@
 \title{Fit an exploratory bi-factor or generalized bi-factor model.}
 \usage{
 bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-projection = "oblq",
+method = "minres", projection = "oblq", nobs = NULL,
 PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, blocks_list = NULL, block_weights = NULL,
-oblq_blocks = NULL, init_Target = NULL, method = "minres", maxit = 20L,
+oblq_blocks = NULL, init_Target = NULL, maxit = 20L,
 cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
 efa_control = NULL, rot_control = NULL,
 first_efa = NULL, second_efa = NULL, verbose = TRUE)
@@ -22,7 +22,11 @@ first_efa = NULL, second_efa = NULL, verbose = TRUE)
 
 \item{bifactor_method}{"GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".}
 
+\item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".}
+
 \item{projection}{Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".}
+
+\item{nobs}{Sample size. Defaults to NULL.}
 
 \item{PhiTarget}{Target matrix for the factor correlations. Defaults to NULL.}
 
@@ -37,8 +41,6 @@ first_efa = NULL, second_efa = NULL, verbose = TRUE)
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
 \item{init_Target}{Initial target matrix for the loadings. Defaults to NULL.}
-
-\item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".}
 
 \item{maxit}{Maximum number of iterations for the GSLiD algorithm. Defaults to 20L.}
 
@@ -110,8 +112,8 @@ scores <- MASS::mvrnorm(1e4, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
 # Fit an Generalized exploratory bi-factor model with GSLiD:
-GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, method = "minres",
-projection = "poblq", bifactor_method = "GSLiD", oblq_blocks = 3,
+GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
+method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
 random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
 }
 

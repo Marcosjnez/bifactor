@@ -4,7 +4,7 @@
 \alias{sl}
 \title{Schmid-Leiman Transformation.}
 \usage{
-sl(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL)
+sl(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL)
 }
 \arguments{
 \item{R}{Correlation matrix.}
@@ -12,6 +12,8 @@ sl(R, n_generals, n_groups, first_efa = NULL, second_efa = NULL)
 \item{n_generals}{Number of general factors.}
 
 \item{n_groups}{Number of group factors.}
+
+\item{nobs}{Sample size. Defaults to NULL.}
 
 \item{first_efa}{Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.}
 
@@ -47,7 +49,7 @@ Target <- ifelse(lambda > 0, 1, 0)
 first <- list(rotation = "target", projection = "oblq", Target = Target[, -c(1:2)])
 second <- list(rotation = "oblimin", projection = "oblq", gamma = 0)
 
-SL <- sl(sim$R, n_generals = 2, n_groups = 6, first, second)
+SL <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100, first, second)
 }
 
 }
