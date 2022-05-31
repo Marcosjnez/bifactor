@@ -218,7 +218,8 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL,
-#' between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
+#' between_blocks = "none", normalization = "none",
+#' rot_control = NULL, random_starts = 1L, cores = 1L)
 #'
 #' @param loadings Unrotated loading matrix.
 #' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
@@ -239,6 +240,7 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' @param block_weights Vector of weights for each block of factors.
 #' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param between_blocks Available between_blocks: "TL" and "TLM". Defaults to none.
+#' @param normalization Available normalizations: "kaiser". Defaults to "none".
 #' @param rot_control List of control parameters for the rotation algorithm. Defaults to NULL.
 #' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
 #' @param cores Number of cores for parallel execution of random starts. Defaults to 1L.
@@ -264,8 +266,8 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 #'
 #' @export
-rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
-  .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, rot_control, random_starts, cores)
+rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
+  .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, normalization, rot_control, random_starts, cores)
 }
 
 #' @title

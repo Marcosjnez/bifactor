@@ -8,12 +8,13 @@
 #'
 #' ## S3 method for class 'efa'
 #' print(efa, nobs=NULL, ...)
+#' print.efa(efa, nobs=NULL, ...)
 #'
 #' @param efa Object of class efa.
 #' @param nobs Sample size. Defaults to NULL.
 #' @param ... Arguments to be passed to or from other methods.
 #'
-#' @details \code{print.efa}... to be explained
+#' @details to be explained
 #'
 #' @return Matrix of variance accounted for the factors.
 #'

@@ -29,8 +29,8 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
     .Call(`_bifactor_sl`, R, n_generals, n_groups, nobs, first_efa, second_efa)
 }
 
-rotate <- function(loadings, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
-    .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, rot_control, random_starts, cores)
+rotate <- function(loadings, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
+    .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, normalization, rot_control, random_starts, cores)
 }
 
 efast <- function(R, nfactors, method = "minres", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {

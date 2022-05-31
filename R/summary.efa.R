@@ -8,13 +8,14 @@
 #'
 #' ## S3 method for class 'efa'
 #' summary(efa, nobs=NULL, suppress=0, order=FALSE, ...)
+#' summary.efa(efa, nobs=NULL, suppress=0, order=FALSE, ...)
 #'
 #' @param efa Object of class efa.
 #' @param nobs Sample size. Defaults to NULL.
 #' @param suppress Hide the loadings whose absolute magnitudes are smaller than this cutoff. Defaults to 0.
 #' @param order Order the columns of the pattern matrix according to the variance they account for. Defaults to FALSE.
 #' @param ... Arguments to be passed to or from other methods.
-#' @details \code{summary.efa}... to be explained
+#' @details to be explained
 #'
 #' @return List with the following objects:
 #' \item{loadings}{Loading matrix.}
