@@ -8,7 +8,8 @@ rotate(loadings, rotation = "oblimin", projection = "oblq",
 gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL,
-between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
+between_blocks = "none", normalization = "none",
+rot_control = NULL, random_starts = 1L, cores = 1L)
 }
 \arguments{
 \item{loadings}{Unrotated loading matrix.}
@@ -48,6 +49,8 @@ between_blocks = "none", rot_control = NULL, random_starts = 1L, cores = 1L)
 \item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
 \item{between_blocks}{Available between_blocks: "TL" and "TLM". Defaults to none.}
+
+\item{normalization}{Available normalizations: "kaiser". Defaults to "none".}
 
 \item{rot_control}{List of control parameters for the rotation algorithm. Defaults to NULL.}
 

@@ -6,6 +6,7 @@
 \usage{
 ## S3 method for class 'efa'
 print(efa, nobs=NULL, ...)
+print.efa(efa, nobs=NULL, ...)
 }
 \arguments{
 \item{efa}{Object of class efa.}
@@ -21,7 +22,7 @@ Matrix of variance accounted for the factors.
 Print summary information from exploratory factor models.
 }
 \details{
-\code{print.efa}... to be explained
+to be explained
 }
 \author{
 Vithor R. Franco & Marcos Jiménez

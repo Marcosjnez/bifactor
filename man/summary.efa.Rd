@@ -6,6 +6,7 @@
 \usage{
 ## S3 method for class 'efa'
 summary(efa, nobs=NULL, suppress=0, order=FALSE, ...)
+summary.efa(efa, nobs=NULL, suppress=0, order=FALSE, ...)
 }
 \arguments{
 \item{efa}{Object of class efa.}
@@ -32,7 +33,7 @@ List with the following objects:
 Compute summaries, fit indices, and information criteria from exploratory factor models.
 }
 \details{
-\code{summary.efa}... to be explained
+to be explained
 }
 \author{
 Vithor R. Franco & Marcos Jiménez
