@@ -44,14 +44,12 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, ...) {
   if(efa$modelInfo$rotation == "none") { # For efa without rotation
     lambda <- efa$efa$loadings
     Phi <- diag(ncol(lambda))
-    uniquenesses <- c(efa$efa$uniquenesses)
-    ObjFn <- efa$efa$f
   } else { # For efa with rotation
     lambda <- efa$rotation$loadings
     Phi <- efa$rotation$Phi
-    uniquenesses <- c(efa$rotation$uniquenesses)
-    ObjFn <- efa$efa$f
   }
+  uniquenesses <- c(efa$efa$uniquenesses)
+  ObjFn <- efa$efa$f
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
   ordering <- order(SSloads, decreasing=T)
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")

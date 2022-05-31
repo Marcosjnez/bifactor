@@ -34,12 +34,11 @@ print.efa <- function(efa, nobs=NULL, ...) {
   if(efa$modelInfo$rotation == "none") { # For efa without rotation
     lambda <- efa$efa$loadings
     Phi <- diag(ncol(lambda))
-    ObjFn <- efa$efa$f
   } else { # For efa with rotation
     lambda <- efa$rotation$loadings
     Phi <- efa$rotation$Phi
-    ObjFn <- efa$efa$f
   }
+  ObjFn <- efa$efa$f
   ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
   fit <- suppressWarnings(fitMeasures(efa, nobs))
   Phi <- Phi[ordering, ordering]
