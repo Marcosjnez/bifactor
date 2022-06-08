@@ -1,3 +1,5 @@
+S3method(print,bifactor)
+S3method(summary,bifactor)
 S3method(print,efa)
 S3method(summary,efa)
 export(asymp_cov)
