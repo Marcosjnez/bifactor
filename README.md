@@ -13,7 +13,7 @@ Using the `devtools` package:
 To install the `bifactor` package in macOS, you need to configure the C++ toolchain so that C++ code can be compiled from R. Try the following installer: https://github.com/rmacoslib/r-macos-rtools/releases/tag/v4.0.0.
 
 If the installer does not succeed, you may follow this tutorial: https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/.
-Briefly, install `Xcode`from App Store. Then, install the package manager Homebrew and GCC:
+Briefly, install `Xcode`from App Store. Then, install the package manager Homebrew and GCC by typing the following line sin the Terminal:
 
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     brew install gcc
