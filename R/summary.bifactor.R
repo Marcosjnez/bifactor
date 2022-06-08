@@ -6,11 +6,11 @@
 #'
 #' @usage
 #'
-#' ## S3 method for class 'efa'
-#' summary(efa, nobs=NULL, suppress=0, order=FALSE, ...)
-#' summary.efa(efa, nobs=NULL, suppress=0, order=FALSE, ...)
+#' ## S3 method for class 'bifactor'
+#' summary(bifactor, nobs=NULL, suppress=0, order=FALSE, ...)
+#' summary.bifactor(bifactor, nobs=NULL, suppress=0, order=FALSE, ...)
 #'
-#' @param efa Object of class efa.
+#' @param bifactor Object of class bifactor.
 #' @param nobs Sample size. Defaults to NULL.
 #' @param suppress Hide the loadings whose absolute magnitudes are smaller than this cutoff. Defaults to 0.
 #' @param order Order the columns of the pattern matrix according to the variance they account for. Defaults to FALSE.
@@ -32,7 +32,8 @@
 #' Vithor R. Franco & Marcos Jiménez
 #'
 #' @export
-summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...) {
+summary.bifactor <- function(bifactor, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...) {
+  efa <- bifactor
   # Check if nobs was provided
   if(is.null(nobs)) {
     if(is.null(efa$modelInfo$nobs)) {
@@ -43,13 +44,9 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   }
 
   ### Pattern matrix with communalities, uniqueness, and complexity
-  if(efa$modelInfo$rotation == "none") { # For efa without rotation
-    lambda <- efa$efa$loadings
-    Phi <- diag(ncol(lambda))
-  } else { # For efa with rotation
-    lambda <- efa$rotation$loadings
-    Phi <- efa$rotation$Phi
-  }
+  lambda <- efa$bifactor$loadings
+  Phi <- efa$bifactor$Phi
+
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
@@ -98,9 +95,9 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   # Loadings
   cat("Standardized loadings (pattern matrix) based upon correlation matrix\n", sep=""); print(loadsM)
   # Variance accounted for
-  cat("\n","Variance accounted for after rotation\n",sep=""); print(VAF)
+  cat("\n","Variance accounted for after bifactor rotation\n",sep=""); print(VAF)
   # Latent correlations
-  cat("\n","Factor correlations after rotation\n",sep=""); print(round(Phi, digits))
+  cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(Phi, digits))
   # Fit
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")

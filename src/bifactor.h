@@ -557,6 +557,52 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
     Rcpp::stop("Unkown projection method");
   }
 
+  // Model Info:
+
+  int p = R.n_cols;
+  int q = x.q;
+  double df_null = p*(p-1)/2;
+  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
+
+  double f_null;
+  if(method == "minres" || method == "pa") {
+    f_null = arma::accu(R % R) - R.n_cols;
+  } else if(method == "ml") {
+    f_null = -arma::log_det_sympd(R);
+  } else if(method == "minrank") {
+    f_null = 0;
+  }
+
+  Rcpp::List modelInfo;
+  modelInfo["R"] = R;
+  modelInfo["method"] = method;
+  modelInfo["projection"] = projection;
+  modelInfo["rotation"] = x.rotations;
+  modelInfo["n_vars"] = R.n_cols;
+  modelInfo["nfactors"] = q;
+  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["df"] = df;
+  modelInfo["df_null"] = df_null;
+  modelInfo["f_null"] = f_null;
+  modelInfo["w"] = x.w;
+  modelInfo["k"] = x.k;
+  modelInfo["gamma"] = x.gamma;
+  modelInfo["epsilon"] = x.epsilon;
+  modelInfo["w"] = x.w;
+  modelInfo["alpha"] = x.alpha;
+  modelInfo["a"] = x.a;
+  modelInfo["b"] = x.b;
+  modelInfo["normalization"] = x.normalization;
+  modelInfo["between_blocks"] = x.between_blocks;
+  modelInfo["Target"] = x.nullable_Target;
+  modelInfo["Weight"] = x.nullable_Weight;
+  modelInfo["PhiTarget"] = x.nullable_PhiTarget;
+  modelInfo["PhiWeight"] = x.nullable_PhiWeight;
+  modelInfo["blocks"] = x.nullable_blocks;
+  modelInfo["blocks_list"] = x.nullable_blocks_list;
+  modelInfo["block_weights"] = x.nullable_block_weights;
+  modelInfo["oblq_blocks"] = x.nullable_oblq_blocks;
+
   // Create defaults:
 
   int efa_maxit, lmm;
@@ -620,7 +666,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
     // congruence = tucker_congruence(loadings, new_loadings);
 
     // min_congruences[i] = congruence.min();
-    max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
+    // max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 
     loadings = new_loadings;
     arma::mat new_Phi = rotation_result["Phi"];
@@ -662,23 +708,41 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
 
   }
 
+  arma::mat L = loadings;
   arma::mat Phi = rotation_result["Phi"];
-  rotation_result["loadings"] = loadings;
-  rotation_result["Phi"] = Phi;
-  arma::mat R_hat = loadings * Phi * loadings.t();
+
+  for (int j=0; j < x.q; ++j) {
+    if (sum(L.col(j)) < 0) {
+      L.col(j)   *= -1;
+      Phi.col(j) *= -1;
+      Phi.row(j) *= -1;
+    }
+  }
+
+  arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
+  arma::uvec indices = arma::sort_index(propVar, "descend");
+  arma::mat Lsorted = L.cols(indices);
+  arma::mat Phisorted = Phi(indices, indices);
+  arma::mat Targetsorted = x.Target.cols(indices);
+  arma::mat Weightsorted = x.Weight.cols(indices);
+
+  rotation_result["loadings"] = Lsorted;
+  rotation_result["Phi"] = Phisorted;
+  arma::mat R_hat = L * Phi * L.t();
   rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
   R_hat.diag().ones();
   rotation_result["R_hat"] = R_hat;
-  rotation_result["Target"] = x.Target;
-  rotation_result["Weights"] = x.Weight;
+  rotation_result["Target"] = Targetsorted;
+  rotation_result["Weights"] = Weightsorted;
   rotation_result["Target_iterations"] = i;
   rotation_result["Target_convergence"] = Target_convergence;
-  rotation_result["min_congruences"] = min_congruences.head(i);
-  rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
+  // rotation_result["min_congruences"] = min_congruences.head(i);
+  // rotation_result["max_abs_diffs"] = max_abs_diffs.head(i);
   // Targets  = Targets(arma::span::all, arma::span::all, arma::span(0, i-1));
   // rotation_result["Targets"] = Targets;
   result["efa"] = efa_result;
   result["bifactor"] = rotation_result;
+  result["modelInfo"] = modelInfo;
 
   return result;
 
@@ -692,7 +756,10 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
                   Rcpp::Nullable<Rcpp::List> nullable_efa_control,
                   Rcpp::Nullable<Rcpp::List> nullable_rot_control) {
 
-  if(cutoff <= 0) Rcpp::stop("The cutoff need to be larger than 0");
+  if(cutoff <= 0) {
+    Rcpp::warning("The cutoff needs to be larger than 0. It was set to 0.20.");
+    cutoff = 0.20;
+  }
 
   // Arguments to pass to the first efa:
 
@@ -760,9 +827,14 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
                                x2.nullable_init,
                                x2.nullable_efa_control, x2.nullable_rot_control);
 
+  Rcpp::List efa_result = final_efa["efa"];
+  Rcpp::List rotation_result = final_efa["rotation"];
+  Rcpp::List modelInfo = final_efa["modelInfo"];
   Rcpp::List results;
+  results["efa"] = efa_result;
+  results["bifactor"] = rotation_result;
+  results["modelInfo"] = modelInfo;
   results["first_order_solution"] = first_order_efa;
-  results["bifactor"] = final_efa;
 
   return results;
 
@@ -808,8 +880,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                                       nullable_efa_control,
                                       nullable_rot_control);
 
-    result["first_order_solution"] = botmin_result["first_order_solution"];
-    result["botmin"] = botmin_result["botmin"];
+    result = botmin_result;
 
   } else if(bifactor_method == "SL") {
 
@@ -875,42 +946,6 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
     Rcpp::stop("Unkown bifactor method");
 
   }
-
-  int p = R.n_cols;
-  int q = nfactors;
-  double df_null = p*(p-1)/2;
-  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
-
-  double f_null;
-  if(method == "minres" || method == "pa") {
-    f_null = arma::accu(R % R) - R.n_cols;
-  } else if(method == "ml") {
-    f_null = -arma::log_det_sympd(R);
-  } else if(method == "minrank") {
-    f_null = 0;
-  }
-
-  Rcpp::List modelInfo;
-  modelInfo["R"] = R;
-  modelInfo["method"] = method;
-  modelInfo["projection"] = projection;
-  modelInfo["n_vars"] = R.n_cols;
-  modelInfo["nfactors"] = nfactors;
-  modelInfo["nobs"] = nullable_nobs;
-  modelInfo["df"] = df;
-  modelInfo["df_null"] = df_null;
-  modelInfo["f_null"] = f_null;
-  modelInfo["w"] = w;
-  // modelInfo["normalization"] = normalization;
-  // modelInfo["between_blocks"] = between_blocks;
-  modelInfo["Target"] = nullable_Target;
-  // modelInfo["Weight"] = nullable_Weight;
-  modelInfo["PhiTarget"] = nullable_PhiTarget;
-  modelInfo["PhiWeight"] = nullable_PhiWeight;
-  modelInfo["blocks"] = nullable_blocks;
-  modelInfo["blocks_list"] = nullable_blocks_list;
-  modelInfo["block_weights"] = nullable_block_weights;
-  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
 
   timer.step("elapsed");
 

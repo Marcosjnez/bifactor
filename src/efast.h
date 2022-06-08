@@ -226,6 +226,12 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
 
+    arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
+    arma::uvec indices = arma::sort_index(propVar, "descend");
+    arma::mat Lsorted = x.lambda.cols(indices);
+    efa_result["loadings"] = Lsorted;
+    efa_result["propVar"] = arma::sort(propVar);
+
     result["efa"] = efa_result;
     result["modelInfo"] = modelInfo;
     timer.step("elapsed");
@@ -250,12 +256,18 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   }
 
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
+  arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
+  arma::uvec indices = arma::sort_index(propVar, "descend");
+  arma::mat Lsorted = L.cols(indices);
+  arma::mat Phisorted = Phi(indices, indices);
+
+  rotation_result["loadings"] = Lsorted;
+  rotation_result["Phi"] = Phisorted;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
+  rotation_result["propVar"] = arma::sort(propVar);
 
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
@@ -317,49 +329,6 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   }
 
-  int p = R.n_cols;
-  int q = nfactors;
-  double df_null = p*(p-1)/2;
-  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
-
-  double f_null;
-  if(method == "minres" || method == "pa") {
-    f_null = arma::accu(R % R) - R.n_cols;
-  } else if(method == "ml") {
-    f_null = -arma::log_det_sympd(R);
-  } else if(method == "minrank") {
-    f_null = 0;
-  }
-
-  Rcpp::List modelInfo;
-  modelInfo["R"] = R;
-  modelInfo["method"] = method;
-  modelInfo["projection"] = projection;
-  modelInfo["rotation"] = rotation;
-  modelInfo["n_vars"] = R.n_cols;
-  modelInfo["nfactors"] = nfactors;
-  modelInfo["nobs"] = nullable_nobs;
-  modelInfo["df"] = df;
-  modelInfo["df_null"] = df_null;
-  modelInfo["f_null"] = f_null;
-  modelInfo["k"] = k;
-  modelInfo["gamma"] = gamma;
-  modelInfo["epsilon"] = epsilon;
-  modelInfo["w"] = w;
-  modelInfo["alpha"] = alpha;
-  modelInfo["a"] = a;
-  modelInfo["b"] = b;
-  modelInfo["normalization"] = normalization;
-  modelInfo["between_blocks"] = between_blocks;
-  modelInfo["Target"] = nullable_Target;
-  modelInfo["Weight"] = nullable_Weight;
-  modelInfo["PhiTarget"] = nullable_PhiTarget;
-  modelInfo["PhiWeight"] = nullable_PhiWeight;
-  modelInfo["blocks"] = nullable_blocks;
-  modelInfo["blocks_list"] = nullable_blocks_list;
-  modelInfo["block_weights"] = nullable_block_weights;
-  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
-
   arma::mat loadings = efa_result["loadings"];
 
   // Structure of rotation arguments:
@@ -388,6 +357,51 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   check_rotate(x, random_starts, cores);
 
+  // Model Info:
+
+  int p = R.n_cols;
+  int q = nfactors;
+  double df_null = p*(p-1)/2;
+  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
+
+  double f_null;
+  if(method == "minres" || method == "pa") {
+    f_null = arma::accu(R % R) - R.n_cols;
+  } else if(method == "ml") {
+    f_null = -arma::log_det_sympd(R);
+  } else if(method == "minrank") {
+    f_null = 0;
+  }
+
+  Rcpp::List modelInfo;
+  modelInfo["R"] = R;
+  modelInfo["method"] = method;
+  modelInfo["projection"] = x.projection;
+  modelInfo["rotation"] = x.rotations;
+  modelInfo["n_vars"] = R.n_cols;
+  modelInfo["nfactors"] = nfactors;
+  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["df"] = df;
+  modelInfo["df_null"] = df_null;
+  modelInfo["f_null"] = f_null;
+  modelInfo["k"] = x.k;
+  modelInfo["gamma"] = x.gamma;
+  modelInfo["epsilon"] = x.epsilon;
+  modelInfo["w"] = x.w;
+  modelInfo["alpha"] = x.alpha;
+  modelInfo["a"] = x.a;
+  modelInfo["b"] = x.b;
+  modelInfo["normalization"] = x.normalization;
+  modelInfo["between_blocks"] = x.between_blocks;
+  modelInfo["Target"] = x.nullable_Target;
+  modelInfo["Weight"] = x.nullable_Weight;
+  modelInfo["PhiTarget"] = x.nullable_PhiTarget;
+  modelInfo["PhiWeight"] = x.nullable_PhiWeight;
+  modelInfo["blocks"] = x.nullable_blocks;
+  modelInfo["blocks_list"] = x.nullable_blocks_list;
+  modelInfo["block_weights"] = x.nullable_block_weights;
+  modelInfo["oblq_blocks"] = x.nullable_oblq_blocks;
+
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
   // Select one specific criteria or mixed criteria:
@@ -404,6 +418,12 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
+
+    arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
+    arma::uvec indices = arma::sort_index(propVar, "descend");
+    arma::mat Lsorted = x.lambda.cols(indices);
+    efa_result["loadings"] = Lsorted;
+    efa_result["propVar"] = arma::sort(propVar);
 
     result["efa"] = efa_result;
     result["modelInfo"] = modelInfo;
@@ -429,12 +449,18 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   }
 
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
+  arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
+  arma::uvec indices = arma::sort_index(propVar, "descend");
+  arma::mat Lsorted = L.cols(indices);
+  arma::mat Phisorted = Phi(indices, indices);
+
+  rotation_result["loadings"] = Lsorted;
+  rotation_result["Phi"] = Phisorted;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
+  rotation_result["propVar"] = arma::sort(propVar);
 
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;

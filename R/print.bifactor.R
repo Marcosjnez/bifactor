@@ -6,11 +6,11 @@
 #'
 #' @usage
 #'
-#' ## S3 method for class 'efa'
-#' print(efa, nobs=NULL, ...)
-#' print.efa(efa, nobs=NULL, ...)
+#' ## S3 method for class 'bifactor'
+#' print(bifactor, nobs=NULL, ...)
+#' print.bifactor(bifactor, nobs=NULL, ...)
 #'
-#' @param efa Object of class efa.
+#' @param efa Object of class bifactor
 #' @param nobs Sample size. Defaults to NULL.
 #' @param ... Arguments to be passed to or from other methods.
 #'
@@ -23,7 +23,8 @@
 #' Vithor R. Franco & Marcos Jiménez
 #'
 #' @export
-print.efa <- function(efa, nobs=NULL, ...) {
+print.bifactor <- function(bifactor, nobs=NULL, ...) {
+  efa <- bifactor
   # Check if nobs was provided
   if(is.null(nobs)) {
     if(is.null(efa$modelInfo$nobs)) {
@@ -32,13 +33,10 @@ print.efa <- function(efa, nobs=NULL, ...) {
       nobs <- efa$modelInfo$nobs
     }
   }
-  if(efa$modelInfo$rotation == "none") { # For efa without rotation
-    lambda <- efa$efa$loadings
-    Phi <- diag(ncol(lambda))
-  } else { # For efa with rotation
-    lambda <- efa$rotation$loadings
-    Phi <- efa$rotation$Phi
-  }
+  ### Pattern matrix with communalities, uniqueness, and complexity
+  lambda <- efa$bifactor$loadings
+  Phi <- efa$bifactor$Phi
+
   ObjFn <- efa$efa$f
   # ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
   fit <- suppressWarnings(fitMeasures(efa, nobs))
@@ -72,6 +70,6 @@ print.efa <- function(efa, nobs=NULL, ...) {
   # Loadings
   cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
   if(efa$modelInfo$rotation != "none" & efa$modelInfo$projection != "orth") {
-    cat("\n","Factor correlations after rotation\n",sep=""); print(round(Phi, 2))
+    cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(Phi, 2))
   }
 }

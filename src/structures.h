@@ -20,6 +20,7 @@ typedef struct arguments_rotate{
   int maxit = 1e04;
   double eps = 1e-05;
   std::string optim = "newtonTR";
+  std::string normalization = "none";
 
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
