@@ -80,6 +80,7 @@ summary.bifactor <- function(bifactor, nobs=NULL, suppress=0, order=FALSE, digit
   VAF <- round(t(data.frame(SSloads, propVar, cumsVar, propExp, cumsExp)),2)
   rownames(VAF) <- c("SS loadings", "Proportion Var", "Cumulative Var",
                      "Proportion Explained", "Cumulative Proportion")
+  colnames(VAF) <- colnames(lambda)
 
   ### Factor correlations
   Phi <- Phi[ordering, ordering]
