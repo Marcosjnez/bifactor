@@ -43,8 +43,8 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   }
   
   ### Pattern matrix with communalities, uniqueness, and complexity
-  lambda <- efa$efa$loadings
-  Phi <- efa$efa$Phi
+  lambda <- efa$rotation$loadings
+  Phi <- efa$rotation$Phi
   
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f

@@ -33,8 +33,8 @@ print.efa <- function(efa, nobs=NULL, ...) {
     }
   }
   ### Pattern matrix with communalities, uniqueness, and complexity
-  lambda <- efa$efa$loadings
-  Phi <- efa$efa$Phi
+  lambda <- efa$rotation$loadings
+  Phi <- efa$rotation$Phi
   
   ObjFn <- efa$efa$f
   ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
@@ -68,8 +68,5 @@ print.efa <- function(efa, nobs=NULL, ...) {
   }
   # Loadings
   cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
-  if(efa$modelInfo$rotation[1] != "none" & efa$modelInfo$projection != "orth") {
-    cat("\n","Factor correlations after rotation\n",sep=""); print(round(Phi, 2))
-  }
   invisible(NULL)
 }
