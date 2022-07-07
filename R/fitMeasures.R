@@ -31,13 +31,6 @@ fitMeasures <- function(efa, nobs=NULL) {
   }
 
   # Basic measures
-  # if(efa$modelInfo$rotation == "none") { # For efa without rotation
-  #   ObjFn <- efa$efa$f
-  #   residuals <- efa$efa$residuals
-  # } else { # For efa with rotation
-  #   ObjFn <- efa$rotation$f
-  #   residuals <- efa$rotation$residuals
-  # }
   ObjFn <- efa$efa$f
   residuals <- efa$efa$residuals
   p <- efa$modelInfo$n_vars

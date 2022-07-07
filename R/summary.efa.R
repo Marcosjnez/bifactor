@@ -53,9 +53,9 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
-  # ordering <- order(SSloads, decreasing=T)
+  ordering <- order(SSloads, decreasing=T)
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
-  # lambda <- lambda[,ordering]
+  lambda <- lambda[,ordering]
   if(is.null(colnames(efa$modelInfo$R))) {
     rownames(lambda) <- paste("item_",sprintf(paste("%0",nchar(nrow(lambda)),"d",sep=""),1:nrow(lambda)),sep="")
   } else {
@@ -85,7 +85,7 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
                      "Proportion Explained", "Cumulative Proportion")
 
   ### Factor correlations
-  # Phi <- Phi[ordering, ordering]
+  Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- colnames(lambda)
 
   ### Fit statistics

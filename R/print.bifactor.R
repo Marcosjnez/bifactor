@@ -38,11 +38,11 @@ print.bifactor <- function(bifactor, nobs=NULL, ...) {
   Phi <- efa$bifactor$Phi
 
   ObjFn <- efa$efa$f
-  # ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
+  ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
   fit <- suppressWarnings(fitMeasures(efa, nobs))
-  # Phi <- Phi[ordering, ordering]
-  # rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
-  #                                                     ordering),sep="")
+  Phi <- Phi[ordering, ordering]
+  rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
+                                                      ordering),sep="")
   colnames(lambda) <- rownames(Phi) <-
     colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
   if(is.null(colnames(efa$modelInfo$R))) {
@@ -72,4 +72,5 @@ print.bifactor <- function(bifactor, nobs=NULL, ...) {
   if(efa$modelInfo$rotation != "none" & efa$modelInfo$projection != "orth") {
     cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(Phi, 2))
   }
+  invisible(NULL)
 }
