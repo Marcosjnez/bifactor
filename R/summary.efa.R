@@ -41,15 +41,11 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
       nobs <- efa$modelInfo$nobs
     }
   }
-
+  
   ### Pattern matrix with communalities, uniqueness, and complexity
-  if(efa$modelInfo$rotation == "none") { # For efa without rotation
-    lambda <- efa$efa$loadings
-    Phi <- diag(ncol(lambda))
-  } else { # For efa with rotation
-    lambda <- efa$rotation$loadings
-    Phi <- efa$rotation$Phi
-  }
+  lambda <- efa$efa$loadings
+  Phi <- efa$efa$Phi
+  
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation

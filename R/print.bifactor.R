@@ -69,7 +69,7 @@ print.bifactor <- function(bifactor, nobs=NULL, ...) {
   }
   # Loadings
   cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
-  if(efa$modelInfo$rotation != "none" & efa$modelInfo$projection != "orth") {
+  if(efa$modelInfo$rotation[1] != "none" & efa$modelInfo$projection != "orth") {
     cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(Phi, 2))
   }
   invisible(NULL)
