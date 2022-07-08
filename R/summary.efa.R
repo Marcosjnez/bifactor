@@ -41,11 +41,13 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
       nobs <- efa$modelInfo$nobs
     }
   }
-  
+
   ### Pattern matrix with communalities, uniqueness, and complexity
   lambda <- efa$rotation$loadings
   Phi <- efa$rotation$Phi
-  
+  Rhat <- efa$efa$Rhat
+  R <- efa$modelInfo$R
+
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
   SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
@@ -85,6 +87,14 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- colnames(lambda)
 
+  ### Factor score indeterminacy
+  Reliability <- diag(Phi %*% t(lambda) %*% solve(Rhat) %*% lambda %*% Phi)
+  Indeterminacy <- sqrt(Reliability)
+  min_cor <- 2*Reliability-1
+  RELIABILITY <- round(t(data.frame(Reliability, Indeterminacy, min_cor)), digits)
+  rownames(RELIABILITY)[3] <- "Minimum Correlation"
+  colnames(RELIABILITY) <- colnames(lambda)
+
   ### Fit statistics
   fit  <- suppressWarnings(fitMeasures(efa, nobs))
 
@@ -98,6 +108,8 @@ summary.efa <- function(efa, nobs=NULL, suppress=0, order=FALSE, digits = 2, ...
   cat("\n","Variance accounted for after rotation\n",sep=""); print(VAF)
   # Latent correlations
   cat("\n","Factor correlations after rotation\n",sep=""); print(round(Phi, digits))
+  # Factor Indeterminacy
+  cat("\n","Factor score indeterminacy\n",sep=""); print(round(RELIABILITY, digits))
   # Fit
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")
