@@ -261,7 +261,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "varimax") != x.rotations.end()) {
 
-    if(x.projection == "oblq" | x.projection == "poblq") {
+    if((x.projection == "oblq") | (x.projection == "poblq")) {
       Rcpp::warning("Usually, the varimax criterion does not converge with (partially) oblique projection. \n Consider using cf with k = 1/(number of items), which is equivalent to varimax for orthogonal rotation but also converges with (partially) oblique projection.");
     }
 

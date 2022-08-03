@@ -1,0 +1,30 @@
+{
+    "args": [
+        "-std=gnu++11",
+        "-IC:/PROGRA~1/R/R-42~1.0/include",
+        "-DNDEBUG",
+        "-fopenmp",
+        "-IC:/Users/vrfra/AppData/Local/R/win-library/4.2/Rcpp/include",
+        "-IC:/Users/vrfra/AppData/Local/R/win-library/4.2/RcppArmadillo/include",
+        "-DEIGEN_DONT_VECTORIZE",
+        "-nostdinc",
+        "-U_MSC_VER",
+        "-D__GNUC__=10",
+        "-D__GNUC_MINOR__=3",
+        "-D__GNUC_PATCHLEVEL__=0",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/include",
+        "-IC:/rtools42/x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
+        "-include",
+        "C:/Users/vrfra/Documents/GitHub/bifactor/.Rproj.user/864BD013/compilation-database/mingw64/cpp-definitions.h"
+    ],
+    "pch": "RcppArmadillo",
+    "is_cpp": true,
+    "hash": "165636279916509432311650943231",
+    "compiler": "12099144591516297805",
+    "rversion": "4.2.0",
+    "dbversion": 1
+}
