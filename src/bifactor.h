@@ -720,20 +720,15 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  arma::uvec indices = arma::sort_index(propVar, "descend");
-  arma::mat Lsorted = L.cols(indices);
-  arma::mat Phisorted = Phi(indices, indices);
-  arma::mat Targetsorted = x.Target.cols(indices);
-  arma::mat Weightsorted = x.Weight.cols(indices);
 
-  rotation_result["loadings"] = Lsorted;
-  rotation_result["Phi"] = Phisorted;
+  rotation_result["loadings"] = L;
+  rotation_result["Phi"] = Phi;
   arma::mat R_hat = L * Phi * L.t();
   rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
   R_hat.diag().ones();
   rotation_result["R_hat"] = R_hat;
-  rotation_result["Target"] = Targetsorted;
-  rotation_result["Weights"] = Weightsorted;
+  rotation_result["Target"] = x.Target;
+  rotation_result["Weights"] = x.Weight;
   rotation_result["Target_iterations"] = i;
   rotation_result["Target_convergence"] = Target_convergence;
   // rotation_result["min_congruences"] = min_congruences.head(i);

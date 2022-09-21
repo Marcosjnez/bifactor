@@ -227,10 +227,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
 
     arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
-    arma::uvec indices = arma::sort_index(propVar, "descend");
-    arma::mat Lsorted = x.lambda.cols(indices);
-    efa_result["loadings"] = Lsorted;
-    efa_result["propVar"] = arma::sort(propVar);
+    efa_result["loadings"] = x.lambda;
+    efa_result["propVar"] = propVar;
 
     result["efa"] = efa_result;
     result["modelInfo"] = modelInfo;
@@ -257,18 +255,13 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  // arma::uvec indices = arma::sort_index(propVar, "descend");
-  // arma::mat Lsorted = L.cols(indices);
-  // arma::mat Phisorted = Phi(indices, indices);
-  // propVar = propVar.cols(indices);
 
-  rotation_result["loadings"] = L; //Lsorted;
-  rotation_result["Phi"] = Phi; // Phisorted;
+  rotation_result["loadings"] = L;
+  rotation_result["Phi"] = Phi;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
-  // rotation_result["propVar"] = arma::sort(propVar);
   rotation_result["propVar"] = propVar;
 
   result["efa"] = efa_result;
@@ -422,10 +415,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
 
     arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
-    arma::uvec indices = arma::sort_index(propVar, "descend");
-    arma::mat Lsorted = x.lambda.cols(indices);
-    efa_result["loadings"] = Lsorted;
-    efa_result["propVar"] = arma::sort(propVar);
+    efa_result["loadings"] = x.lambda;
+    efa_result["propVar"] = propVar;
 
     result["efa"] = efa_result;
     result["modelInfo"] = modelInfo;
@@ -452,18 +443,13 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  // arma::uvec indices = arma::sort_index(propVar, "descend");
-  // arma::mat Lsorted = L.cols(indices);
-  // arma::mat Phisorted = Phi(indices, indices);
-  // propVar = propVar.cols(indices);
 
-  rotation_result["loadings"] = L; //Lsorted;
-  rotation_result["Phi"] = Phi; // Phisorted;
+  rotation_result["loadings"] = L;
+  rotation_result["Phi"] = Phi;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
-  // rotation_result["propVar"] = arma::sort(propVar);
   rotation_result["propVar"] = propVar;
 
   result["efa"] = efa_result;
