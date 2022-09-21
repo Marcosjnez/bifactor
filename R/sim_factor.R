@@ -33,46 +33,28 @@ opt_error <- function(x, delta, G) {
   return(x)
 
 }
-f_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+f_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
-  lambda_parameters <- length(indexes_lambda)
+  lambda_p <- length(indexes_lambda)
   Lambda <- matrix(0, p, q)
-  Lambda[indexes_lambda] <- x[1:lambda_parameters]
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
   Phi <- matrix(0, q, q)
-  Phi[indexes_phi] <- x[-(1:lambda_parameters)]
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
   Phi <- t(Phi) + Phi
   diag(Phi) <- 1
-  Rhat <- Lambda %*% Phi %*% t(Lambda)
-  diag(Rhat) <- 1
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
   res <- S - Rhat
   f <- 0.5*sum(res*res)
 
   return(f)
 
 }
-g_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
-
-  p <- nrow(S)
-  lambda_parameters <- length(indexes_lambda)
-  Lambda <- matrix(0, p, q)
-  Lambda[indexes_lambda] <- x[1:lambda_parameters]
-  Phi <- matrix(0, q, q)
-  Phi[indexes_phi] <- x[-(1:lambda_parameters)]
-  Phi <- t(Phi) + Phi
-  diag(Phi) <- 1
-  Rhat <- Lambda %*% Phi %*% t(Lambda)
-  diag(Rhat) <- 1
-  res <- S - Rhat
-
-  g1 <- (res %*% Lambda %*% Phi)[indexes_lambda]
-  g2 <- (t(Lambda) %*% res %*% Lambda)[indexes_phi]
-  g <- -2*c(g1, g2)
-
-  return(g)
-
-}
-f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+g_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -83,14 +65,43 @@ f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
   Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
   Phi <- t(Phi) + Phi
   diag(Phi) <- 1
-  u <- x[-(1:(lambda_p + phi_p))]
-  Rhat <- Lambda %*% Phi %*% t(Lambda) + diag(u)
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
+  res <- S - Rhat
+
+  g1 <- (res %*% Lambda %*% Phi)[indexes_lambda]
+  g2 <- (t(Lambda) %*% res %*% Lambda)[indexes_phi]
+  # g <- -2*c(g1, g2, 0.5*diag(res))
+  res2 <- res
+  res2[lower.tri(res2)] <- 2*res[lower.tri(res)]
+  g <- -2*c(g1, g2, 0.5*res2[indexes_psi])
+
+  return(g)
+
+}
+f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
+
+  p <- nrow(S)
+  lambda_p <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
   f <- log(det(Rhat)) - ldetS + sum(S*solve(Rhat)) - p
 
   return(f)
 
 }
-g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
+g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -101,86 +112,102 @@ g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi) {
   Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
   Phi <- t(Phi) + Phi
   diag(Phi) <- 1
-  u <- x[-(1:(lambda_p + phi_p))]
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
 
-  Rhat <- Lambda %*% Phi %*% t(Lambda) + diag(u)
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
   Rhat_inv <- solve(Rhat)
   Ri_res_Ri <- 2*Rhat_inv %*% (Rhat - S) %*% Rhat_inv
+  Ri_res_Ri2 <- Ri_res_Ri
+  Ri_res_Ri2[lower.tri(Ri_res_Ri2)] <- 2*Ri_res_Ri[lower.tri(Ri_res_Ri)]
 
   # Joreskog (page 10; 1965) Testing a simple structure in factor analysis
+  # g <- c(c(Ri_res_Ri %*% Lambda %*% Phi)[indexes_lambda],
+  #        c(t(Lambda) %*% Ri_res_Ri %*% Lambda)[indexes_phi],
+  #        diag(Ri_res_Ri)*0.5)
   g <- c(c(Ri_res_Ri %*% Lambda %*% Phi)[indexes_lambda],
          c(t(Lambda) %*% Ri_res_Ri %*% Lambda)[indexes_phi],
-         diag(Ri_res_Ri)*0.5) # omitting the sample size constant
+         Ri_res_Ri2[indexes_psi]*0.5)
 
   return(g)
 
 }
-CFA <- function(S, target, targetphi, method = "minres") {
+CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)), method = "minres") {
 
   p <- nrow(target)
   q <- ncol(target)
-  indexes_lambda <- which(target != 0)
-  indexes_phi <- which(targetphi != 0 & lower.tri(targetphi))
-  lambda_p <- length(indexes_lambda)
-  phi_p <- length(indexes_phi)
-  init <- 1/diag(solve(S))
+  indexes_lambda <- which(target != 0) # Which lambdas are estimated
+  indexes_phi <- which(targetphi != 0 & lower.tri(targetphi)) # Which phis are estimated
+  indexes_psi <- which(targetpsi != 0 & lower.tri(targetpsi, diag = TRUE)) # Which psies are estimated
+  lambda_p <- length(indexes_lambda) # Number of lambda parameters
+  phi_p <- length(indexes_phi) # Number of phi parameters
+  psi_p <- length(indexes_psi) # Number of psi parameters
+
+  init_diag_psi <- 1/diag(solve(S)) # Initial diagonal psi parameter values
+  init_psi <- rep(0, times = psi_p)
+  diag_indexes <- (p+1)*0:(p-1)+1 # Indexes for the diagonal of Psi
+  offdiag_indexes <- which(targetpsi != 0 & lower.tri(targetpsi)) # Indexes for the off-diagonal of Psi
+  cor_res_indexes <- which(indexes_psi %in% offdiag_indexes) # Indexes for correlated residuals
+  # Allocate init_diag_psi in the positions of the vector corresponding to the diagonal of Psi:
+  init_psi[-cor_res_indexes] <- init_diag_psi
+
+  lower_psi <- rep(0.005, psi_p) # Lower bounds for the uniquenessess
+  lower_psi[cor_res_indexes] <- -0.995 # Lower bounds for correlated residuals
+  upper_psi <- rep(0.995, psi_p) # Upper bounds for correlated residuals
+  lower <- c(rep(-Inf, lambda_p), rep(-1, phi_p), lower_psi)
+  upper <- c(rep(Inf, lambda_p), rep(1, phi_p), upper_psi)
+
+  x <- c(stats::runif(lambda_p), rep(0, phi_p), init_psi)
 
   if(method == "minres") {
 
-    x <- c(stats::runif(lambda_p), rep(0, phi_p))
     ldetS <- NULL
     f <- f_minres
     g <- g_minres
-    lower <- c(rep(-Inf, lambda_p), rep(-1, phi_p))
-    upper <- c(rep(Inf, lambda_p), rep(1, phi_p))
 
   } else if(method == "ml") {
 
-    x <- c(stats::runif(lambda_p), rep(0, phi_p), init)
     ldetS <- log(det(S))
     f <- f_ml
     g <- g_ml
-    lower <- c(rep(-Inf, lambda_p), rep(-1, phi_p), rep(0, p))
-    upper <- c(rep(Inf, lambda_p), rep(1, phi_p + p))
 
   }
 
   cfa <- stats::nlminb(x, objective = f, gradient = g,
-                lower = lower, upper = upper,
-                S = S, ldetS = ldetS, q = q, indexes_lambda = indexes_lambda,
-                indexes_phi = indexes_phi,
-                control = list(iter.max = 1e4, eval.max = 1e4))
+                       lower = lower, upper = upper,
+                       S = S, ldetS = ldetS, q = q, indexes_lambda = indexes_lambda,
+                       indexes_phi = indexes_phi, indexes_psi = indexes_psi,
+                       control = list(iter.max = 1e4, eval.max = 1e4))
 
+  # Arrange lambda parameter estimates:
   lambda_hat <- matrix(0, p, q)
   lambda_hat[indexes_lambda] <- cfa$par[1:lambda_p]
+
+  # Arrange phi parameter estimates:
   phi_hat <- matrix(0, q, q)
+  phi_hat[indexes_phi] <- cfa$par[(lambda_p+1):(lambda_p + phi_p)]
+  phi_hat <- t(phi_hat) + phi_hat
+  diag(phi_hat) <- 1
 
-  if(method == "minres") {
+  # Arrange psi parameter estimates:
+  psi_hat <- matrix(0, p, p)
+  psi_hat[indexes_psi] <- cfa$par[-(1:(lambda_p + phi_p))]
+  psi_hat[upper.tri(psi_hat)] <- t(psi_hat)[upper.tri(psi_hat)]
 
-    phi_hat[indexes_phi] <- cfa$par[-(1:lambda_p)]
-    phi_hat <- phi_hat + t(phi_hat)
-    diag(phi_hat) <- 1
-
-  } else if(method == "ml") {
-
-    phi_hat[indexes_phi] <- cfa$par[(lambda_p+1):(lambda_p + phi_p)]
-    phi_hat <- t(phi_hat) + phi_hat
-    diag(phi_hat) <- 1
-    u <- cfa$par[-(1:(lambda_p + phi_p))]
-
-  }
-
-  S_hat <- lambda_hat %*% phi_hat %*% t(lambda_hat)
-  uniquenesses_hat <- 1 - diag(S_hat)
-  diag(S_hat) <- 1
+  # Model matrix:
+  S_hat <- lambda_hat %*% phi_hat %*% t(lambda_hat) + psi_hat
+  uniquenesses_hat <- diag(psi_hat)
+  diag(S_hat) <- 1 # Fix rounding errors from the optimization
   residuals <- S - S_hat
 
-  df <- p*(p+1)/2 - (length(indexes_lambda) + length(indexes_phi) + p)
+  # Degrees of freedom:
+  df <- p*(p+1)/2 - (lambda_p + phi_p + psi_p)
 
   results <- list(f = cfa$objective, convergence = cfa$convergence,
                   iterations = cfa$iterations, df = df,
                   lambda = lambda_hat, phi = phi_hat,
-                  uniquenesses = uniquenesses_hat,
+                  psi_hat = psi_hat, uniquenesses = uniquenesses_hat,
                   model = S_hat, residuals = residuals)
 
   return(results)
@@ -445,7 +472,8 @@ yuan <- function(R, lambda, Phi, uniquenesses,
   R <- L %*% Phi %*% t(L); diag(R) <- 1
   target <- ifelse(lambda != 0, 1, 0)
   targetphi <- ifelse(Phi != 0, 1, 0)
-  fit <- CFA(R, target, targetphi, method = method)
+  targetpsi <- diag(p)
+  fit <- CFA(R, target, targetphi, targetpsi, method = method)
   Phat <- fit$model
 
   # from delta to tau:
@@ -529,7 +557,7 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory generalized bifactor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory bi-factor analysis with multiple general factors. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
 sim_factor <- function(n_generals, groups_per_general, items_per_group,
