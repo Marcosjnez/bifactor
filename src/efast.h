@@ -18,8 +18,8 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
                       int random_starts, int cores) {
 
   arma::vec xf(random_starts);
-  TRN x1;
-  std::vector<TRN> x2(random_starts);
+  NTR x1;
+  std::vector<NTR> x2(random_starts);
   // Select the optimization rutine:
   rotation_optim* algorithm = choose_optim(x.optim);
 
@@ -257,17 +257,19 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  arma::uvec indices = arma::sort_index(propVar, "descend");
-  arma::mat Lsorted = L.cols(indices);
-  arma::mat Phisorted = Phi(indices, indices);
+  // arma::uvec indices = arma::sort_index(propVar, "descend");
+  // arma::mat Lsorted = L.cols(indices);
+  // arma::mat Phisorted = Phi(indices, indices);
+  // propVar = propVar.cols(indices);
 
-  rotation_result["loadings"] = Lsorted;
-  rotation_result["Phi"] = Phisorted;
+  rotation_result["loadings"] = L; //Lsorted;
+  rotation_result["Phi"] = Phi; // Phisorted;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
-  rotation_result["propVar"] = arma::sort(propVar);
+  // rotation_result["propVar"] = arma::sort(propVar);
+  rotation_result["propVar"] = propVar;
 
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
@@ -450,17 +452,19 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  arma::uvec indices = arma::sort_index(propVar, "descend");
-  arma::mat Lsorted = L.cols(indices);
-  arma::mat Phisorted = Phi(indices, indices);
+  // arma::uvec indices = arma::sort_index(propVar, "descend");
+  // arma::mat Lsorted = L.cols(indices);
+  // arma::mat Phisorted = Phi(indices, indices);
+  // propVar = propVar.cols(indices);
 
-  rotation_result["loadings"] = Lsorted;
-  rotation_result["Phi"] = Phisorted;
+  rotation_result["loadings"] = L; //Lsorted;
+  rotation_result["Phi"] = Phi; // Phisorted;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["residuals"] = efa_result["residuals"];
-  rotation_result["propVar"] = arma::sort(propVar);
+  // rotation_result["propVar"] = arma::sort(propVar);
+  rotation_result["propVar"] = propVar;
 
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
