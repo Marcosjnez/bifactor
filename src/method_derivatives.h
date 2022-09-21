@@ -390,7 +390,7 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 }
 
 /*
- * Hessian for maximum likelihood
+ * Hessian for ml
  */
 
 arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,

@@ -75,8 +75,8 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   }
 
   arma::vec xf(random_starts);
-  TRN x1;
-  std::vector<TRN> x2(random_starts);
+  NTR x1;
+  std::vector<NTR> x2(random_starts);
 
   // Perform multiple rotations with random starting values:
 

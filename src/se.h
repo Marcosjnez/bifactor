@@ -102,10 +102,10 @@ Rcpp::List se(Rcpp::List fit,
   } else if(method == "ml") {
     H = hessian_ml(x.S, x.L, x.Phi, x.projection);
   } else {
-    Rcpp::stop("Standard errors are not implemented yet for this method");
+    Rcpp::stop("Standard errors are not implemented yet for this extraction method");
   }
 
-  // Add constraints to the hessian matrix:
+  // Add the constraints to the hessian matrix:
   int kk = x.d_constr.n_rows;
   H = arma::join_rows(H, x.d_constr.t());
   // Add zeros to make H a square matrix:
@@ -129,7 +129,7 @@ Rcpp::List se(Rcpp::List fit,
   // Find A^{-1}BA^{-1}:
   arma::mat A_inv = H_inv(arma::span(0, m-1), arma::span(0, m-1));
   arma::mat BB = B(x.S, x.L, x.Phi, nullable_X, method, x.projection,
-                   type, eta);
+                   type, eta); // Variance of the correlation matrix
   arma::mat VAR = A_inv * BB * A_inv;
   arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));
 

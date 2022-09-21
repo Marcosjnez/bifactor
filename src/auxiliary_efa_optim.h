@@ -11,12 +11,12 @@
 // #include "auxiliary_criteria.h"
 // #include "criteria.h"
 
-// Line-search satisfying the armijo condition:
+// Line-search algorithm satisfying the armijo condition:
 
 arguments_efa armijo(arguments_efa x, efa_manifold *manifold,
-                        efa_criterion *criterion,
-                        double ss_fac, double ss_min, double max_iter,
-                        double c1, double c2, double eps) {
+                     efa_criterion *criterion,
+                     double ss_fac, double ss_min, double max_iter,
+                     double c1, double c2, double eps) {
 
   x.ss = std::max(ss_min, x.ss * ss_fac);
   // x.ss = x.ss*2;
@@ -143,11 +143,9 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
 
 }
 
-typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> TRN;
-
 // Newton Trust-region algorithm:
 
-TRN ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
+NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
 
   /*
    * Riemannian trust-region algorithm
@@ -292,7 +290,7 @@ TRN ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
 
 // Gradient descent algorithm:
 
-TRN gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
+NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 0.5, c2 = 0.5;

@@ -5,13 +5,17 @@
  *
  */
 
-// Criteria for factor analysis
+// Criteria for factor extraction
 
 class efa_criterion {
 
 public:
 
   virtual void F(arguments_efa& x) = 0;
+
+  virtual void G(arguments_efa& x) = 0;
+
+  virtual void dG(arguments_efa& x) = 0;
 
   virtual void gLPU(arguments_efa& x) = 0;
 
@@ -31,16 +35,29 @@ public:
 
   void F(arguments_efa& x) {
 
-    arma::mat reduced_R = x.R - diagmat(x.psi);
-
-    arma::vec eigval;
-    eig_sym(eigval, reduced_R);
+    x.reduced_R = x.R - diagmat(x.psi);
+    eig_sym(x.eigval, x.eigvec, x.reduced_R);
     arma::vec e = eigval(arma::span(0, x.p - x.q - 1));
+
     x.f = arma::accu(e % e);
 
   }
 
-  void gLPU(arguments_efa& x) {}
+  void G(arguments_efa& x) {
+
+    arma::vec e_values = x.eigval(arma::span(0, x.p - x.q - 1));
+    arma::mat e_vectors = x.eigvec(arma::span::all, arma::span(0, x.p - x.q - 1));
+    x.g = -2*arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
+
+  }
+
+  void dG(arguments_efa& x) {
+
+  }
+
+  void gLPU(arguments_efa& x) {
+
+  }
 
   void hLPU(arguments_efa& x) {}
 
@@ -49,7 +66,7 @@ public:
 };
 
 /*
- * minres
+ * ml
  */
 
 class ml: public efa_criterion {
@@ -59,12 +76,9 @@ public:
   void F(arguments_efa& x) {
 
     x.sqrt_psi = sqrt(x.psi);
-    arma::mat sc = diagmat(1/x.sqrt_psi);
-    x.Sstar = sc * x.R * sc;
-
-    arma::vec eigval;
-    eig_sym(eigval, x.Sstar);
-
+    x.sc = arma::diagmat(1/x.sqrt_psi);
+    x.reduced_R = x.sc * x.R * x.sc;
+    eig_sym(x.eigval, x.reduced_R);
     arma::vec e = eigval(arma::span(0, x.p - x.q - 1));
 
     // double objective = -arma::accu(log(e) + 1/e - 1);
@@ -73,11 +87,26 @@ public:
 
   }
 
-  void gLP(arguments_efa& x) {}
+  void G(arguments_efa& x) {
 
-  void hLP(arguments_efa& x) {}
+    arma::mat A = x.eigvec(arma::span::all, arma::span(0, x.q-1));
+    arma::vec eigenvalues = x.eigval(arma::span(0, x.q-1));
 
-  void dgLP(arguments_efa& x) {}
+    x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi)/x.psi;
+
+  }
+
+  void dG(arguments_efa& x) {
+
+  }
+
+  void gLPU(arguments_efa& x) {
+
+  }
+
+  void hLPU(arguments_efa& x) {}
+
+  void dgLPU(arguments_efa& x) {}
 
 };
 

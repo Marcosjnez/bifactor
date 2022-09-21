@@ -84,8 +84,8 @@ arguments_rotate armijo(arguments_rotate x, rotation_manifold *manifold,
     manifold->param(x); // update x.L, x.Phi and x.Inv_T
     criterion->F(x);
     double df = f0 - x.f;
-    if (df >= -c1 * x.ss * x.inprod || // armijo condition
-        x.ss < eps) break;
+    if (df > c1 * x.ss * x.inprod || x.ss < 1e-09) // armijo condition
+      break;
     x.ss *= c2;
 
   } while (iteration <= max_iter);
@@ -97,21 +97,11 @@ arguments_rotate armijo(arguments_rotate x, rotation_manifold *manifold,
 
   }
 
-  // update gradient
-  criterion->gLP(x);
-  manifold->grad(x);
-  // Riemannian gradient
-  manifold->proj(x);
-
-  x.ng = sqrt(arma::accu(x.rg % x.rg));
-  x.dir = -x.rg;
-  x.inprod = arma::accu(x.dir % x.rg);
-
   return x;
 
 }
 
-// Conjugate-gradient method to solve the Riemannian Newton equation:
+// Conjugate-gradient method to solve the Riemannian Newton equation in the Trust-Region algorithm:
 
 void tcg(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion,
          arma::mat& dir, bool& att_bnd, double ng, arma::vec c, double rad) {
@@ -193,11 +183,9 @@ void tcg(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cr
 
 }
 
-typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> TRN;
-
 // Newton Trust-region algorithm:
 
-TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
+NTR ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
 
   /*
    * Riemannian trust-region algorithm
@@ -212,7 +200,7 @@ TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cri
 
   // Rcpp::Rcout << "x.f = " << x.f << std::endl;
 
-  // Gradient wrt L
+  // Gradient wrt L and P
   criterion->gLP(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
 
   // Rcpp::Rcout << "x.gL = " << x.gL << std::endl;
@@ -228,7 +216,7 @@ TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cri
 
   // Rcpp::Rcout << "x.dgL = " << x.dgL << std::endl;
 
-  double ng = sqrt(arma::accu(x.rg % x.rg));
+  x.ng = sqrt(arma::accu(x.rg % x.rg));
 
   double max_rad = 10;
 
@@ -254,14 +242,12 @@ TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cri
   arguments_rotate new_x;
   arma::mat dir(x.q, x.q);
 
-  do {
+  x.convergence = false;
 
-    if (ng < x.eps) break;
-
-    ++x.iteration;
+  do{
 
     // subsolver
-    tcg(x, manifold, criterion, dir, att_bnd, ng, c, rad);
+    tcg(x, manifold, criterion, dir, att_bnd, x.ng, c, rad);
     x.dT = dir;
     new_x = x;
     new_x.T += dir;
@@ -313,28 +299,26 @@ TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cri
 
       x = new_x;
 
-      // update gradient
+      // update the gradient
       criterion->gLP(x);
       manifold->grad(x);
 
       // Riemannian gradient
       manifold->proj(x);
 
-      ng = sqrt(arma::accu(x.rg % x.rg));
+      x.ng = sqrt(arma::accu(x.rg % x.rg));
 
     }
 
-  } while (x.iteration <= x.maxit);
+    ++x.iteration;
+    if (x.ng < x.eps) {
+      x.convergence = true;
+      break;
+    }
 
+  } while (x.iteration < x.maxit);
 
-  x.convergence = true;
-  if(x.iteration > x.maxit) {
-
-    x.convergence = false;
-
-  }
-
-  TRN result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
+  NTR result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
 
   return result;
 
@@ -342,7 +326,7 @@ TRN ntr(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cri
 
 // Gradient descent algorithm:
 
-TRN gd(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
+NTR gd(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 0.5, c2 = 0.5;
@@ -355,31 +339,202 @@ TRN gd(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *crit
   manifold->grad(x);
   // Riemannian gradient
   manifold->proj(x);
-  x.ng = sqrt(arma::accu(x.rg % x.rg));
   x.dir = -x.rg;
-  x.inprod = arma::accu(x.dir % x.rg);
+  x.inprod = arma::accu(-x.dir % x.rg);
+  x.ng = sqrt(x.inprod);
   // x.ss = 1;
+
+  x.convergence = false;
 
   do{
 
+    // x.ss *= 2;
+
+    x = armijo(x, manifold, criterion, ss_fac, ss_min,
+               10, c1, c2, x.eps);
+
+    // update gradient
+    criterion->gLP(x);
+    manifold->grad(x);
+    // Riemannian gradient
+    manifold->proj(x);
+
+    x.dir = -x.rg;
+    x.inprod = arma::accu(-x.dir % x.rg);
+    x.ng = sqrt(x.inprod);
+
     ++x.iteration;
+    if (x.ng < x.eps) {
+      x.convergence = true;
+      break;
+    }
+
+  } while (x.iteration < x.maxit);
+
+  NTR result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
+
+  return result;
+
+}
+
+// BFGS algorithm:
+
+NTR bfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
+
+  x.iteration = 0;
+  double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
+
+  // Parameterization
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
+  criterion->F(x);
+  // update the gradient
+  criterion->gLP(x);
+  manifold->grad(x);
+  // Riemannian gradient
+  manifold->proj(x);
+  x.dir = -x.rg;
+  x.inprod = arma::accu(-x.dir % x.rg);
+  x.ng = sqrt(x.inprod);
+  // x.ss = 1;
+  int p1 = x.T.n_rows;
+  int p2 = x.T.n_cols;
+  arma::mat B(p1*p2, p1*p2, arma::fill::eye);
+
+  x.convergence = false;
+
+  do{
 
     // x.ss *= 2;
-    if (x.ng < x.eps) break;
 
-      x = armijo(x, manifold, criterion, ss_fac, ss_min,
-                 10, c1, c2, x.eps);
+    arma::mat old_T = x.T;
+    arma::mat old_rg = x.rg;
 
-  } while (x.iteration <= x.maxit);
+    x = armijo(x, manifold, criterion, ss_fac, ss_min,
+               30, c1, c2, x.eps);
 
-  x.convergence = true;
-  if(x.iteration > x.maxit) {
+    // update gradient
+    criterion->gLP(x);
+    manifold->grad(x);
+    // Riemannian gradient
+    manifold->proj(x);
 
-    x.convergence = false;
+    arma::vec y = arma::vectorise(x.rg - old_rg);
+    arma::vec s = arma::vectorise(x.T - old_T);
+    double sy = arma::accu(s%y);
+    B += (sy + y.t() * B * y) % (s * s.t()) / (sy*sy) -
+      (B * y * s.t() + s * y.t() * B) / sy;
+    arma::mat dir = B * arma::vectorise(x.rg);
+    dir.reshape(p1, p2);
 
-  }
+    x.dir = -dir;
+    x.inprod = arma::accu(-x.dir % x.rg);
+    x.ng = sqrt(x.inprod);
 
-  TRN result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
+    ++x.iteration;
+    if (x.ng < x.eps) {
+      x.convergence = true;
+      break;
+    }
+
+  } while (x.iteration < x.maxit);
+
+  NTR result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
+
+  return result;
+
+}
+
+// L-BFGS algorithm:
+
+NTR lbfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *criterion) {
+
+  x.iteration = 0;
+  double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
+
+  // Parameterization
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
+  criterion->F(x);
+  // update the gradient
+  criterion->gLP(x);
+  manifold->grad(x);
+  // Riemannian gradient
+  manifold->proj(x);
+  x.dir = -x.rg;
+  x.inprod = arma::accu(-x.dir % x.rg);
+  x.ng = sqrt(x.inprod);
+  // x.ss = 1;
+  int p1 = x.T.n_rows;
+  int p2 = x.T.n_cols;
+  arma::mat B(p1*p2, p1*p2, arma::fill::eye);
+
+  int M = 15;
+  std::vector<arma::vec> s(x.maxit), y(x.maxit);
+  std::vector<double> p(x.maxit), alpha(x.maxit), beta(x.maxit);
+
+  x.convergence = false;
+
+  do{
+
+    // x.ss *= 2;
+
+    int k = x.iteration;
+    arma::uvec seq(2);
+    seq[0] = M; seq[1] = k;
+    int min = seq.min();
+    arma::vec max(2);
+    max[0] = min; max[1] = 0;
+    int m = max.max();
+
+    arma::mat old_T = x.T;
+    arma::mat old_rg = x.rg;
+
+    x = armijo(x, manifold, criterion, ss_fac, ss_min,
+               30, c1, c2, x.eps);
+
+    // update gradient
+    criterion->gLP(x);
+    manifold->grad(x);
+    // Riemannian gradient
+    manifold->proj(x);
+
+    arma::vec q = arma::vectorise(x.rg);
+    s[k] = arma::vectorise(x.T - old_T);
+    y[k] = arma::vectorise(x.rg - old_rg);
+    p[k] = 1/arma::accu(y[k] % s[k]);
+
+    for(int i=k; i > (k-m-1); --i) {
+
+      alpha[i] = p[i]*arma::accu(s[i] % q);
+      q -= alpha[i] * y[i];
+
+    }
+
+    double gamma = arma::accu(s[k] % y[k]) / arma::accu(y[k] % y[k]);
+    arma::mat H0 = gamma*B;
+    arma::mat z = H0 * q;
+
+    for(int i=(k-m); i < (k+1); ++i) {
+
+      beta[i] = p[i]*arma::accu(y[i] % z);
+      z += s[i] * (alpha[i] - beta[i]);
+
+    }
+
+    z.reshape(p1, p2);
+
+    x.dir = -z;
+    x.inprod = arma::accu(-x.dir % x.rg);
+    x.ng = sqrt(x.inprod);
+
+    ++x.iteration;
+    if (x.ng < x.eps) {
+      x.convergence = true;
+      break;
+    }
+
+  } while (x.iteration < x.maxit);
+
+  NTR result = std::make_tuple(x.L, x.Phi, x.T, x.f, x.iteration, x.convergence);
 
   return result;
 

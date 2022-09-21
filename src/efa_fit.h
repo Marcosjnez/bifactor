@@ -137,18 +137,19 @@ arma::vec ml_gradient(arma::vec psi, arma::mat R, int nfactors, int n_items) {
   arma::mat eigvec2 = reverse(eigvec, 1);
 
   arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
-  arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1)) - 1;
-  for(int i=0; i < nfactors; ++i) {
-    if(eigenvalues[i] < 0) eigenvalues[i] = 0;
-  }
-  arma::mat D = diagmat(sqrt(eigenvalues));
+  arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
+  // for(int i=0; i < nfactors; ++i) {
+  //   if(eigenvalues[i] < 0) eigenvalues[i] = 0;
+  // }
+  // arma::mat D = diagmat(sqrt(eigenvalues - 1));
+  // arma::mat w = A * D;
+  // w = diagmat(sqrt_psi) * w;
+  // arma::mat ww = w * w.t();
+  // arma::mat residuals = R - ww - diagmat(psi);
+  // arma::mat gradient = -diagvec(residuals) / (psi % psi);
 
-  arma::mat w = A * D;
-  w = diagmat(sqrt_psi) * w;
-  arma::mat ww = w * w.t();
-  arma::mat residuals = R - ww - diagmat(psi);
-
-  arma::mat gradient = -diagvec(residuals) / (psi % psi);
+  arma::mat gradient = ((A % A) * (eigenvalues - 1) + 1 -
+    arma::diagvec(R)/psi)/psi;
 
   return gradient;
 }

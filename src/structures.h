@@ -96,8 +96,9 @@ typedef struct arguments_efa{
   arma::vec psi, sqrt_psi;
   int q, p;
   double f = 0;
-  arma::mat lambda, phi, Sstar;
-  arma::vec u;
+  arma::mat lambda, phi, reduced_R, eigvec;
+  arma::vec u, eigval, sc;
 
 } args_efa;
 
+typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NTR;

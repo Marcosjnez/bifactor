@@ -4,18 +4,18 @@ class rotation_optim {
 
 public:
 
-  virtual TRN optim(arguments_rotate x, rotation_manifold *manifold,
+  virtual NTR optim(arguments_rotate x, rotation_manifold *manifold,
                      rotation_criterion *criterion) = 0;
 
 };
 
-// Gradient descent:
+// Riemannian gradient descent:
 
 class RGD:public rotation_optim {
 
 public:
 
-  TRN optim(arguments_rotate x, rotation_manifold *manifold,
+  NTR optim(arguments_rotate x, rotation_manifold *manifold,
              rotation_criterion *criterion) {
 
     return gd(x, manifold, criterion);
@@ -24,13 +24,13 @@ public:
 
 };
 
-// Newton Trust-Region:
+// Riemannian Newton Trust-Region:
 
 class RNTR:public rotation_optim {
 
 public:
 
-  TRN optim(arguments_rotate x, rotation_manifold *manifold,
+  NTR optim(arguments_rotate x, rotation_manifold *manifold,
              rotation_criterion *criterion) {
 
     return ntr(x, manifold, criterion);
@@ -39,6 +39,38 @@ public:
 
 };
 
+// BFGS algorithm:
+
+class BFGS:public rotation_optim {
+
+public:
+
+  NTR optim(arguments_rotate x, rotation_manifold *manifold,
+            rotation_criterion *criterion) {
+
+    return bfgs(x, manifold, criterion);
+
+  }
+
+};
+
+// L-BFGS algorithm:
+
+class LBFGS:public rotation_optim {
+
+public:
+
+  NTR optim(arguments_rotate x, rotation_manifold *manifold,
+            rotation_criterion *criterion) {
+
+    return lbfgs(x, manifold, criterion);
+
+  }
+
+};
+
+// Select the optimization algorithm:
+
 rotation_optim* choose_optim(std::string optim) {
 
   rotation_optim* algorithm;
@@ -46,9 +78,13 @@ rotation_optim* choose_optim(std::string optim) {
     algorithm = new RGD();
   } else if(optim == "newtonTR") {
     algorithm = new RNTR();
+  } else if(optim == "BFGS") {
+    algorithm = new BFGS();
+  } else if(optim == "L-BFGS") {
+    algorithm = new LBFGS();
   } else {
 
-    Rcpp::stop("Available optimization rutines for rotation: \n gradient, newtonTR");
+    Rcpp::stop("Available optimization rutines for rotation: \n 'gradient', 'BFGS', 'L-BFGS', 'newtonTR'. The default method is 'newtonTR'.");
 
   }
 
