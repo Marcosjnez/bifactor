@@ -233,12 +233,13 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     }
 
-    x.gamma = new_k(x.rotations, "oblimin", x.gamma);
     x.N.set_size(x.q, x.q); x.N.ones();
     x.N.diag(0).zeros();
+    x.gamma = new_k(x.rotations, "oblimin", x.gamma);
+
     arma::mat I(x.p, x.p, arma::fill::eye), gamma_C(x.p, x.p, arma::fill::ones);
 
-    if(x.n_blocks > 1) {
+    if(!x.blocks_list.empty()) {
       for(int i=0; i < x.n_blocks; ++i) { // if(!x.gamma[i].empty())
         gamma_C *= (x.gamma[i]/x.p);
         x.I_gamma_Ci[i] = (I - gamma_C);
@@ -265,17 +266,17 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
       Rcpp::warning("Usually, the varimax criterion does not converge with (partially) oblique projection. \n Consider using cf with k = 1/(number of items), which is equivalent to varimax for orthogonal rotation but also converges with (partially) oblique projection.");
     }
 
-    if(x.n_blocks > 1) {
-      for(int i=0; i < x.n_blocks; ++i) {
-        arma::vec v(x.p, arma::fill::ones);
-        arma::mat I(x.p, x.p, arma::fill::eye);
-        x.Hi[i] = I - v * v.t() / (x.p + 0.0); // Centering matrix
-      }
-    } else {
+    // if(!x.blocks_list.empty()) {
+    //   for(int i=0; i < x.n_blocks; ++i) {
+    //     arma::vec v(x.p, arma::fill::ones);
+    //     arma::mat I(x.p, x.p, arma::fill::eye);
+    //     x.Hi[i] = I - v * v.t() / (x.p + 0.0); // Centering matrix
+    //   }
+    // } else {
       arma::vec v(x.p, arma::fill::ones);
       arma::mat I(x.p, x.p, arma::fill::eye);
       x.H = I - v * v.t() / (x.p + 0.0); // Centering matrix
-    }
+    // }
 
   }
   if(std::find(x.rotations.begin(), x.rotations.end(), "varimin") != x.rotations.end()) {
@@ -290,7 +291,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     // For oblique rotation:
 
-    if(x.n_blocks > 1) {
+    if(!x.blocks_list.empty()) {
       for(int i=0; i < x.blocks_list.size(); ++i) {
 
         arma::uvec indexes = x.blocks_list[i];

@@ -1375,7 +1375,7 @@ public:
 };
 
 /*
- * Mixed criteria
+ * Mixed criteria (multiple criteria simultaneously allowed)
  */
 
 // Choose rotation criteria for mixed criteria:
