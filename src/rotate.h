@@ -136,9 +136,6 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
-  arma::uvec indices = arma::sort_index(propVar, "descend");
-  arma::mat Lsorted = L.cols(indices);
-  arma::mat Phisorted = Phi(indices, indices);
 
   Rcpp::List modelInfo;
   modelInfo["loadings"] = loadings;
@@ -168,9 +165,9 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   modelInfo["oblq_blocks"] = nullable_oblq_blocks;
 
   Rcpp::List result;
-  result["loadings"] = Lsorted;
-  result["Phi"] = Phisorted;
-  result["propVar"] = arma::sort(propVar);
+  result["loadings"] = L;
+  result["Phi"] = Phi;
+  result["propVar"] = propVar;
   result["T"] = T;
   result["f"] = f;
   result["iterations"] = iterations;
