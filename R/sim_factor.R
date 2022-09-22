@@ -521,7 +521,8 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
 #' generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
-#' method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan")
+#' method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan",
+#' lambda = NULL, Phi = NULL)
 #'
 #' @param n_generals Number of general factors.
 #' @param groups_per_general Number of group factors per general factor.
@@ -537,7 +538,8 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 #' @param fit Fit index to control the population error.
 #' @param misfit Misfit value to generate population error.
 #' @param error_method Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".
-#' @param lambda Custom matrix
+#' @param lambda Custom loading matrix. If Phi is NULL, then all the factors will be correlated at the value given in groups_rho.
+#' @param Phi Custom Phi matrix. If lambda is NULL, then Phi should be conformable to the loading matrix specified with the above arguments.
 #'
 #' @details \code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
 #' correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
