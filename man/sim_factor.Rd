@@ -38,6 +38,8 @@ method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan")
 \item{misfit}{Misfit value to generate population error.}
 
 \item{error_method}{Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".}
+
+\item{lambda}{Custom matrix}
 }
 \value{
 List with the following objects:
@@ -62,5 +64,5 @@ or increase (if setting pure items).
 Loading magnitudes may range between 0.3-0.5 ("low"), 0.4-0.6 ("medium") and 0.5-0.7 ("high").
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory generalized bifactor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory bi-factor analysis with multiple general factors. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 }
