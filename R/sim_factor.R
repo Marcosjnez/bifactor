@@ -207,7 +207,7 @@ CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)), method = "
   results <- list(f = cfa$objective, convergence = cfa$convergence,
                   iterations = cfa$iterations, df = df,
                   lambda = lambda_hat, phi = phi_hat,
-                  psi_hat = psi_hat, uniquenesses = uniquenesses_hat,
+                  psi = psi_hat, uniquenesses = uniquenesses_hat,
                   model = S_hat, residuals = residuals)
 
   return(results)
@@ -288,14 +288,28 @@ guRhat <- function(p) {
   return(gu)
 
 }
-cudeck <- function(R, lambda, Phi, uniquenesses,
+gURhat <- function(p) {
+
+  pcov <- p*(p+1)*0.5
+
+  Psi <- diag(p)
+  gPsi <- diag(p) %x% diag(p)
+  gPsi <- gPsi + dxt(Psi) %*% gPsi
+  gPsi <- gPsi[, lower.tri(Psi, diag = TRUE)]
+  gPsi[gPsi != 0] <- 1
+
+  return(gPsi)
+
+}
+cudeck <- function(R, lambda, Phi, Psi,
                    fit = "rmsr", misfit = "close",
-                   method = "ols", confirmatory = TRUE) {
+                   method = "minres", confirmatory = TRUE) {
 
   # Method of Cudeck and Browne (1992):
 
   p <- nrow(R)
   q <- ncol(lambda)
+  uniquenesses <- diag(Psi)
 
   tdiag <- TRUE
 
@@ -305,20 +319,18 @@ cudeck <- function(R, lambda, Phi, uniquenesses,
     # not estimating correlations)
     # if(!correlation) dS_dL <- dS_dL[, which(lambda > 0)]
     npars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
-    dS_du <- guRhat(p)
     dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
     dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
-    gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
+    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
+    gS <- cbind(dS_dL, dS_dP, dS_dU) # matrix of derivatives wrt the correlation model
 
   } else {
 
-    # dS_dP <- gPRhat(lambda, Phi)
     # gS <- cbind(dS_dL, dS_dP, dS_du)
     npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
-    dS_du <- guRhat(p)
     dS_dL <- gLRhat(lambda, Phi)
+    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
     # dS_dP <- gPRhat(lambda, Phi)
-    # gS <- cbind(dS_dL, dS_dP, dS_du) # matrix of derivatives wrt the correlation model
     gS <- cbind(dS_dL, dS_du) # matrix of derivatives wrt the correlation model
 
   }
@@ -327,8 +339,8 @@ cudeck <- function(R, lambda, Phi, uniquenesses,
 
   if(method == "minres" || method == "ols") {
 
-    B <- -2*gS[lower.tri(R, diag = tdiag), ]
-    # B <- -2*lambda %*%
+    B <- -gS[lower.tri(R, diag = tdiag), ]
+    # t(B) %*% (sim$R_error - sim$R)[upper.tri(R, diag = TRUE)]
 
   } else if(method == "ml") {
 
@@ -345,9 +357,11 @@ cudeck <- function(R, lambda, Phi, uniquenesses,
     diag(D) <- 2
     diag(D)[indexes] <- 1
     R_inv <- solve(R)
-    vecs <- apply(gS, 2, FUN = function(x) -t(R_inv %*% matrix(x, p, p) %*% R_inv))
-    B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
-    B <- t(B)
+    # vecs <- apply(gS, 2, FUN = function(x) -t(R_inv %*% matrix(x, p, p) %*% R_inv))
+    # B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
+    # B <- t(B)
+    B <- -apply(gS, 2, FUN = function(x) t((R_inv %*% matrix(x, p, p) %*% R_inv)[which(upper.tri(R, diag = TRUE))]) %*% D)
+    # t(B) %*% (sim$R_error - sim$R)[upper.tri(R, diag = TRUE)]
 
   }
 
@@ -421,28 +435,33 @@ cudeck <- function(R, lambda, Phi, uniquenesses,
 
   # check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
-  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
+  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of misfit may be too big.")
 
   return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
 
 }
-yuan <- function(R, lambda, Phi, uniquenesses,
+yuan <- function(R, lambda, Phi, Psi,
                  fit = "rmsr", misfit = "close",
                  method = "minres", confirmatory = TRUE) {
 
   p <- nrow(R)
   q <- ncol(lambda)
-
-  tdiag <- TRUE
+  uniquenesses <- diag(Psi)
 
   if(confirmatory) {
 
-    npars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
+    npars <- sum(lambda > 0) + sum(abs(Phi[lower.tri(Phi)]) > 0) +
+      sum(abs(Psi[lower.tri(Psi, diag = TRUE)]) > 0)
+    target <- ifelse(lambda != 0, 1, 0)
+    targetphi <- ifelse(Phi != 0, 1, 0)
+    targetpsi <- ifelse(Psi != 0, 1, 0)
 
   } else {
 
     npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
-
+    target <- matrix(1, p, q); target[upper.tri(target)] <- 0
+    targetphi <- diag(q)
+    targetpsi <- diag(p)
   }
 
   df <- p*(p+1)/2 - npars # Degrees of freedom
@@ -466,18 +485,18 @@ yuan <- function(R, lambda, Phi, uniquenesses,
     delta <- misfit
   }
 
-  p <- nrow(R)
-  L <- lambda + 1e-06
-  R1 <- R
-  R <- L %*% Phi %*% t(L); diag(R) <- 1
-  target <- ifelse(lambda != 0, 1, 0)
-  targetphi <- ifelse(Phi != 0, 1, 0)
-  targetpsi <- diag(p)
-  fit <- CFA(R, target, targetphi, targetpsi, method = method)
+  lambda <- lambda - 1e-04
+  # Phi <- Phi - 1e-04
+  # Psi <- Psi + 1e-04
+  # lambda[target == 0] <- 1e-04
+  # Phi[targetphi == 0] <- 1e-04
+  # Psi[targetpsi == 0] <- 1e-04
+  Rerror <- lambda %*% Phi %*% t(lambda) + Psi; diag(Rerror) <- 1
+  fit <- CFA(Rerror, target, targetphi, targetpsi, method = method)
   Phat <- fit$model
 
   # from delta to tau:
-  E <- R - Phat
+  E <- Rerror - Phat
 
   if(method == "minres" || method == "ols") {
 
@@ -486,7 +505,7 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 
   } else if(method == "ml") {
 
-    R_inv <- solve(R1)
+    R_inv <- solve(R)
     constant <- 1e-04 / sqrt(mean(E*E))
     E <- constant*E # Fix this to avoid NAs
     G <- R_inv %*% E
@@ -503,12 +522,11 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 
   # check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
-  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of error may be too big.")
+  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of misfit may be too big.")
 
   return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
 
 }
-
 #' @title
 #' Simulate a bi-factor or generalized bifactor population structure.
 #' @description
@@ -540,6 +558,7 @@ yuan <- function(R, lambda, Phi, uniquenesses,
 #' @param error_method Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".
 #' @param lambda Custom loading matrix. If Phi is NULL, then all the factors will be correlated at the value given in groups_rho.
 #' @param Phi Custom Phi matrix. If lambda is NULL, then Phi should be conformable to the loading matrix specified with the above arguments.
+#' @param Phi Custom Psi matrix. If lambda is NULL, then Psi should be conformable to the loading matrix specified with the above arguments.
 #'
 #' @details \code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
 #' correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
@@ -570,7 +589,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
                        generals_rho = 0, groups_rho = 0,
                        confirmatory = TRUE, method = "minres",
                        fit = "rmsr", misfit = 0, error_method = "yuan",
-                       lambda = NULL, Phi = NULL) {
+                       lambda = NULL, Phi = NULL, Psi = NULL) {
 
   ng <- n_generals # Save the number of general factors for recursive iteration
   condition <- n_generals == 0
@@ -579,6 +598,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
   lambda_null <- is.null(lambda)
   Phi_null <- is.null(Phi)
+  Psi_null <- is.null(Psi)
 
   if(!lambda_null & Phi_null) {
 
@@ -636,15 +656,6 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
     # Total number of factors:
     n_factors <- n_generals + n_groups
-
-    if(!Phi_null) {
-
-      if(nrow(Phi) != n_factors & ncol(Phi) != n_factors) {
-        stop("The Phi matrix that was provided is not conformable with the \n
-             lambda matrix generated by the argument specifications")
-      }
-
-    }
 
     # Initialize the population loading matrix:
     lambda <- matrix(NA, nrow = n_items, ncol = n_factors)
@@ -733,6 +744,9 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
   }
 
+  # if n_generals == 0, remove the general factor:
+  if(condition) lambda <- lambda[, -1, drop = FALSE]
+
   if(Phi_null) {
 
     # Factor correlations:
@@ -742,19 +756,30 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
     Phi[-(1:n_generals), -(1:n_generals)] <- groups_rho
     diag(Phi) <- 1
 
-    if(condition) { # if n_generals == 0, remove the general factor
+    # if n_generals == 0, remove the general factor:
+    if(condition) Phi <- Phi[-1, , drop = FALSE][, -1, drop = FALSE]
 
-      lambda <- lambda[, -1, drop = FALSE]
-      Phi <- Phi[-1, , drop = FALSE][, -1, drop = FALSE]
+  } else {
 
+    if(nrow(Phi) != ncol(lambda) | ncol(Phi) != ncol(lambda)) {
+      stop("The Phi matrix that was provided is not conformable with the lambda matrix generated by the argument specifications")
     }
 
   }
 
+  if(!Psi_null) {
+    Psi <- 0.5*(t(Psi) + Psi) # Make Psi symmetric
+    diag(Psi) <- 0 # The actual uniquenesses depend on Lambda and Phi
+  } else {
+    p <- nrow(lambda)
+    Psi <- matrix(0, p, p)
+  }
+
   # Population model correlation matrix:
 
-  R <- lambda %*% Phi %*% t(lambda)
+  R <- lambda %*% Phi %*% t(lambda) + Psi
   uniquenesses <- 1 - diag(R)
+  diag(Psi) <- uniquenesses
   diag(R) <- 1
   R_error <- R
   delta <- 0
@@ -763,30 +788,32 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
   if( any(uniquenesses < 0) ) {
 
-    if(lambda_null | Phi_null) {
-      stop("The provided lambda or Phi matrix produced negative variances")
+    if(!lambda_null | !Phi_null | !Psi_null) {
+      stop("The provided lambda, Phi or Psi matrices produced negative variances")
     }
 
-    warning("At least one communality greater than 1 was found \n Resampling...")
+    warning("At least one communality greater than 1 was found, probably due to a high misfit value \n Resampling...")
 
     sim <- sim_factor(n_generals = ng, groups_per_general = groups_per_general,
                       items_per_group = items_per_group,
                       loadings_g = loadings_g, loadings_s = loadings_s,
                       crossloadings = crossloadings, pure = pure,
-                      generals_rho = generals_rho, groups_rho = groups_rho)
+                      generals_rho = generals_rho, groups_rho = groups_rho,
+                      confirmatory = confirmatory, method = method,
+                      fit = fit, misfit = misfit, error_method = error_method,
+                      lambda = lambda, Phi = Phi, Psi = Psi)
 
-    lambda = sim$lambda; R = sim$R; Phi = sim$Phi; uniquenesses = sim$uniquenesses
+    return(sim)
 
   }
 
   # Add population error to the population model correlation matrix:
 
-  if(misfit != 0 & misfit != "zero") { # Population error?
+  if(misfit != 0 & misfit != "zero") {
 
     if(error_method == "cudeck") {
 
-      cudeck_ <- cudeck(R = R, lambda = lambda, Phi = Phi,
-                        uniquenesses = uniquenesses,
+      cudeck_ <- cudeck(R = R, lambda = lambda, Phi = Phi, Psi = Psi,
                         fit = fit, misfit = misfit,
                         method = method, confirmatory = confirmatory)
       R_error <- cudeck_$R_error
@@ -795,10 +822,9 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
     } else if(error_method == "yuan") {
 
-      yuan_ <- yuan(R = R, lambda = lambda, Phi = Phi,
-                      uniquenesses = uniquenesses,
-                      fit = fit, misfit = misfit,
-                      method = method, confirmatory = confirmatory)
+      yuan_ <- yuan(R = R, lambda = lambda, Phi = Phi, Psi = Psi,
+                    fit = fit, misfit = misfit,
+                    method = method, confirmatory = confirmatory)
       R_error <- yuan_$R_error
       delta <- yuan_$delta
       misfit <- yuan_$misfit
@@ -811,7 +837,8 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
   }
 
-  return( list(lambda = lambda, Phi = Phi, uniquenesses = uniquenesses,
+  return( list(lambda = lambda, Phi = Phi, Psi = Psi,
+               uniquenesses = uniquenesses,
                R = R, R_error = R_error, fit = fit, delta = delta,
                misfit = misfit) )
 
