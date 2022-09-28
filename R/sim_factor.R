@@ -745,7 +745,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
   }
 
   # if n_generals == 0, remove the general factor:
-  if(condition) lambda <- lambda[, -1, drop = FALSE]
+  if(condition & lambda_null) lambda <- lambda[, -1, drop = FALSE]
 
   if(Phi_null) {
 
