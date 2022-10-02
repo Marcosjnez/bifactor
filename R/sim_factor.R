@@ -354,7 +354,7 @@ cudeck <- function(R, lambda, Phi, Psi,
     diag(D)[indexes] <- 1
     R_inv <- solve(R)
     # vecs <- apply(gS, 2, FUN = function(x) -t(R_inv %*% matrix(x, p, p) %*% R_inv))
-    # B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
+    # B <- t(vecs[which(upper.tri(R, diag = TRUE)), ]) %*% D
     # B <- t(B)
     B <- -apply(gS, 2, FUN = function(x) t((R_inv %*% matrix(x, p, p) %*% R_inv)[which(upper.tri(R, diag = TRUE))]) %*% D)
     # The error must be orthogonal to the derivative of each parameter derivative wrt the correlation model
@@ -371,8 +371,8 @@ cudeck <- function(R, lambda, Phi, Psi,
   A2 <- sq %*% A1 %*% sq
   diag_u <- diag(sqrt(uniquenesses))
   y <- diag_u %*% A2 %*% diag_u
-  y <- y[lower.tri(y, diag = tdiag)]
-  # y <- A2[lower.tri(A2, diag = tdiag)]
+  y <- y[lower.tri(y, diag = TRUE)]
+  # y <- A2[lower.tri(A2, diag = TRUE)]
   # y <- stats::runif(p*(p+1)/2, 0, 1)
   # e <- qr.Q(qr(cbind(B, y)))[, ncol(B)+1]
   # v <- MASS::ginv(BtB) %*% t(B) %*% y
@@ -383,14 +383,14 @@ cudeck <- function(R, lambda, Phi, Psi,
 
   # Get the error matrix:
 
-  E <- matrix(0, p, p)
-  E[lower.tri(E, diag = tdiag)] <- e
-  E <- t(E) + E
-  diag(E) <- 0
-
   # Adjust the error to satisfy the desired amount of misfit:
 
   if(method == "minres" || method == "ols") {
+
+    E <- matrix(0, p, p)
+    E[lower.tri(E, diag = TRUE)] <- e
+    E <- t(E) + E
+    diag(E) <- 0
 
     if(fit == "rmsr") {
       if(misfit == "close") {
@@ -415,6 +415,11 @@ cudeck <- function(R, lambda, Phi, Psi,
     E <- k*E
 
   } else if(method == "ml") {
+
+    E <- matrix(0, p, p)
+    E[upper.tri(R, diag = TRUE)] <- e
+    E <- t(E) + E
+    diag(E) <- 0
 
     if(fit == "rmsr") {
       delta <- "A given RMSR is compatible with multiple maximum likelihood discrepancy values and is not provided"
