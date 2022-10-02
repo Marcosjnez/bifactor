@@ -303,44 +303,40 @@ gURhat <- function(p) {
 }
 cudeck <- function(R, lambda, Phi, Psi,
                    fit = "rmsr", misfit = "close",
-                   method = "minres", confirmatory = TRUE) {
+                   method = "minres") {
 
   # Method of Cudeck and Browne (1992):
 
-  p <- nrow(R)
+  p <- nrow(lambda)
   q <- ncol(lambda)
   uniquenesses <- diag(Psi)
 
-  tdiag <- TRUE
+  # Count the number of parameters
+  nlambda <- sum(lambda != 0)
+  nphi <- sum(Phi[lower.tri(Phi)] != 0)
+  npsi <- sum(Psi[lower.tri(Psi, diag = TRUE)] != 0)
+  npars <- nlambda + nphi + npsi
+  df <- p*(p+1)/2 - npars # Degrees of freedom
 
-  if(confirmatory) {
-
-    # Select the columns corresponding to estimated loadings (only works when
-    # not estimating correlations)
-    # if(!correlation) dS_dL <- dS_dL[, which(lambda > 0)]
-    npars <- sum(lambda > 0) + p + sum(abs(Phi[lower.tri(Phi)]) > 0)
-    dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
-    dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
-    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
-    gS <- cbind(dS_dL, dS_dP, dS_dU) # matrix of derivatives wrt the correlation model
-
-  } else {
-
-    # gS <- cbind(dS_dL, dS_dP, dS_du)
-    npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
-    dS_dL <- gLRhat(lambda, Phi)
-    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
-    # dS_dP <- gPRhat(lambda, Phi)
-    gS <- cbind(dS_dL, dS_du) # matrix of derivatives wrt the correlation model
-
+  if(nlambda + nphi > p*q - 0.5*q*(q-1)) {
+    warning("The model is not identified. There exists infinite solutions for the model parameters.")
   }
 
-  df <- p*(p+1)/2 - npars # Degrees of freedom
+  if(nlambda + nphi + npsi > p*(p+1)/2) {
+    warning("The true model has negative degrees of freedom.")
+  }
+
+  # Create the matrix of derivatives wrt the correlation model:
+
+  dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
+  dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
+  dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
+  gS <- cbind(dS_dL, dS_dP, dS_dU)
 
   if(method == "minres" || method == "ols") {
 
-    B <- -gS[lower.tri(R, diag = tdiag), ]
-    # t(B) %*% (sim$R_error - sim$R)[upper.tri(R, diag = TRUE)]
+    # Select the nonduplicated elements of the correlation matrix wrt each parameter
+    B <- -gS[lower.tri(R, diag = TRUE), ]
 
   } else if(method == "ml") {
 
@@ -361,9 +357,11 @@ cudeck <- function(R, lambda, Phi, Psi,
     # B <- t(vecs[which(upper.tri(R, diag = tdiag)), ]) %*% D
     # B <- t(B)
     B <- -apply(gS, 2, FUN = function(x) t((R_inv %*% matrix(x, p, p) %*% R_inv)[which(upper.tri(R, diag = TRUE))]) %*% D)
-    # t(B) %*% (sim$R_error - sim$R)[upper.tri(R, diag = TRUE)]
+    # The error must be orthogonal to the derivative of each parameter derivative wrt the correlation model
 
   }
+
+  # Generate random error:
 
   # BtB <- t(B) %*% B
   m <- p+1
@@ -383,52 +381,72 @@ cudeck <- function(R, lambda, Phi, Psi,
   # e <- qr.resid(B.qr, y)
   e <- unname(stats::lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
 
-  if(fit == "rmsr") {
-    if(misfit == "close") {
-      r2 <- mean(1-uniquenesses)
-      misfit <- 0.05*r2
-    } else if(misfit == "acceptable") {
-      r2 <- mean(1-uniquenesses)
-      misfit <- 0.10*r2
-    }
-    delta <- misfit^2*0.5*p*(p-1)
-    # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
-  } else if(fit == "cfi") {
-    null_f <- 0.5*(sum(R^2) - p)
-    delta <- (1-misfit)*null_f
-  } else if(fit == "rmsea") {
-    delta <- misfit^2 * df
-  } else if(fit == "raw") {
-    delta <- misfit
-  }
+  # Get the error matrix:
+
+  E <- matrix(0, p, p)
+  E[lower.tri(E, diag = tdiag)] <- e
+  E <- t(E) + E
+  diag(E) <- 0
+
+  # Adjust the error to satisfy the desired amount of misfit:
 
   if(method == "minres" || method == "ols") {
 
-    E <- matrix(0, p, p)
-    E[lower.tri(E, diag = tdiag)] <- e
-    E <- t(E) + E
-    diag(E) <- 0
+    if(fit == "rmsr") {
+      if(misfit == "close") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.05*r2
+      } else if(misfit == "acceptable") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.10*r2
+      }
+      delta <- misfit^2*0.5*p*(p-1)
+      # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
+    } else if(fit == "cfi") {
+      null_f <- 0.5*(sum(R^2) - p)
+      delta <- (1-misfit)*null_f
+    } else if(fit == "rmsea") {
+      delta <- misfit^2 * df
+    } else if(fit == "raw") {
+      delta <- misfit
+    }
+
     k <- sqrt(2*delta/sum(E*E))
     E <- k*E
 
   } else if(method == "ml") {
 
-    E <- matrix(0, p, p)
-    E[upper.tri(R, diag = tdiag)] <- e
-    E <- t(E) + E
-    diag(E) <- 0
-    constant <- 1e-04 / sqrt(mean(E*E))
-    E <- constant*E # Fix this to avoid NAs
-    R_inv <- solve(R)
-    G <- R_inv %*% E
-    x <- suppressWarnings(grid_search(delta, G))
-    k <- opt(x, delta, G)
-    # limits <- c(-1e05, 1e05)
-    # k <- GSS(delta, G, limits)
-    # k <- grad_descend(delta, G)
+    if(fit == "rmsr") {
+      delta <- "A given RMSR is compatible with multiple maximum likelihood discrepancy values and is not provided"
+    } else if(fit == "cfi") {
+      null_f <- -log(det(R))
+      delta <- (1-misfit)*null_f
+    } else if(fit == "rmsea") {
+      delta <- misfit^2 * df
+    } else if(fit == "raw") {
+      delta <- misfit
+    }
 
-    E <- k*E
+    if(fit == "rmsr") {
 
+      k <- sqrt((0.5*p*(p-1))*2*misfit^2/sum(E*E))
+      E <- k*E
+
+    } else {
+
+      constant <- 1e-04 / sqrt(mean(E*E))
+      E <- constant*E # Fix this to avoid NAs
+      R_inv <- solve(R)
+      G <- R_inv %*% E
+      x <- suppressWarnings(grid_search(delta, G))
+      # x <- sqrt(2*delta/sum(G*G)) # Initial value suggested by Cudeck
+      k <- opt(x, delta, G)
+      # limits <- c(-1e05, 1e05)
+      # k <- GSS(delta, G, limits)
+      # k <- grad_descend(delta, G)
+      E <- k*E
+
+    }
   }
 
   R_error <- R + E
@@ -442,83 +460,107 @@ cudeck <- function(R, lambda, Phi, Psi,
 }
 yuan <- function(R, lambda, Phi, Psi,
                  fit = "rmsr", misfit = "close",
-                 method = "minres", confirmatory = TRUE) {
+                 method = "minres") {
 
   p <- nrow(R)
   q <- ncol(lambda)
   uniquenesses <- diag(Psi)
 
-  if(confirmatory) {
-
-    npars <- sum(lambda > 0) + sum(abs(Phi[lower.tri(Phi)]) > 0) +
-      sum(abs(Psi[lower.tri(Psi, diag = TRUE)]) > 0)
-    target <- ifelse(lambda != 0, 1, 0)
-    targetphi <- ifelse(Phi != 0, 1, 0)
-    targetpsi <- ifelse(Psi != 0, 1, 0)
-
-  } else {
-
-    npars <- p*q + p - 0.5*q*(q-1) # Number of model parameters
-    target <- matrix(1, p, q); target[upper.tri(target)] <- 0
-    targetphi <- diag(q)
-    targetpsi <- diag(p)
-  }
-
+  # Count the number of parameters
+  nlambda <- sum(lambda != 0)
+  nphi <- sum(Phi[lower.tri(Phi)] != 0)
+  npsi <- sum(Psi[lower.tri(Psi, diag = TRUE)] != 0)
+  npars <- nlambda + nphi + npsi
   df <- p*(p+1)/2 - npars # Degrees of freedom
 
-  if(fit == "rmsr") {
-    if(misfit == "close") {
-      r2 <- mean(1-uniquenesses)
-      misfit <- 0.05*r2
-    } else if(misfit == "acceptable") {
-      r2 <- mean(1-uniquenesses)
-      misfit <- 0.10*r2
-    }
-    delta <- misfit^2*0.5*p*(p-1)
-    # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
-  } else if(fit == "cfi") {
-    null_f <- 0.5*(sum(R^2) - p)
-    delta <- (1-misfit)*null_f
-  } else if(fit == "rmsea") {
-    delta <- misfit^2 * df
-  } else if(fit == "raw") {
-    delta <- misfit
+  if(nlambda + nphi > p*q - 0.5*q*(q-1)) {
+    warning("The population model is not identified. There exists infinite solutions for the model parameters.")
   }
 
-  lambda <- lambda - 1e-04
-  # Phi <- Phi - 1e-04
-  # Psi <- Psi + 1e-04
-  # lambda[target == 0] <- 1e-04
-  # Phi[targetphi == 0] <- 1e-04
-  # Psi[targetpsi == 0] <- 1e-04
-  Rerror <- lambda %*% Phi %*% t(lambda) + Psi; diag(Rerror) <- 1
-  fit <- CFA(Rerror, target, targetphi, targetpsi, method = method)
-  Phat <- fit$model
+  if(nlambda + nphi + npsi > p*(p+1)/2) {
+    warning("The population model has negative degrees of freedom.")
+  }
 
-  # from delta to tau:
+  # Add an small error to the population parameters
+  # lambda_error <- lambda - 1e-04
+  # Rerror <- lambda_error %*% Phi %*% t(lambda_error) + Psi; diag(Rerror) <- 1
+  Rerror <- R
+  Rerror[lower.tri(R)] <- Rerror[lower.tri(R)] + runif(0.5*p*(p-1), -1e-06, 1e-06)
+  Rerror[upper.tri(R)] <- t(Rerror)[upper.tri(R)]
+
+  # Create the FA model
+  target <- ifelse(lambda != 0, 1, 0)
+  targetphi <- ifelse(Phi != 0, 1, 0)
+  targetpsi <- ifelse(Psi != 0, 1, 0)
+  cfa <- CFA(Rerror, target, targetphi, targetpsi, method = method)
+  Phat <- cfa$model
+
+  # Get the error matrix:
   E <- Rerror - Phat
+  # Hopefully, the error is orthogonal to the derivative of each parameter derivative wrt the discrepancy function
+
+  # Adjust the error to satisfy the desired amount of misfit:
 
   if(method == "minres" || method == "ols") {
 
-    tau <- sqrt(2*delta/sum(E*E))
-    R_error <- Phat + tau*E
+    if(fit == "rmsr") {
+      if(misfit == "close") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.05*r2
+      } else if(misfit == "acceptable") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.10*r2
+      }
+      delta <- misfit^2*0.5*p*(p-1)
+      # delta <- (1-misfit2)*(0.5*(sum(R_error^2) - p))
+    } else if(fit == "cfi") {
+      null_f <- 0.5*(sum(R^2) - p)
+      delta <- (1-misfit)*null_f
+    } else if(fit == "rmsea") {
+      delta <- misfit^2 * df
+    } else if(fit == "raw") {
+      delta <- misfit
+    }
+
+    k <- sqrt(2*delta/sum(E*E))
+    E <- k*E
 
   } else if(method == "ml") {
 
-    R_inv <- solve(R)
-    constant <- 1e-04 / sqrt(mean(E*E))
-    E <- constant*E # Fix this to avoid NAs
-    G <- R_inv %*% E
+    if(fit == "rmsr") {
+      delta <- "A given RMSR is compatible with multiple maximum likelihood discrepancy values and is not provided"
+    } else if(fit == "cfi") {
+      null_f <- -log(det(R))
+      delta <- (1-misfit)*null_f
+    } else if(fit == "rmsea") {
+      delta <- misfit^2 * df
+    } else if(fit == "raw") {
+      delta <- misfit
+    }
 
-    tau <- suppressWarnings(grid_search(delta, G))
-    tau <- opt_error(tau, delta, G)
-    # limits <- c(-1e3, 1e3)
-    # tau <- GSS(delta, G, limits)
-    # tau <- grad_descend(delta, G)
+    if(fit == "rmsr") {
 
-    R_error <- Phat + tau*E
+      k <- sqrt((0.5*p*(p-1))*2*misfit^2/sum(E*E))
+      E <- k*E
 
+    } else {
+
+      constant <- 1e-04 / sqrt(mean(E*E))
+      E <- constant*E # Fix this to avoid NAs
+      R_inv <- solve(R)
+      G <- R_inv %*% E
+      x <- suppressWarnings(grid_search(delta, G))
+      # x <- sqrt(2*delta/sum(G*G)) # Initial value suggested by Cudeck
+      k <- opt(x, delta, G)
+      # limits <- c(-1e05, 1e05)
+      # k <- GSS(delta, G, limits)
+      # k <- grad_descend(delta, G)
+      E <- k*E
+
+    }
   }
+
+    R_error <- Phat + E
 
   # check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
@@ -538,7 +580,7 @@ yuan <- function(R, lambda, Phi, Psi,
 #' sim_factor(n_generals, groups_per_general, items_per_group,
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
-#' generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
+#' generals_rho = 0, groups_rho = 0,
 #' method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan",
 #' lambda = NULL, Phi = NULL)
 #'
@@ -551,7 +593,6 @@ yuan <- function(R, lambda, Phi, Psi,
 #' @param pure Fix a pure item on each general factor. Defaults to FALSE.
 #' @param generals_rho Correlation among the general factors. Defaults to 0.
 #' @param groups_rho Correlation among the group factors. Defaults to 0.
-#' @param confirmatory Logical. Should the misfit value be computed according to a confirmatory model (TRUE) or an exploratory model (FALSE). Defaults to TRUE.
 #' @param method Method used to generate population error: "minres" or "ml".
 #' @param fit Fit index to control the population error.
 #' @param misfit Misfit value to generate population error.
@@ -587,7 +628,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
                        loadings_g = "medium", loadings_s = "medium",
                        crossloadings = 0, pure = FALSE,
                        generals_rho = 0, groups_rho = 0,
-                       confirmatory = TRUE, method = "minres",
+                       method = "minres",
                        fit = "rmsr", misfit = 0, error_method = "yuan",
                        lambda = NULL, Phi = NULL, Psi = NULL) {
 
@@ -799,7 +840,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
                       loadings_g = loadings_g, loadings_s = loadings_s,
                       crossloadings = crossloadings, pure = pure,
                       generals_rho = generals_rho, groups_rho = groups_rho,
-                      confirmatory = confirmatory, method = method,
+                      method = method,
                       fit = fit, misfit = misfit, error_method = error_method,
                       lambda = lambda, Phi = Phi, Psi = Psi)
 
@@ -815,7 +856,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
       cudeck_ <- cudeck(R = R, lambda = lambda, Phi = Phi, Psi = Psi,
                         fit = fit, misfit = misfit,
-                        method = method, confirmatory = confirmatory)
+                        method = method)
       R_error <- cudeck_$R_error
       delta <- cudeck_$delta
       misfit <- cudeck_$misfit
@@ -824,7 +865,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
       yuan_ <- yuan(R = R, lambda = lambda, Phi = Phi, Psi = Psi,
                     fit = fit, misfit = misfit,
-                    method = method, confirmatory = confirmatory)
+                    method = method)
       R_error <- yuan_$R_error
       delta <- yuan_$delta
       misfit <- yuan_$misfit
