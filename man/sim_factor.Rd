@@ -7,7 +7,7 @@
 sim_factor(n_generals, groups_per_general, items_per_group,
 loadings_g = "medium", loadings_s = "medium",
 crossloadings = 0, pure = FALSE,
-generals_rho = 0, groups_rho = 0, confirmatory = TRUE,
+generals_rho = 0, groups_rho = 0,
 method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan",
 lambda = NULL, Phi = NULL)
 }
@@ -30,8 +30,6 @@ lambda = NULL, Phi = NULL)
 
 \item{groups_rho}{Correlation among the group factors. Defaults to 0.}
 
-\item{confirmatory}{Logical. Should the misfit value be computed according to a confirmatory model (TRUE) or an exploratory model (FALSE). Defaults to TRUE.}
-
 \item{method}{Method used to generate population error: "minres" or "ml".}
 
 \item{fit}{Fit index to control the population error.}
@@ -48,23 +46,24 @@ lambda = NULL, Phi = NULL)
 List with the following objects:
 \item{lambda}{Population loading matrix.}
 \item{Phi}{Population factor correlation matrix.}
-\item{R}{Population correlation matrix.}
-\item{R_error}{Population correlation matrix with error.}
+\item{Psi}{Population matrix of correlated errors and uniquenesses in the diagonal.}
 \item{uniquenesses}{Vector of population uniquenesses.}
+\item{R}{Population correlation matrix according to the model.}
+\item{R_error}{Population correlation matrix with error.}
 \item{delta}{Minimum of the objective function that correspond to the misfit value.}
 }
 \description{
 Simulate a bi-factor or generalized bifactor population structure with cross-loading, pure items and correlated factors.
 }
 \details{
-\code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
+\code{sim_factor} generates bi-factor and multiple bi-factor patterns with cross-loadings, pure items and
 correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
 is introduced for an item pertaining to each group factor. When \code{pure} is TRUE, one item loading of each group
 factor is removed so that the item loads entirely on the general factor. To maintain the item communalities
 constant upon these modifications, the item loading on the other factors may shrunk (if adding cross-loadings)
 or increase (if setting pure items).
 
-Loading magnitudes may range between 0.3-0.5 ("low"), 0.4-0.6 ("medium") and 0.5-0.7 ("high").
+Loading magnitudes range between 0.3-0.5 ("low"), 0.4-0.6 ("medium") and 0.5-0.7 ("high").
 }
 \references{
 Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory bi-factor analysis with multiple general factors. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
