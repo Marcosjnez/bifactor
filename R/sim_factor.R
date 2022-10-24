@@ -269,7 +269,7 @@ gPRhat <- function(Lambda, Phi) {
   g1 <- Lambda %x% Lambda
   g2 <- g1 %*% dxt(Phi)
   g <- g1 + g2
-  g <- g[, which(lower.tri(Phi))]
+  g <- g[, which(lower.tri(Phi)), drop = FALSE]
 
   return(g)
 
@@ -295,7 +295,7 @@ gURhat <- function(p) {
   Psi <- diag(p)
   gPsi <- diag(p) %x% diag(p)
   gPsi <- gPsi + dxt(Psi) %*% gPsi
-  gPsi <- gPsi[, lower.tri(Psi, diag = TRUE)]
+  gPsi <- gPsi[, lower.tri(Psi, diag = TRUE), drop = FALSE]
   gPsi[gPsi != 0] <- 1
 
   return(gPsi)
@@ -363,7 +363,6 @@ cudeck <- function(R, lambda, Phi, Psi,
 
   # Generate random error:
 
-  # BtB <- t(B) %*% B
   m <- p+1
   U <- replicate(p, stats::runif(m, 0, 1))
   A1 <- t(U) %*% U
@@ -373,13 +372,9 @@ cudeck <- function(R, lambda, Phi, Psi,
   y <- diag_u %*% A2 %*% diag_u
   y <- y[lower.tri(y, diag = TRUE)]
   # y <- A2[lower.tri(A2, diag = TRUE)]
-  # y <- stats::runif(p*(p+1)/2, 0, 1)
-  # e <- qr.Q(qr(cbind(B, y)))[, ncol(B)+1]
-  # v <- MASS::ginv(BtB) %*% t(B) %*% y
-  # e <- y - B %*% v # equation 7
-  # B.qr <- qr(B)
-  # e <- qr.resid(B.qr, y)
-  e <- unname(stats::lm(y ~ B, model = FALSE, qr = TRUE)$residuals)
+  # e <- y - B %*% v # equation 7 from Cudeck and Browne (1992)
+  Q <- qr.Q(qr(B))
+  e <- y - Q %*% t(Q) %*% y
 
   # Get the error matrix:
 

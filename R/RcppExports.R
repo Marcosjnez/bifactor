@@ -41,8 +41,12 @@ get_target <- function(loadings, Phi, cutoff = 0) {
     .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
 }
 
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-    .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifad <- function(R, n_generals, n_groups, projection = "orth", oblq_blocks = NULL, cutoff = 0, normalization = "none", nobs = NULL, first_efa = NULL, second_efa = NULL, rot_control = NULL, random_starts = 1L, cores = 1L) {
+    .Call(`_bifactor_bifad`, R, n_generals, n_groups, projection, oblq_blocks, cutoff, normalization, nobs, first_efa, second_efa, rot_control, random_starts, cores)
+}
+
+bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+    .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {

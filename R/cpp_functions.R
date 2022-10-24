@@ -402,8 +402,8 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, blocks_list = NULL, block_weights = NULL,
 #' oblq_blocks = NULL, init_Target = NULL, maxit = 20L,
-#' cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
-#' efa_control = NULL, rot_control = NULL,
+#' cutoff = 0, normalization = "none, w = 1, random_starts = 1L, cores = 1L,
+#' init = NULL, efa_control = NULL, rot_control = NULL,
 #' first_efa = NULL, second_efa = NULL, verbose = TRUE)
 #'
 #' @description
@@ -422,6 +422,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @param init_Target Initial target matrix for the loadings. Defaults to NULL.
 #' @param maxit Maximum number of iterations for the GSLiD algorithm. Defaults to 20L.
 #' @param cutoff Cut-off used to update the target matrix upon each iteration. Defaults to 0.
+#' @param normalization Available normalizations: "kaiser". Defaults to "none".
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
 #' @param blocks_list List containing the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
@@ -487,12 +488,12 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' # Fit an Generalized exploratory bi-factor model with GSLiD:
 #' GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
 #' method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
-#' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
+#' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization)
 #'}
 #'
 #' @export
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 #' @title
