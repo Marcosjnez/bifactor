@@ -32,10 +32,10 @@ arma::mat gLRhat(arma::mat Lambda, arma::mat Phi) {
 
 }
 
-arma::mat gPRhat(arma::mat Lambda, arma::mat Phi) {
+arma::mat gPRhat(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
 
   int q = Phi.n_cols;
-  arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
+  // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
   arma::mat g1 = arma::kron(Lambda, Lambda);
   arma::mat g2 = g1 * dxt(q, q);
   arma::mat g_temp = g1 + g2;
@@ -78,12 +78,12 @@ arma::mat hessian_Lambda(arma::mat S, arma::mat Lambda,
 
 }
 
-arma::mat hessian_Phi(arma::mat Lambda, arma::mat Phi) {
+arma::mat hessian_Phi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
 
-  arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
+  // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
   arma::mat LxL = 2*arma::kron(Lambda, Lambda);
   arma::mat LxLt = LxL.t();
-  arma::mat hessian_Phi = LxLt.rows(indexes) * gPRhat(Lambda, Phi);
+  arma::mat hessian_Phi = LxLt.rows(indexes) * gPRhat(Lambda, Phi, indexes);
 
   return hessian_Phi;
 
@@ -99,11 +99,11 @@ arma::mat hessian_psi(arma::vec psi) {
 }
 
 arma::mat hessian_LambdaPhi(arma::mat S, arma::mat Lambda,
-                            arma::mat Phi, arma::vec psi) {
+                            arma::mat Phi, arma::vec psi,
+                            arma::uvec indexes) {
 
   int p = Lambda.n_rows;
   int q = Phi.n_rows;
-  int q_cor = q*(q-1)/2;
 
   arma::mat LambdaPhi = Lambda * Phi;
   arma::mat Rhat = LambdaPhi * Lambda.t() + arma::diagmat(psi);
@@ -111,8 +111,8 @@ arma::mat hessian_LambdaPhi(arma::mat S, arma::mat Lambda,
   arma::mat I1(p, p, arma::fill::eye);
   arma::mat I2(q, q, arma::fill::eye);
 
-  arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
-  arma::mat h1 = 2*arma::kron(LambdaPhi.t(), I1) * gPRhat(Lambda, Phi);
+  // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
+  arma::mat h1 = 2*arma::kron(LambdaPhi.t(), I1) * gPRhat(Lambda, Phi, indexes);
   arma::mat h21 = -2*arma::kron(I2, residuals * Lambda);
   arma::mat h22 = h21 + h21 * dxt(q, q);
   arma::mat h2 = h22.cols(indexes);
@@ -141,21 +141,21 @@ arma::mat hessian_Lambdapsi(arma::mat Lambda, arma::mat Phi) {
 
 }
 
-arma::mat hessian_Phipsi(arma::mat Lambda, arma::mat Phi) {
+arma::mat hessian_Phipsi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
 
   int p = Lambda.n_rows;
 
-  arma::mat gPR = gPRhat(Lambda, Phi);
-  arma::uvec indexes(p);
-  for(int i=0; i < p; ++i) indexes[i] = i*p + i;
-  arma::mat h_Phipsi = gPR.rows(indexes);
+  arma::mat gPR = gPRhat(Lambda, Phi, indexes);
+  arma::uvec indexes_psi(p);
+  for(int i=0; i < p; ++i) indexes_psi[i] = i*p + i;
+  arma::mat h_Phipsi = gPR.rows(indexes_psi);
 
   return h_Phipsi.t();
 
 }
 
 arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
-                         std::string projection) {
+                         std::string projection, arma::uvec indexes) {
 
   /*
    * Compute all the functions above and create the hessian matrix
@@ -182,19 +182,19 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
   arma::mat h_Lambda = h1 + h2;
 
   arma::mat gPR;
-  arma::uvec indexes;
+  // arma::uvec indexes;
   arma::mat h_Phi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Phi
      */
 
-    indexes = trimatl_ind(arma::size(Phi), -1);
+    // indexes = trimatl_ind(arma::size(Phi), -1);
     arma::mat LxL = 2*arma::kron(Lambda, Lambda);
     arma::mat LxLt = LxL.t();
-    gPR = gPRhat(Lambda, Phi);
+    gPR = gPRhat(Lambda, Phi, indexes);
     h_Phi = LxLt.rows(indexes) * gPR;
 
   }
@@ -205,7 +205,7 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
   arma::mat h_psi = I1;
   arma::mat h_LambdaPhi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Lambda and Phi
@@ -237,7 +237,7 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   arma::mat h_Phipsi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Phi and Psi
@@ -251,7 +251,7 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   arma::mat hessian;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Join all the derivatives such that
@@ -260,7 +260,13 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
      * h_Lambdapsi.t()  h_Phipsi.t()  h_psi
      */
 
-    int q_cor = q*(q-1)/2;
+    int q_cor;
+    if(projection == "oblq") {
+      q_cor = q*(q-1)/2;
+    }
+    if(projection == "poblq") {
+      q_cor = indexes.size();
+    }
 
     // insert columnwise:
     arma::mat hessian1 = h_Lambda; // pq x pq
@@ -325,10 +331,11 @@ arma::mat gLS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 
 }
 
-arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
+arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
+                     arma::uvec indexes1) {
 
   int p = S.n_rows;
-  arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
+  // arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
   arma::uvec indexes2 = trimatl_ind(arma::size(S), -1);
 
   arma::mat g1 = -2*arma::kron(Lambda.t(), Lambda.t());
@@ -341,7 +348,7 @@ arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 }
 
 arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
-                      std::string projection) {
+                      std::string projection, arma::uvec indexes1) {
 
   /*
    * Compute d2f/(dtheta ds)
@@ -350,7 +357,7 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
   int p = Lambda.n_rows;
   int q = Lambda.n_cols;
 
-  arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
+  // arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
   arma::uvec indexes2 = trimatl_ind(arma::size(S), -1);
 
   arma::mat LambdaPhi = Lambda * Phi;
@@ -368,14 +375,16 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
     gd = g;
     k = p*q;
 
-  } else if(projection == "oblq") {
+  } else if(projection == "oblq" | projection == "poblq") {
 
     arma::mat d1 = -2*arma::kron(Lambda.t(), Lambda.t());
     arma::mat d2 = d1 * dxt(p, p);
     arma::mat d_temp = d1 + d2;
     arma::mat d = d_temp(indexes1, indexes2);
     gd = arma::join_cols(g, d);
-    k = p*q + q*(q-1)/2;
+
+    if(projection == "oblq") k = p*q + q*(q-1)/2;
+    if(projection == "poblq") k = p*q + indexes1.size();
 
   }
 
@@ -394,7 +403,7 @@ arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
  */
 
 arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
-                     std::string projection) {
+                     std::string projection, arma::uvec indexes) {
 
   /*
    * Compute all the functions above and create the hessian matrix
@@ -428,24 +437,24 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
   arma::mat h_Lambda = h1 + h2;
 
   arma::mat dRhat_dP;
-  arma::uvec indexes1;
+  // arma::uvec indexes;
   arma::mat dRi_res_Ri_dP;
   arma::mat h_Phi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Phi
      */
 
-    indexes1 = trimatl_ind(arma::size(Phi), -1);
+    // indexes = trimatl_ind(arma::size(Phi), -1);
     arma::mat LxL = 2*arma::kron(Lambda, Lambda);
     arma::mat LxLt = LxL.t();
-    dRhat_dP = gPRhat(Lambda, Phi);
+    dRhat_dP = gPRhat(Lambda, Phi, indexes);
     dRi_res_Ri_dP = dRi_res_Ri_dRhat * dRhat_dP;
     arma::mat LtxLt = arma::kron(Lambda.t(), Lambda.t());
 
-    h_Phi = LtxLt.rows(indexes1) * dRi_res_Ri_dP;
+    h_Phi = LtxLt.rows(indexes) * dRi_res_Ri_dP;
 
   }
   /*
@@ -459,7 +468,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   arma::mat h_LambdaPhi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Lambda and Phi
@@ -473,7 +482,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
     arma::mat h22 = h21 * dxtPhi;
     h2 = h21 + h22;
 
-    h_LambdaPhi = h1 + h2.cols(indexes1);
+    h_LambdaPhi = h1 + h2.cols(indexes);
 
   }
 
@@ -485,7 +494,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   arma::mat h_Phipsi;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Second derivatives for Phi and Psi
@@ -497,7 +506,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   arma::mat hessian;
 
-  if(projection == "oblq") {
+  if(projection == "oblq" | projection == "poblq") {
 
     /*
      * Join all the derivatives such that
@@ -506,7 +515,9 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
      * h_Lambdapsi.t()  h_Phipsi.t()  h_psi
      */
 
-    int q_cor = q*(q-1)/2;
+    int q_cor;
+    if(projection == "oblq") q_cor = q*(q-1)/2;
+    if(projection == "poblq") q_cor = indexes.size();
 
     // insert columnwise:
     arma::mat hessian1 = h_Lambda; // pq x pq
@@ -556,7 +567,7 @@ arma::mat hessian_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
  */
 
 arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
-                  std::string projection) {
+                  std::string projection, arma::uvec indexes1) {
 
   /*
    * Compute d2f/(dtheta ds)
@@ -566,7 +577,7 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
   int q = Lambda.n_cols;
   int pp = p*p;
 
-  arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
+  // arma::uvec indexes1 = trimatl_ind(arma::size(Phi), -1);
   arma::uvec indexes2 = trimatl_ind(arma::size(S), -1);
   arma::uvec indexes3 = arma::linspace<arma::uvec>(0, pp-1, p);
   arma::mat I1(p, p, arma::fill::eye);
@@ -597,14 +608,15 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
     gd = g;
     k = p*q;
 
-  } else if(projection == "oblq") {
+  } else if(projection == "oblq" | projection == "poblq") {
 
     arma::mat d1 = arma::kron(Lambda.t(), Lambda.t());
     arma::mat d_temp = d1 * dRi_res_Ri_dS;
 
     arma::mat d = d_temp(indexes1, indexes2);
     gd = arma::join_cols(g, d);
-    k = p*q + q*(q-1)/2;
+    if(projection == "oblq") k = p*q + q*(q-1)/2;
+    if(projection == "poblq") k = p*q + indexes1.size();
 
   }
 
@@ -620,6 +632,7 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 }
 
 arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
+            arma::uvec loblq_indexes,
             Rcpp::Nullable<arma::mat> nullable_X = R_NilValue,
             std::string method = "minres", std::string projection = "oblq",
             std::string type = "continuous", double eta = 1) {
@@ -633,11 +646,11 @@ arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
   if(method == "minres") {
 
-    gLPS = gLPS_minres(S, Lambda, Phi, projection);
+    gLPS = gLPS_minres(S, Lambda, Phi, projection, loblq_indexes);
 
   } else if(method == "ml") {
 
-    gLPS = gLPS_ml(S, Lambda, Phi, projection);
+    gLPS = gLPS_ml(S, Lambda, Phi, projection, loblq_indexes);
 
   }
 

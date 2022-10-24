@@ -14,7 +14,7 @@ typedef struct arguments_rotate{
   int p, q, iteration = 0;
   std::vector<int> qi;
   double w = 1, alpha = 10, f, q2;
-  arma::vec k = {0}, gamma = {0}, epsilon = {0.01};
+  arma::vec k = {0}, gamma = {0}, epsilon = {0.01}, clf_epsilon = {0.01};
   double a = 30, b = 0.36, ss = 1, inprod = 1, ng = 1;
   bool convergence = false;
   int maxit = 1e04;
@@ -38,6 +38,10 @@ typedef struct arguments_rotate{
   gC1, gC, glogC, glogCN, gexplogCN, exp_lCN, gL1, gL2, I, I1, I2, Ng,
   dxtL, dxt_L2s, dmudL, dc2dL, dmudP, dc2dP, LtLxI, dxtP, expmu, expmmu, dir;
 
+  arma::vec Lvec;
+  arma::uvec lower, larger;
+  std::vector<arma::uvec> loweri, largeri;
+
   arma::rowvec var, varq;
   std::vector<arma::rowvec> vari, varqi;
   arma::colvec mu, c2, dc2dmu;
@@ -49,7 +53,7 @@ typedef struct arguments_rotate{
   std::vector<double> prodvari, prodvarqi, prodc2i;
 
   arma::vec term;
-  arma::uvec oblq_indexes, blocks_vector; // REMOVE blocks_vector?
+  arma::uvec oblq_indexes, loblq_indexes, orth_indexes, blocks_vector; // REMOVE blocks_vector?
   std::vector<arma::uvec> list_oblq_indexes, blocks_list;
   arma::vec block_weights;
   int n_blocks = 1, n_rotations = 1, i, n_loads;
@@ -81,7 +85,7 @@ typedef struct arguments_efast{
   std::string normalization = "none";
   std::string between_blocks = "none";
   double w = 1, alpha = 1;
-  arma::vec k = {0}, gamma = {0}, epsilon = {0.01};
+  arma::vec k = {0}, gamma = {0}, epsilon = {0.01}, clf_epsilon = {0.1};
   double a = 30, b = 0.36;
   int random_starts = 10L, cores = 1L;
   Rcpp::Nullable<arma::vec> nullable_init = R_NilValue;

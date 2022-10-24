@@ -155,6 +155,14 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
   bool heywood = arma::any( uniquenesses < 0 );
 
+  // Force average positive loadings in all factors:
+
+  for (int j=0; j < nfactors; ++j) {
+    if (sum(w.col(j)) < 0) {
+      w.col(j)   *= -1;
+    }
+  }
+
   result["loadings"] = w;
   result["uniquenesses"] = uniquenesses;
   result["Rhat"] = Rhat;

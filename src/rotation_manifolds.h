@@ -64,6 +64,8 @@ public:
 
   void g_constraints(arguments_rotate& x) {
 
+    // Parameters in columns and constraints in rows
+
     arma::mat I1(x.p, x.p, arma::fill::eye);
     arma::mat I2(x.q, x.q, arma::fill::eye);
     int pq = x.p*x.q;
@@ -73,10 +75,9 @@ public:
       arma::kron(x.gL.t(), I2) * dxt(x.p, x.q); // q*q x p*q matrix
 
     arma::uvec indexes_1 = arma::trimatl_ind(arma::size(I2), -1);
-    arma::uvec indexes_2 = arma::trimatu_ind(arma::size(I2), 1);
     arma::mat d_constr2 = dxt(x.q, x.q) * x.d_constr_temp;
     // Derivative of the constraint equation (zero matrix) wrt L:
-    x.d_constr_temp -= d_constr2;
+    x.d_constr_temp -= d_constr2; // q*q x p*q matrix
     // Pick up the lower diagonal constraint derivatives wrt L (q*(q-1)/2 constraints):
     x.d_constr = x.d_constr_temp.rows(indexes_1);
     // add p zero-columns for the constraints wrt the uniquenesses:
@@ -171,6 +172,8 @@ public:
 
   void g_constraints(arguments_rotate& x) {
 
+    // Parameters in columns and constraints in rows
+
     int pq = x.p*x.q;
     int qq = x.q*x.q;
     int q_cor = x.q*(x.q-1)/2;
@@ -190,7 +193,7 @@ public:
     B.slice(0) = x.d_constr_temp;
     B.reshape(x.q, x.q, pq);
     B.each_slice() *= inv_Phi;
-    B.reshape(x.q*x.q, pq, 1);
+    B.reshape(qq, pq, 1);
     // Derivative of the constraint equation (diagonal matrix) wrt L:
     x.d_constr_temp = B.slice(0); // q*q x p*q matrix
 
@@ -199,7 +202,7 @@ public:
     arma::mat Phi_t = dxt(x.q, x.q);
     arma::mat HP_temp = c1p + c1p * Phi_t;
     if(!x.hP.is_empty()) HP_temp -= x.hP; // q*q x q*q matrix
-    // Pick up the lower diagonal constraint derivatives:
+    // Pick up the estimated correlations in the lower diagonal:
     arma::mat HP = HP_temp.cols(indexes_2);
 
     // Join the derivative constraints wrt L and Phi:
@@ -294,35 +297,48 @@ public:
 
   void g_constraints(arguments_rotate& x) {
 
+    // Parameters in columns and constraints in rows
+
     int pq = x.p*x.q;
     int qq = x.q*x.q;
-    int q_cor = x.q*(x.q-1)/2;
-    arma::uvec indexes_1(x.q);
+    arma::mat dxtPhi = dxt(x.q, x.q);
 
-    for(int i=0; i < x.q; ++i) indexes_1[i] = ((i+1)*x.q) - (x.q-i);
-    arma::uvec indexes_2 = arma::trimatl_ind(arma::size(x.Phi), -1);
+    // Indexes to select the nonduplicated correlation entries:
     arma::mat I2(x.q, x.q, arma::fill::eye);
 
     x.d_constr_temp = arma::kron(I2, x.L.t()) * x.hL +
-      arma::kron(x.gL.t(), I2) * dxt(x.p, x.q);
+      arma::kron(x.gL.t(), I2) * dxt(x.p, x.q); // q*q x p*q matrix
 
+    // Rebuild each column of x.d_constr_temp as a qxq matrix and multiply by inv_Phi:
     arma::mat inv_Phi = arma::inv_sympd(x.Phi);
     arma::cube B(qq, pq, 1);
     B.slice(0) = x.d_constr_temp;
     B.reshape(x.q, x.q, pq);
     B.each_slice() *= inv_Phi;
-    B.reshape(x.q*x.q, pq, 1);
-    x.d_constr_temp = B.slice(0);
+    B.reshape(qq, pq, 1);
+    // Derivative of the constraint equation (diagonal matrix) wrt L:
+    arma::mat d_const_oblq = B.slice(0); // q*q x p*q matrix
+    arma::mat d_const_orth = d_const_oblq - dxtPhi * d_const_oblq; // q*q x p*q matrix
+    d_const_oblq = d_const_oblq.rows(x.oblq_indexes);
+    d_const_orth = d_const_orth.rows(x.orth_indexes);
+    x.d_constr_temp = arma::join_cols(d_const_oblq, d_const_orth);
 
+    // Derivative of the constraint equation (diagonal matrix) wrt Phi:
     arma::mat c1p = -arma::kron(inv_Phi.t(), (x.L.t() * x.gL * inv_Phi));
-    arma::mat Phi_t = dxt(x.q, x.q);
-    arma::mat HP_temp = c1p + c1p * Phi_t;
-    if(!x.hP.is_empty()) HP_temp -= x.hP;
-    arma::mat HP = HP_temp.cols(indexes_2);
+    arma::mat HP_oblq = c1p + c1p * dxtPhi;
+    if(!x.hP.is_empty()) HP_oblq -= x.hP; // q*q x q*q matrix
+    arma::mat HP_orth = HP_oblq - dxtPhi * HP_oblq;
+    HP_oblq = HP_oblq.rows(x.oblq_indexes);
+    HP_orth = HP_orth.rows(x.orth_indexes);
+    arma::mat HP = arma::join_cols(HP_oblq, HP_orth);
+    // Pick up the estimated correlations in the lower diagonal:
+    HP = HP.cols(x.loblq_indexes);
 
+    // Join the derivative constraints wrt L and Phi:
     x.d_constr = arma::join_rows(x.d_constr_temp, HP);
-    x.d_constr.shed_rows(indexes_1);
-    x.d_constr.insert_cols(pq + q_cor, x.p);
+    // add p zero-columns for the constraints wrt the uniquenesses:
+    int n_cols = x.d_constr.n_cols;
+    x.d_constr.insert_cols(n_cols, x.p);
 
   };
 
@@ -332,6 +348,7 @@ public:
     arma::mat X0 = c1 + c1.t();
     x.A = lyap_sym(x.Phi, X0);
     x.A(x.oblq_indexes).zeros();
+    // x.A.diag() = 0.5*arma::diagvec(X0);
 
     // x.A = syl(x.Phi, X0);
     // X0(x.oblq_indexes).zeros(); x.A = lyapunov(x.Phi, X0, x.oblq_indexes); x.A(x.oblq_indexes).zeros();
@@ -350,7 +367,8 @@ public:
     arma::mat Q = dX0 - c2;
     // dAPhi + PhidA = Q
     arma::mat dA = lyap_sym(x.Phi, Q);
-    dA(x.oblq_indexes).zeros(); // should be set to 0?
+    dA(x.oblq_indexes).zeros();
+    // dA.diag() = 0.5*arma::diagvec(Q);
 
     // arma::mat dA = syl(Phi, Q);
     // Q(x.oblq_indexes).zeros(); arma::mat dA = lyapunov(x.Phi, Q, x.oblq_indexes); dA(x.oblq_indexes).zeros();
@@ -362,6 +380,7 @@ public:
     arma::mat X0 = c + c.t();
     arma::mat A = lyap_sym(x.Phi, X0);
     A(x.oblq_indexes).zeros();
+    // A.diag() = 0.5*arma::diagvec(X0);
 
     // X0(x.oblq_indexes).zeros(); arma::mat A = lyapunov(x.Phi, X0, x.oblq_indexes); A(x.oblq_indexes).zeros();
     // arma::mat A = lyapunov_2(x.Phi, X0, x.oblq_indexes);

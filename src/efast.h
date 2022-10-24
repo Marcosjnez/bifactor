@@ -55,19 +55,6 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
   int iterations = std::get<4>(x1);
   bool convergence = std::get<5>(x1);
 
-  // Force average positive loadings in all factors:
-
-  // arma::vec v = arma::sign(arma::sum(L, 0));
-  // L.each_row() /= v;
-
-  for (int j=0; j < x.q; ++j) {
-    if (sum(L.col(j)) < 0) {
-      L.col(j)   *= -1;
-      Phi.col(j) *= -1;
-      Phi.row(j) *= -1;
-    }
-  }
-
   if(!convergence) {
 
     Rcpp::Rcout << "\n" << std::endl;
@@ -166,6 +153,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["k"] = k;
   modelInfo["gamma"] = gamma;
   modelInfo["epsilon"] = epsilon;
+  arma::vec clf_epsilon = {0.01};
+  modelInfo["clf_epsilon"] = clf_epsilon;
   modelInfo["w"] = w;
   modelInfo["alpha"] = alpha;
   modelInfo["a"] = a;
@@ -191,7 +180,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
-    x.a = a, x.b = b;
+    x.a = a, x.b = b, x.clf_epsilon = clf_epsilon;
   x.between_blocks = between_blocks;
   x.rotations = rotation;
   x.projection = projection;
@@ -252,6 +241,19 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
     L.each_col() %= weigths;
 
+  }
+
+  // Force average positive loadings in all factors:
+
+  // arma::vec v = arma::sign(arma::sum(L, 0));
+  // L.each_row() /= v;
+
+  for (int j=0; j < x.q; ++j) {
+    if (sum(L.col(j)) < 0) {
+      L.col(j)   *= -1;
+      Phi.col(j) *= -1;
+      Phi.row(j) *= -1;
+    }
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
@@ -334,7 +336,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
-    x.a = a, x.b = b;
+    x.a = a, x.b = b, x.clf_epsilon = {0.01};
   x.between_blocks = between_blocks;
   x.rotations = rotation;
   x.projection = projection;
@@ -382,6 +384,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["k"] = x.k;
   modelInfo["gamma"] = x.gamma;
   modelInfo["epsilon"] = x.epsilon;
+  modelInfo["clf_epsilon"] = x.clf_epsilon;
   modelInfo["w"] = x.w;
   modelInfo["alpha"] = x.alpha;
   modelInfo["a"] = x.a;
@@ -440,6 +443,19 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
     L.each_col() %= weigths;
 
+  }
+
+  // Force average positive loadings in all factors:
+
+  // arma::vec v = arma::sign(arma::sum(L, 0));
+  // L.each_row() /= v;
+
+  for (int j=0; j < x.q; ++j) {
+    if (sum(L.col(j)) < 0) {
+      L.col(j)   *= -1;
+      Phi.col(j) *= -1;
+      Phi.row(j) *= -1;
+    }
   }
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;

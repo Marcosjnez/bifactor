@@ -36,20 +36,22 @@ Rcpp::List se(Rcpp::List fit,
 
   Rcpp::List rot = fit["rotation"];
   arma::mat L_ = rot["loadings"]; x.L = L_;
+  arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
+  arma::mat T_ = rot["T"]; x.T = T_;
+
   Rcpp::List efa = fit["efa"];
+  arma::mat lambda_ = efa["loadings"]; x.lambda = lambda_;
   std::string projection_ = modelInfo["projection"]; x.projection = projection_;
   std::vector<std::string> rotation_ = modelInfo["rotation"]; x.rotations = rotation_;
 
-  arma::mat lambda_ = efa["loadings"]; x.lambda = lambda_;
   x.p = x.lambda.n_rows;
   x.q = x.lambda.n_cols;
-  x.lambda.set_size(x.p, x.q);
-  x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  arma::mat T_ = rot["T"]; x.T = T_;
-  arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
+  // x.lambda.set_size(x.p, x.q);
+  // x.Phi.set_size(x.q, x.q); x.Phi.eye();
   arma::vec gamma_ = modelInfo["gamma"]; x.gamma = gamma_;
   arma::vec k_ = modelInfo["k"]; x.k = k_;
   arma::vec epsilon_ = modelInfo["epsilon"]; x.epsilon = epsilon_;
+  arma::vec clf_epsilon_ = modelInfo["clf_epsilon"]; x.clf_epsilon = clf_epsilon_;
   double w_ = modelInfo["w"]; x.w = w_;
   double alpha_ = modelInfo["alpha"]; x.alpha = alpha_;
   double a_ = modelInfo["a"]; x.a = a_;
@@ -84,51 +86,76 @@ Rcpp::List se(Rcpp::List fit,
 
   // Compute the rotation constraints:
 
-  manifold->param(x);
+  // manifold->param(x); // The sign of L and Phi may change (x.Inv_T is not necessary)
   criterion->F(x);
   criterion->gLP(x);
   criterion->hLP(x);
   manifold->g_constraints(x); // update x.d_constr
 
   // Rcpp::List xx;
-  // xx["constr"] = x.d_constr_temp;
+  // xx["constr"] = x.d_constr;
+  // xx["orth_indexes"] = x.orth_indexes;
+  // xx["oblq_indexes"] = x.oblq_indexes;
+  // xx["loblq_indexes"] = x.loblq_indexes;
   // return xx;
+
+  int pq = x.p*x.q;
+  int q_cor;
+  int m;
+  arma::uvec loblq_indexes;
+
+  if(x.projection == "orth") {
+    m = x.p*x.q + x.p;
+  } else if(x.projection == "oblq") {
+    q_cor = x.q*(x.q-1)/2;
+    m = x.p*x.q + q_cor + x.p;
+    loblq_indexes = arma::trimatl_ind(arma::size(x.Phi), -1);
+  } else if(x.projection == "poblq") {
+    loblq_indexes = x.loblq_indexes;
+    q_cor = loblq_indexes.size();
+    m = x.p*x.q + q_cor + x.p;
+  } else {
+    Rcpp::stop("Unkown projection");
+  }
 
   // Compute the Hessian:
 
-  arma::mat H;
+  arma::mat H, Hess;
   if(method == "minres") {
-    H = hessian_minres(x.S, x.L, x.Phi, x.projection);
+    Hess = hessian_minres(x.S, x.L, x.Phi, x.projection, loblq_indexes);
   } else if(method == "ml") {
-    H = hessian_ml(x.S, x.L, x.Phi, x.projection);
+    Hess = hessian_ml(x.S, x.L, x.Phi, x.projection, loblq_indexes);
   } else {
     Rcpp::stop("Standard errors are not implemented yet for this extraction method");
   }
 
   // Add the constraints to the hessian matrix:
   int kk = x.d_constr.n_rows;
-  H = arma::join_rows(H, x.d_constr.t());
+  H = arma::join_rows(Hess, x.d_constr.t());
   // Add zeros to make H a square matrix:
   arma::mat zeros(kk, kk);
   arma::mat C = arma::join_rows(x.d_constr, zeros);
   H = arma::join_cols(H, C);
   arma::mat H_inv = arma::inv(H);
 
-  int pq = x.p*x.q;
-  int q_cor = x.q*(x.q-1)/2;
-  int m;
-  arma::uvec indexes;
-
-  if(x.projection == "orth") {
-    m = x.p*x.q + x.p;
-  } else {
-    m = x.p*x.q + q_cor + x.p;
-    indexes = arma::trimatl_ind(arma::size(x.Phi), -1);
-  }
+  // arma::uvec caca = arma::trimatl_ind(arma::size(x.Phi), -1);
+  // arma::uvec indexes_1(x.q);
+  // for(int i=0; i < x.q; ++i) indexes_1[i] = ((i+1)*x.q) - (x.q-i);
+  // Rcpp::List xx;
+  // xx["Hess"] = Hess;
+  // xx["H"] = H;
+  // xx["H_inv"] = H_inv;
+  // xx["constr"] = x.d_constr;
+  // xx["orth_indexes"] = x.orth_indexes;
+  // xx["oblq_indexes"] = x.oblq_indexes;
+  // xx["loblq_indexes"] = x.loblq_indexes;
+  // xx["projection"] = x.projection;
+  // xx["method"] = method;
+  // return xx;
 
   // Find A^{-1}BA^{-1}:
   arma::mat A_inv = H_inv(arma::span(0, m-1), arma::span(0, m-1));
-  arma::mat BB = B(x.S, x.L, x.Phi, nullable_X, method, x.projection,
+  arma::mat BB = B(x.S, x.L, x.Phi, loblq_indexes, nullable_X, method, x.projection,
                    type, eta); // Variance of the correlation matrix
   arma::mat VAR = A_inv * BB * A_inv;
   arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));
@@ -145,10 +172,10 @@ Rcpp::List se(Rcpp::List fit,
       psi_se[ij] = se[i];
       ++ij;
     }
-  } else {
+  } else if(x.projection == "oblq") {
     int ij = 0;
     for(int i=pq; i < (pq+q_cor); ++i) {
-      Phi_se[indexes(ij)] = se[i];
+      Phi_se[loblq_indexes(ij)] = se[i];
       ++ij;
     }
     Phi_se = arma::symmatl(Phi_se);
@@ -157,6 +184,20 @@ Rcpp::List se(Rcpp::List fit,
       psi_se[ij] = se[i];
       ++ij;
     }
+  } else if(x.projection == "poblq") {
+    int ij = 0;
+    for(int i=pq; i < (pq+q_cor); ++i) {
+      Phi_se[loblq_indexes(ij)] = se[i];
+      ++ij;
+    }
+    Phi_se = arma::symmatl(Phi_se);
+    ij = 0;
+    for(int i=pq+q_cor; i < m; ++i) {
+      psi_se[ij] = se[i];
+      ++ij;
+    }
+  } else {
+    Rcpp::stop("Unkown projection");
   }
 
   Rcpp::List result;

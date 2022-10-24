@@ -453,12 +453,12 @@ NTR lbfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *c
 
   // Parameterization
   manifold->param(x); // update x.L, x.Phi and x.Inv_T
-  criterion->F(x);
+  criterion->F(x);    // Compute the objective with x.L and x.Phi
   // update the gradient
-  criterion->gLP(x);
-  manifold->grad(x);
+  criterion->gLP(x);  // Update the gradient wrt x.L and x.Phi
+  manifold->grad(x);  // Update the gradient wrt x.T
   // Riemannian gradient
-  manifold->proj(x);
+  manifold->proj(x);  // Update the Riemannian gradient x.rg
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = sqrt(x.inprod);
@@ -488,6 +488,7 @@ NTR lbfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *c
     arma::mat old_T = x.T;
     arma::mat old_rg = x.rg;
 
+    // Update x.ss, x.T, x.L, x.Phi and x.Inv_T and x.f
     x = armijo(x, manifold, criterion, ss_fac, ss_min,
                30, c1, c2, x.eps);
 

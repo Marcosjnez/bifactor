@@ -106,6 +106,18 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method = "minres",
 arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double cutoff = 0);
 
 // [[Rcpp::export]]
+Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
+                 std::string projection = "orth",
+                 Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
+                 double cutoff = 0,
+                 std::string normalization = "none",
+                 Rcpp::Nullable<int> nobs = R_NilValue,
+                 Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
+                 Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
+                 Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
+                 int random_starts = 1, int cores = 1);
+
+// [[Rcpp::export]]
 Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                    std::string bifactor_method = "GSLiD",
                    std::string method = "minres",
@@ -118,7 +130,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                    Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
                    Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
                    Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
-                   int maxit = 20, double cutoff = 0,
+                   int maxit = 20, double cutoff = 0, std::string normalization = "none",
                    double w = 1, int random_starts = 1, int cores = 1,
                    Rcpp::Nullable<arma::vec> init = R_NilValue,
                    Rcpp::Nullable<Rcpp::List> efa_control = R_NilValue,

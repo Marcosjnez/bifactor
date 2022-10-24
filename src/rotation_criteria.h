@@ -442,7 +442,8 @@ public:
 
   void F(arguments_rotate& x) {
 
-    x.L2 = x.L % x.L;
+    // x.L2 = x.L % x.L;
+    x.L2 = x.L % x.L + .00001;
     arma::rowvec c1 = arma::sum(x.L2, 0);
     x.mu = x.a*(c1.t()-x.b);
     x.expmmu = arma::exp(-x.mu);
@@ -508,6 +509,8 @@ public:
 
     x.L2 = x.L.t() * x.L;
     arma::colvec c1 = arma::diagvec(x.Phi * x.L2);
+    // x.L2 = x.L % x.L + .00001;
+    // arma::rowvec c1 = arma::sum(x.L2, 0);
     x.mu = x.a*(c1-x.b);
     x.expmmu = arma::exp(-x.mu);
     x.c2 = 1/(1 + x.expmmu);
@@ -589,6 +592,66 @@ public:
 
     x.dgP = arma::reshape(dgP, x.q, x.q);
     x.dgP.diag().zeros();
+
+  }
+
+};
+
+/*
+ * Linear CLF
+ */
+
+class clf_l: public rotation_criterion {
+
+public:
+
+  void F(arguments_rotate& x) {
+
+    double b = 1 / (2*x.clf_epsilon[0]);
+    double a = x.clf_epsilon[0] - b*x.clf_epsilon[0]*x.clf_epsilon[0];
+
+    arma::mat absL = arma::abs(x.L);
+    x.lower = arma::find(absL <= x.clf_epsilon[0]);
+    x.larger = arma::find(absL > x.clf_epsilon[0]);
+    double f1 = arma::accu(a + b*absL.elem(x.lower) % absL.elem(x.lower));
+    double f2 = arma::accu(absL.elem(x.larger));
+
+    x.f = f1 + f2;
+
+  }
+
+  void gLP(arguments_rotate& x) {
+
+    double b = 1 / (2*x.clf_epsilon[0]);
+    x.gL.set_size(arma::size(x.L));
+    x.gL.elem(x.lower) = 2*b*x.L.elem(x.lower);
+    x.gL.elem(x.larger) = arma::sign(x.L.elem(x.larger));
+
+  }
+
+  void hLP(arguments_rotate& x) {
+
+    int p = x.L.n_rows;
+    int q = x.L.n_cols;
+    arma::mat hL(p*q, p*q, arma::fill::zeros);
+
+    arma::mat absL = arma::abs(x.L);
+    x.lower = arma::find(absL <= x.clf_epsilon[0]);
+    double d = 1 / x.clf_epsilon[0];
+
+    // for(int i=0; i < x.lower.size(); ++i) {
+    //   // x.hL(arma::span(x.lower[i]), arma::span(x.lower[i])) = d;
+    //   x.hL(x.lower[i], x.lower[i]) = d;
+    // }
+
+  }
+
+  void dgLP(arguments_rotate& x) {
+
+    double b = 1 / (2*x.clf_epsilon[0]);
+    x.dgL.set_size(arma::size(x.L));
+    x.dgL.zeros();
+    x.dgL.elem(x.lower) = 2*b*x.dL.elem(x.lower);
 
   }
 
@@ -1083,7 +1146,8 @@ public:
     arma::uvec indexes = x.blocks_list[x.i];
     x.Li[x.i] = x.L.cols(indexes);
 
-    x.Li2[x.i] = x.Li[x.i] % x.Li[x.i];
+    // x.Li2[x.i] = x.Li[x.i] % x.Li[x.i];
+    x.Li2[x.i] = x.Li[x.i] % x.Li[x.i] + .00001;
     arma::rowvec c1 = arma::sum(x.Li2[x.i], 0);
     x.mui[x.i] = x.a*(c1.t()-x.b);
     x.expmmui[x.i] = arma::exp(-x.mui[x.i]);
@@ -1157,6 +1221,8 @@ public:
     x.Li[x.i] = x.L.cols(indexes);
     x.Phii[x.i] = x.Phi(indexes, indexes);
 
+    // x.Li2[x.i] = x.Li[x.i] % x.Li[x.i] + .00001;
+    // arma::rowvec c1 = arma::sum(x.Li2[x.i], 0);
     x.Li2[x.i] = x.Li[x.i].t() * x.Li[x.i];
     arma::colvec c1 = arma::diagvec(x.Phii[x.i] * x.Li2[x.i]);
     x.mui[x.i] = x.a*(c1-x.b);
@@ -1250,6 +1316,66 @@ public:
 
     x.dgP.cols(indexes) += arma::reshape(dgP, q, q) * x.block_weights[x.i];
     x.dgP.diag().zeros();
+
+  }
+
+};
+
+/*
+ * Linear CLF
+ */
+
+class rep_clf_l: public rotation_criterion {
+
+public:
+
+  void F(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.Li[x.i] = x.L.cols(indexes);
+
+    double b = 1 / (2*x.clf_epsilon[x.i]);
+    double a = x.clf_epsilon[x.i] - b*x.clf_epsilon[x.i]*x.clf_epsilon[x.i];
+
+    arma::mat absLi = arma::abs(x.Li[x.i]);
+    x.loweri[x.i] = arma::find(absLi <= x.clf_epsilon[x.i]);
+    x.largeri[x.i] = arma::find(absLi > x.clf_epsilon[x.i]);
+    double f1 = arma::accu(a + b*absLi.elem(x.loweri[x.i]) % absLi.elem(x.loweri[x.i]));
+    double f2 = arma::accu(absLi.elem(x.largeri[x.i]));
+
+    x.f += (f1 + f2) * x.block_weights[x.i];
+
+  }
+
+  void gLP(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+
+    double b = 1 / (2*x.clf_epsilon[x.i]);
+    arma::mat gLi(arma::size(x.Li[x.i]));
+    gLi.elem(x.loweri[x.i]) = 2*b*x.Li[x.i].elem(x.loweri[x.i]);
+    gLi.elem(x.largeri[x.i]) = arma::sign(x.Li[x.i].elem(x.largeri[x.i]));
+
+    x.gL.cols(indexes) += gLi * x.block_weights[x.i];
+
+  }
+
+  void hLP(arguments_rotate& x) {
+
+    Rcpp::stop("Standard errors not implement yet for block criteria");
+
+  }
+
+  void dgLP(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    arma::mat dLi = x.dL.cols(indexes);
+
+    double b = 1 / (2*x.clf_epsilon[x.i]);
+    arma::mat dgLi(arma::size(x.Li[x.i]), arma::fill::zeros);
+    dgLi.elem(x.loweri[x.i]) = 2*b*dLi.elem(x.loweri[x.i]);
+
+    x.dgL.cols(indexes) += dgLi * x.block_weights[x.i];
 
   }
 
@@ -1428,13 +1554,17 @@ rotation_criterion* choose_rep_criterion(std::string rotation, std::string proje
       criterion = new rep_simplix_orth();
     }
 
+  } else if(rotation == "clfl") {
+
+    criterion = new rep_clf_l();
+
   } else if(rotation == "none") {
 
     criterion = new none();
 
   } else {
 
-    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix");
+    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
 
   }
 
@@ -1647,11 +1777,15 @@ rotation_criterion* choose_criterion(std::vector<std::string> rotations, std::st
       criterion = new simplix_orth();
     }
 
+  } else if(rotations[0] == "clfl") {
+
+    criterion = new clf_l();
+
   } else if(rotations[0] == "none") {
 
   } else {
 
-    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix");
+    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
 
   }
 

@@ -11,8 +11,6 @@
 
 void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
-  x.n_rotations = x.rotations.size();
-
   // Create a list of column indexes for each block of factors:
 
   if(x.nullable_blocks.isNotNull() || x.nullable_blocks_list.isNotNull()) {
@@ -43,12 +41,14 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     }
 
+    // Number of blocks:
     x.n_blocks = x.blocks_list.size();
 
     // Weights for each block of factors:
 
     if(x.nullable_block_weights.isNull()) {
 
+      // If not specified, set the blocks to 1:
       x.block_weights.set_size(x.n_blocks);
       x.block_weights.ones();
 
@@ -62,6 +62,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     }
 
+    // For mixed criteria, specify the size of the std::vector objects:
     x.qi.resize(x.n_blocks), x.Li.resize(x.n_blocks), x.Li2.resize(x.n_blocks),
     x.Ni.resize(x.n_blocks), x.HLi2.resize(x.n_blocks), x.LoLi2.resize(x.n_blocks),
     x.termi.resize(x.n_blocks), x.IgCL2Ni.resize(x.n_blocks), x.f1i.resize(x.n_blocks),
@@ -74,9 +75,13 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     x.Ii.resize(x.n_blocks), x.dc2dLi.resize(x.n_blocks), x.dmudPi.resize(x.n_blocks),
     x.dc2dPi.resize(x.n_blocks), x.LtLxIi.resize(x.n_blocks), x.expmmui.resize(x.n_blocks),
     x.Phii.resize(x.n_blocks), x.dxtPi.resize(x.n_blocks), x.HL2i.resize(x.n_blocks);
+    x.largeri.resize(x.n_blocks); x.loweri.resize(x.n_blocks);
 
     // Number of factors in each block (x.qi):
     for(int i=0; i < x.n_blocks; ++i) x.qi[i] = x.blocks_list[i].size();
+
+    // Number of specified rotation criteria:
+    x.n_rotations = x.rotations.size();
 
     if(x.n_rotations == 1) {
 
@@ -85,7 +90,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     } else {
 
-      if(x.n_rotations != x.n_blocks) Rcpp::stop("The number of rotation criteria and blocks does not match. \n Provide either one rotation criteria for all the blocks or one for each block");
+      if(x.n_rotations != x.n_blocks) Rcpp::stop("The number of rotation criteria and blocks of factors does not match. \n Provide either one rotation criteria for all the blocks or one for each block");
 
     }
 
@@ -113,7 +118,18 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
       arma::mat X(x.q, x.q, arma::fill::ones);
       arma::mat Q = zeros(X, x.list_oblq_indexes);
+      // Select the indexes for the duplicated oblique entries
       x.oblq_indexes = arma::find(Q == 0);
+      // Select the indexes for the lower diagonal (nonducaplicated) orthogonal entries
+      arma::uvec set_to_zero = arma::trimatu_ind(arma::size(X), 0);
+      Q.elem(set_to_zero).zeros();
+      x.orth_indexes = arma::find(Q == 1);
+      // Select the indexes for the lower diagonal (nonducaplicated) oblique entries
+      Q.elem(set_to_zero).ones();
+      x.loblq_indexes = arma::find(Q == 0);
+
+      // These indexes will be used to set to zero the oblique entries in the
+      // A matrix in poblq projection and to extract the rotation constraints
 
     }
 
@@ -123,14 +139,16 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   std::vector<std::string> all_rotations = {"cf", "oblimin", "geomin", "target",
                                             "xtarget", "varimax", "varimin",
-                                            "equavar", "simplix", "none"};
+                                            "equavar", "simplix", "clfl", "none"};
 
+  // Check for invalid rotations:
   for (auto i: x.rotations) {
     if (std::find(all_rotations.begin(), all_rotations.end(), i) == all_rotations.end()) {
-      Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix");
+      Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
     }
   }
 
+  // TARGET ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "target") != x.rotations.end()) {
 
     if (x.nullable_Target.isNotNull()) {
@@ -141,13 +159,15 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     if (x.nullable_Weight.isNotNull()) {
       x.Weight = Rcpp::as<arma::mat>(x.nullable_Weight);
     } else {
+      // If missing, Weight = 1 - Target (Partially specified target rotation)
       x.Weight = 1 - x.Target;
     }
 
+    // Check the dimensions of the target:
     arma::mat dimcheck(x.p, x.q);
     if(x.n_blocks > 1) {
       // Find the position of the block corresponding to the target criteria and
-      // resize dimcheck according to the number of factors specified in the target:
+      // resize dimcheck according to the number of factors specified in the block:
       int pos = std::find(x.rotations.begin(), x.rotations.end(), "target") - x.rotations.begin();
       dimcheck.set_size(x.p, x.qi[pos]);
     }
@@ -163,6 +183,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   }
 
+  // XTARGET ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "xtarget") != x.rotations.end()) {
 
     if(x.w < 0) Rcpp::stop("w must be nonnegative");
@@ -180,14 +201,17 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     if (x.nullable_Weight.isNotNull()) {
       x.Weight = Rcpp::as<arma::mat>(x.nullable_Weight);
     } else {
+      // If missing, Weight = 1 - Target (Partially specified target rotation)
       x.Weight = 1-x.Target;
     }
     if (x.nullable_PhiWeight.isNotNull()) {
       x.Phi_Weight = Rcpp::as<arma::mat>(x.nullable_PhiWeight);
     } else {
+      // If missing, PhiWeight = 1 - PhiTarget (Partially specified target rotation)
       x.Phi_Weight = 1-x.Phi_Target;
     }
 
+    // Check the dimensions of the Target and PhiTarget
     arma::mat dimcheck1(x.p, x.q);
     arma::mat dimcheck2(x.q, x.q);
     if(x.n_blocks > 1) {
@@ -207,24 +231,43 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     }
 
-    x.Phi_Weight.diag().zeros();
+    x.Phi_Weight.diag().zeros(); // This should have no effect, actually
     x.Weight2 = x.Weight % x.Weight;
     x.Phi_Weight2 = x.Phi_Weight % x.Phi_Weight;
 
   }
 
-  if(std::find(x.rotations.begin(), x.rotations.end(), "geomin") != x.rotations.end()) {
+  // Linear CLF ROTATION
+  if(std::find(x.rotations.begin(), x.rotations.end(), "clfl") != x.rotations.end()) {
 
-    if(x.epsilon.min() < 0) {
+    if(x.clf_epsilon.min() < 0) {
 
-      Rcpp::stop("epsilon must be nonnegative");
+      Rcpp::stop("clf_epsilon must be nonnegative");
 
     }
 
+    // Resize the constant vector so that it has the same length as the number of blocks.
+    // Put each element of the original vector in the position corresponding to the CLF block:
+    x.clf_epsilon = new_k(x.rotations, "clfl", x.clf_epsilon);
+
+  }
+
+  // GEOMIN ROTATION
+  if(std::find(x.rotations.begin(), x.rotations.end(), "geomin") != x.rotations.end()) {
+
+    if(x.epsilon.min() <= 0) {
+
+      Rcpp::stop("epsilon must be positive");
+
+    }
+
+    // Resize the constant vector so that it has the same length as the number of blocks.
+    // Put each element of the original vector in the position corresponding to the geomin block:
     x.epsilon = new_k(x.rotations, "geomin", x.epsilon);
 
   }
 
+  // OBLIMIN ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "oblimin") != x.rotations.end()) {
 
     if(x.gamma.min() < 0) {
@@ -235,6 +278,8 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
     x.N.set_size(x.q, x.q); x.N.ones();
     x.N.diag(0).zeros();
+    // Resize the constant vector so that it has the same length as the number of blocks.
+    // Put each element of the original vector in the position corresponding to the oblimin block:
     x.gamma = new_k(x.rotations, "oblimin", x.gamma);
 
     arma::mat I(x.p, x.p, arma::fill::eye), gamma_C(x.p, x.p, arma::fill::ones);
@@ -250,6 +295,8 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     }
 
   }
+
+  // CF ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "cf") != x.rotations.end()) {
 
     x.N.set_size(x.q, x.q); x.N.ones();
@@ -257,9 +304,13 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     x.M.set_size(x.p, x.p); x.M.ones();
     x.M.diag(0).zeros();
 
+    // Resize the constant vector so that it has the same length as the number of blocks.
+    // Put each element of the original vector in the position corresponding to the CF block:
     x.k = new_k(x.rotations, "cf", x.k);
 
   }
+
+  // VARIMAX ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "varimax") != x.rotations.end()) {
 
     if((x.projection == "oblq") | (x.projection == "poblq")) {
@@ -279,6 +330,8 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     // }
 
   }
+
+  // VARIMIN ROTATION
   if(std::find(x.rotations.begin(), x.rotations.end(), "varimin") != x.rotations.end()) {
 
     arma::vec v(x.p, arma::fill::ones);
@@ -287,6 +340,8 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   }
 
+
+  // SIMPLIX ROTATION
   if(x.rotations[0] == "simplix") {
 
     // For oblique rotation:
@@ -316,12 +371,14 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     x.dgP = arma::zeros(x.q, x.q);
 
   }
-  if(x.rotations[0] == "none") {
 
-    // do nothing
+  // if(x.rotations[0] == "none") {
+  //
+  //   // do nothing
+  //
+  // }
 
-  }
-
+  // Between block criteria (REMOVE)
   if(x.between_blocks == "TL") {
 
     if(x.nullable_between_blocks_list.isNull()) {
@@ -348,7 +405,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   }
 
-  // Check rotation optimization parameters:
+  // Check rotation control parameters:
 
   Rcpp::List rot_control;
 
