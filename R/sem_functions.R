@@ -259,7 +259,8 @@ MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
   upper <- c(rep(Inf, lambda_p), rep(0.995, phi_p), upper_psi)
   lower[indexes_uniquenesses] <- 0.001
   upper[indexes_uniquenesses] <- 0.999
-  # lower[indexes_factorvars] <- 0.005
+  lower[indexes_factorvars] <- 0.001
+  upper[indexes_factorvars] <- Inf
 
   # lower_psi <- rep(-Inf, psi_p) # Lower bounds for correlated residuals
   # upper_psi <- rep(Inf, psi_p) # Upper bounds for correlated residuals
