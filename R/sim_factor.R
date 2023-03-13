@@ -331,7 +331,7 @@ cudeck <- function(R, lambda, Phi, Psi,
   if(efa) {
 
     dS_dL <- gLRhat(lambda, Phi)
-    dS_dU <- guRhat(p)
+    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
     gS <- cbind(dS_dL, dS_dU)
 
   } else {
