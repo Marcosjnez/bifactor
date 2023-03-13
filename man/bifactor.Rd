@@ -5,13 +5,12 @@
 \title{Fit an exploratory bi-factor or generalized bi-factor model.}
 \usage{
 bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-method = "minres", projection = "oblq", nobs = NULL,
-PhiTarget = NULL, PhiWeight = NULL,
-blocks = NULL, blocks_list = NULL, block_weights = NULL,
-oblq_blocks = NULL, init_Target = NULL, maxit = 20L,
-cutoff = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL,
-efa_control = NULL, rot_control = NULL,
-first_efa = NULL, second_efa = NULL, verbose = TRUE)
+method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
+PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL,
+oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
+normalization = "none", w = 1, random_starts = 1L, cores = 1L,
+init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL,
+second_efa = NULL, verbose = TRUE)
 }
 \arguments{
 \item{R}{Correlation matrix.}
@@ -45,6 +44,8 @@ first_efa = NULL, second_efa = NULL, verbose = TRUE)
 \item{maxit}{Maximum number of iterations for the GSLiD algorithm. Defaults to 20L.}
 
 \item{cutoff}{Cut-off used to update the target matrix upon each iteration. Defaults to 0.}
+
+\item{normalization}{Available normalizations: "kaiser". Defaults to "none".}
 
 \item{w}{\eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.}
 
@@ -114,7 +115,7 @@ s <- cor(scores)
 # Fit an Generalized exploratory bi-factor model with GSLiD:
 GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
 method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
-random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE)
+random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization)
 }
 
 }
