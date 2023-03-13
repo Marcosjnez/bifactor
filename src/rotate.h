@@ -80,8 +80,10 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
 
   // Perform multiple rotations with random starting values:
 
+#ifdef _OPENMP
   omp_set_num_threads(cores);
 #pragma omp parallel for
+#endif
   for (int i=0; i < random_starts; ++i) {
 
     arguments_rotate args = x;

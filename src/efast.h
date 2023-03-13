@@ -25,8 +25,10 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
 
   // Perform multiple rotations with random starting values:
 
+#ifdef _OPENMP
   omp_set_num_threads(cores);
 #pragma omp parallel for
+#endif
   for (int i=0; i < random_starts; ++i) {
 
     arguments_rotate args = x;
@@ -96,6 +98,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  Rcpp::Nullable<Rcpp::List> nullable_rot_control) {
 
   Rcpp::Timer timer;
+  Rcpp::List result;
 
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
@@ -107,32 +110,53 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   // Check EFA inputs:
 
-  check_efa(R, nfactors, nullable_init, init,
-            nullable_efa_control,
-            efa_maxit, lmm, efa_factr);
+  // check_efa(R, nfactors, nullable_init, init,
+  //           nullable_efa_control,
+  //           efa_maxit, lmm, efa_factr);
+  //
+  // Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
 
-  Rcpp::List result;
-  Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
+  // Structure of efa arguments:
 
-  bool heywood = efa_result["Heywood"];
+  arguments_efa xefa;
+  xefa.method = method;
+  xefa.R = R;
+  xefa.p = R.n_cols;
+  xefa.q = nfactors;
+  xefa.upper = arma::diagvec(xefa.R);
+  if (nullable_init.isNotNull()) {
+    xefa.psi = Rcpp::as<arma::vec>(nullable_init);
+  } else {
+    xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+  }
 
-  if(heywood) {
+  check_efa(xefa, nullable_efa_control);
+
+  // Select one manifold:
+  efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
+  // Select the factor extraction method:
+  efa_criterion* efa_criterion = choose_efa_criterion(xefa.method);
+
+  Rcpp::List efa_result = efa(xefa, efa_manifold, efa_criterion,
+                              xefa.random_starts, xefa.cores);
+
+  xefa.heywood = efa_result["heywood"];
+
+  if(xefa.heywood) {
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
 
-    efa_result = efa(init, R, nfactors, "minrank", efa_maxit, efa_factr, lmm);
+    efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
 
   }
 
-  int p = R.n_cols;
-  int q = nfactors;
-  double df_null = p*(p-1)/2;
-  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
+  double df_null = xefa.p*(xefa.p-1)/2;
+  double df = xefa.p*(xefa.p+1)/2 - (xefa.p*xefa.q + xefa.p - xefa.q*(xefa.q-1)/2);
 
   double f_null;
   if(method == "minres" || method == "pa") {
-    f_null = arma::accu(R % R) - R.n_cols;
+    f_null = arma::accu(R % R) - xefa.p;
   } else if(method == "ml") {
     f_null = -arma::log_det_sympd(R);
   } else if(method == "minrank") {
@@ -169,6 +193,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["blocks_list"] = nullable_blocks_list;
   modelInfo["block_weights"] = nullable_block_weights;
   modelInfo["oblq_blocks"] = nullable_oblq_blocks;
+  modelInfo["lower"] = xefa.lower;
+  modelInfo["upper"] = xefa.upper;
 
   arma::mat loadings = efa_result["loadings"];
 
@@ -208,8 +234,14 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   arma::vec weigths;
   if (normalization == "kaiser") {
 
-    weigths = sqrt(sum(x.lambda % x.lambda, 1));
+    weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
+
+  } else if(normalization == "none") {
+
+  } else {
+
+    Rcpp::stop("Unkown normalization");
 
   }
 
@@ -249,7 +281,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   // L.each_row() /= v;
 
   for (int j=0; j < x.q; ++j) {
-    if (sum(L.col(j)) < 0) {
+    if (arma::sum(L.col(j)) < 0) {
       L.col(j)   *= -1;
       Phi.col(j) *= -1;
       Phi.row(j) *= -1;
@@ -299,6 +331,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  Rcpp::Nullable<Rcpp::List> nullable_rot_control) {
 
   Rcpp::Timer timer;
+  Rcpp::List result;
 
   // Create defaults:
 
@@ -308,21 +341,42 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   // Check EFA inputs:
 
-  check_efa(R, nfactors, nullable_init, init,
-            nullable_efa_control,
-            efa_maxit, lmm, efa_factr);
+  // check_efa(R, nfactors, nullable_init, init,
+  //           nullable_efa_control,
+  //           efa_maxit, lmm, efa_factr);
+  //
+  // Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
 
-  Rcpp::List result;
-  Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
+  arguments_efa xefa;
+  xefa.method = method;
+  xefa.R = R;
+  xefa.p = R.n_cols;
+  xefa.q = nfactors;
+  xefa.upper = arma::diagvec(xefa.R);
+  if (nullable_init.isNotNull()) {
+    xefa.psi = Rcpp::as<arma::vec>(nullable_init);
+  } else {
+    xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+  }
 
-  bool heywood = efa_result["Heywood"];
+  check_efa(xefa, nullable_efa_control);
 
-  if(heywood) {
+  // Select one manifold:
+  efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
+  // Select the factor extraction method:
+  efa_criterion* efa_criterion = choose_efa_criterion(xefa.method);
+
+  Rcpp::List efa_result = efa(xefa, efa_manifold, efa_criterion,
+                              xefa.random_starts, xefa.cores);
+
+  xefa.heywood = efa_result["heywood"];
+
+  if(xefa.heywood) {
 
     Rcpp::Rcout << "\n" << std::endl;
     Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
 
-    efa_result = efa(init, R, nfactors, "minrank", efa_maxit, efa_factr, lmm);
+    efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
 
   }
 
@@ -356,14 +410,12 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   // Model Info:
 
-  int p = R.n_cols;
-  int q = nfactors;
-  double df_null = p*(p-1)/2;
-  double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
+  double df_null = x.p*(x.p-1)/2;
+  double df = x.p*(x.p+1)/2 - (x.p*x.q + x.p - x.q*(x.q-1)/2);
 
   double f_null;
   if(method == "minres" || method == "pa") {
-    f_null = arma::accu(R % R) - R.n_cols;
+    f_null = arma::accu(R % R) - x.p;
   } else if(method == "ml") {
     f_null = -arma::log_det_sympd(R);
   } else if(method == "minrank") {
@@ -399,6 +451,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["blocks_list"] = x.nullable_blocks_list;
   modelInfo["block_weights"] = x.nullable_block_weights;
   modelInfo["oblq_blocks"] = x.nullable_oblq_blocks;
+  modelInfo["lower"] = xefa.lower;
+  modelInfo["upper"] = xefa.upper;
 
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
@@ -410,8 +464,14 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   arma::vec weigths;
   if (normalization == "kaiser") {
 
-    weigths = sqrt(sum(x.lambda % x.lambda, 1));
+    weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
+
+  } else if(normalization == "none") {
+
+  } else {
+
+    Rcpp::stop("Unkown normalization");
 
   }
 
@@ -451,7 +511,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   // L.each_row() /= v;
 
   for (int j=0; j < x.q; ++j) {
-    if (sum(L.col(j)) < 0) {
+    if (arma::sum(L.col(j)) < 0) {
       L.col(j)   *= -1;
       Phi.col(j) *= -1;
       Phi.row(j) *= -1;

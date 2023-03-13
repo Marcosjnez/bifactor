@@ -4,19 +4,21 @@ class efa_optim {
 
 public:
 
-  virtual NTR optim(arguments_efa x, efa_manifold *manifold,
-                    efa_criterion *criterion) = 0;
+  virtual efa_NTR optim(arguments_efa x,
+                        efa_manifold *manifold,
+                        efa_criterion *criterion) = 0;
 
 };
 
 // Gradient descent:
 
-class RGD:public efa_optim {
+class efa_RGD:public efa_optim {
 
 public:
 
-  NTR optim(arguments_efa x, efa_manifold *manifold,
-            efa_criterion *criterion) {
+  efa_NTR optim(arguments_efa x,
+                efa_manifold *manifold,
+                efa_criterion *criterion) {
 
     return gd(x, manifold, criterion);
 
@@ -24,14 +26,31 @@ public:
 
 };
 
-// Newton Trust-Region:
+// L-BFGS algorithm:
 
-class RNTR:public efa_optim {
+class efa_LBFGS:public efa_optim {
 
 public:
 
-  NTR optim(arguments_efa x, efa_manifold *manifold,
-            efa_criterion *criterion) {
+  efa_NTR optim(arguments_efa x,
+                efa_manifold *manifold,
+                efa_criterion *criterion) {
+
+    return lbfgs(x, manifold, criterion);
+
+  }
+
+};
+
+// Newton Trust-Region:
+
+class efa_RNTR:public efa_optim {
+
+public:
+
+  efa_NTR optim(arguments_efa x,
+                efa_manifold *manifold,
+                efa_criterion *criterion) {
 
     return ntr(x, manifold, criterion);
 
@@ -39,16 +58,18 @@ public:
 
 };
 
-efa_optim* choose_optim(std::string optim) {
+efa_optim* choose_efa_optim(std::string optim) {
 
   efa_optim* algorithm;
   if(optim == "gradient") {
-    algorithm = new RGD();
+    algorithm = new efa_RGD();
+  } else if(optim == "L-BFGS") {
+    algorithm = new efa_LBFGS();
   } else if(optim == "newtonTR") {
-    algorithm = new RNTR();
+    algorithm = new efa_RNTR();
   } else {
 
-    Rcpp::stop("Available optimization rutines for factor extraction: \n gradient, newtonTR");
+    Rcpp::stop("Available optimization rutines for factor extraction: \n gradient, L-BFGS, newtonTR");
 
   }
 

@@ -13,6 +13,8 @@ public:
 
   virtual void param(arguments_efa& x) = 0;
 
+  virtual void dLPU(arguments_efa& x) = 0;
+
   virtual void grad(arguments_efa& x) = 0;
 
   virtual void dgrad(arguments_efa& x) = 0;
@@ -37,6 +39,10 @@ public:
 
   }
 
+  void dLPU(arguments_efa& x) {
+
+  }
+
   void grad(arguments_efa& x) {
 
   }
@@ -50,6 +56,8 @@ public:
   }
 
   void proj(arguments_efa& x) {
+
+    x.rg = x.g;
 
   }
 
@@ -73,6 +81,10 @@ public:
 
   }
 
+  void dLPU(arguments_efa& x) {
+
+  }
+
   void grad(arguments_efa& x) {
 
   }
@@ -87,6 +99,8 @@ public:
 
   void proj(arguments_efa& x) {
 
+    x.rg = x.g;
+
   }
 
   void hess(arguments_efa& x) {
@@ -95,26 +109,19 @@ public:
 
   void retr(arguments_efa& x) {
 
-    arma::vec upper = arma::diagvec(x.R);
-    for(int i=0; i < x.p; ++i) {
-      x.psi[i].clamp(0.005, upper[i]);
-    }
-
   }
 
 };
 
 // Choose the manifold:
 
-efa_manifold* choose_manifold(std::string projection) {
+efa_manifold* choose_efa_manifold(std::string mani) {
 
-  rotation_manifold* manifold;
-  if(projection == "identity") {
+  efa_manifold* manifold;
+  if(mani == "identity") {
     manifold = new identity();
-  } else if(projection == "box") {
+  } else if(mani == "box") {
     manifold = new box();
-  } else if(projection == "none") {
-
   } else {
 
     Rcpp::stop("Available manifolds for factor extraction: \n identity, box");

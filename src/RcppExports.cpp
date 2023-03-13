@@ -182,29 +182,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// bifad
-Rcpp::List bifad(arma::mat R, int n_generals, int n_groups, std::string projection, Rcpp::Nullable<arma::uvec> oblq_blocks, double cutoff, std::string normalization, Rcpp::Nullable<int> nobs, Rcpp::Nullable<Rcpp::List> first_efa, Rcpp::Nullable<Rcpp::List> second_efa, Rcpp::Nullable<Rcpp::List> rot_control, int random_starts, int cores);
-RcppExport SEXP _bifactor_bifad(SEXP RSEXP, SEXP n_generalsSEXP, SEXP n_groupsSEXP, SEXP projectionSEXP, SEXP oblq_blocksSEXP, SEXP cutoffSEXP, SEXP normalizationSEXP, SEXP nobsSEXP, SEXP first_efaSEXP, SEXP second_efaSEXP, SEXP rot_controlSEXP, SEXP random_startsSEXP, SEXP coresSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< int >::type n_generals(n_generalsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_groups(n_groupsSEXP);
-    Rcpp::traits::input_parameter< std::string >::type projection(projectionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::uvec> >::type oblq_blocks(oblq_blocksSEXP);
-    Rcpp::traits::input_parameter< double >::type cutoff(cutoffSEXP);
-    Rcpp::traits::input_parameter< std::string >::type normalization(normalizationSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type nobs(nobsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type first_efa(first_efaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type second_efa(second_efaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type rot_control(rot_controlSEXP);
-    Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
-    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(bifad(R, n_generals, n_groups, projection, oblq_blocks, cutoff, normalization, nobs, first_efa, second_efa, rot_control, random_starts, cores));
-    return rcpp_result_gen;
-END_RCPP
-}
 // bifactor
 Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups, std::string bifactor_method, std::string method, std::string projection, Rcpp::Nullable<int> nobs, Rcpp::Nullable<arma::mat> PhiTarget, Rcpp::Nullable<arma::mat> PhiWeight, Rcpp::Nullable<arma::uvec> blocks, Rcpp::Nullable<std::vector<arma::uvec>> blocks_list, Rcpp::Nullable<arma::vec> block_weights, Rcpp::Nullable<arma::uvec> oblq_blocks, Rcpp::Nullable<arma::mat> init_Target, int maxit, double cutoff, std::string normalization, double w, int random_starts, int cores, Rcpp::Nullable<arma::vec> init, Rcpp::Nullable<Rcpp::List> efa_control, Rcpp::Nullable<Rcpp::List> rot_control, Rcpp::Nullable<Rcpp::List> first_efa, Rcpp::Nullable<Rcpp::List> second_efa, bool verbose);
 RcppExport SEXP _bifactor_bifactor(SEXP RSEXP, SEXP n_generalsSEXP, SEXP n_groupsSEXP, SEXP bifactor_methodSEXP, SEXP methodSEXP, SEXP projectionSEXP, SEXP nobsSEXP, SEXP PhiTargetSEXP, SEXP PhiWeightSEXP, SEXP blocksSEXP, SEXP blocks_listSEXP, SEXP block_weightsSEXP, SEXP oblq_blocksSEXP, SEXP init_TargetSEXP, SEXP maxitSEXP, SEXP cutoffSEXP, SEXP normalizationSEXP, SEXP wSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP initSEXP, SEXP efa_controlSEXP, SEXP rot_controlSEXP, SEXP first_efaSEXP, SEXP second_efaSEXP, SEXP verboseSEXP) {
@@ -348,7 +325,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_rotate", (DL_FUNC) &_bifactor_rotate, 23},
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 28},
     {"_bifactor_get_target", (DL_FUNC) &_bifactor_get_target, 3},
-    {"_bifactor_bifad", (DL_FUNC) &_bifactor_bifad, 13},
     {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 26},
     {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
     {"_bifactor_se", (DL_FUNC) &_bifactor_se, 5},

@@ -411,8 +411,10 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
   arma::uvec indexes = consecutive(0, p-1);
   int half = p/2;
 
+#ifdef _OPENMP
   omp_set_num_threads(cores);
 #pragma omp parallel for
+#endif
   for(int i=0; i < N; ++i) {
 
     arma::uvec selected = arma::randperm(p, half);

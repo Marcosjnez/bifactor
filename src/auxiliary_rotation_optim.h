@@ -51,28 +51,19 @@ arma::mat gram(arma::mat X) {
 
 }
 
-double root_quad(double a, double b, double c) {
-
-  // Solution to quadratic interpolation:
-
-  double res = 0.5 * (- b + sqrt(b * b - 4 * a * c) ) / a;
-
-  return res;
-
-}
-
 // Line-search satisfying the armijo condition:
 
-arguments_rotate armijo(arguments_rotate x, rotation_manifold *manifold,
-                        rotation_criterion *criterion,
-                        double ss_fac, double ss_min, double max_iter,
-                        double c1, double c2, double eps) {
+void armijo(arguments_rotate& x, rotation_manifold *manifold,
+            rotation_criterion *criterion,
+            double ss_fac, double ss_min, double max_iter,
+            double c1, double c2, double eps) {
 
   x.ss = std::max(ss_min, x.ss * ss_fac);
   // x.ss = x.ss*2;
   double f0 = x.f;
   int iteration = 0;
   arma::mat X = x.T;
+  x.inprod = arma::accu(x.dir % x.rg);
 
   do{
 
@@ -83,8 +74,8 @@ arguments_rotate armijo(arguments_rotate x, rotation_manifold *manifold,
     // Parameterization
     manifold->param(x); // update x.L, x.Phi and x.Inv_T
     criterion->F(x);
-    double df = f0 - x.f;
-    if (df > c1 * x.ss * x.inprod || x.ss < 1e-09) // armijo condition
+    double df = x.f - f0;
+    if (df < c1 * x.ss * x.inprod || x.ss < 1e-09) // armijo condition
       break;
     x.ss *= c2;
 
@@ -96,8 +87,6 @@ arguments_rotate armijo(arguments_rotate x, rotation_manifold *manifold,
     convergence = false;
 
   }
-
-  return x;
 
 }
 
@@ -350,15 +339,14 @@ NTR gd(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *crit
 
     // x.ss *= 2;
 
-    x = armijo(x, manifold, criterion, ss_fac, ss_min,
-               10, c1, c2, x.eps);
+    armijo(x, manifold, criterion, ss_fac, ss_min,
+           10, c1, c2, x.eps);
 
     // update gradient
     criterion->gLP(x);
     manifold->grad(x);
     // Riemannian gradient
     manifold->proj(x);
-
     x.dir = -x.rg;
     x.inprod = arma::accu(-x.dir % x.rg);
     x.ng = sqrt(x.inprod);
@@ -409,8 +397,8 @@ NTR bfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *cr
     arma::mat old_T = x.T;
     arma::mat old_rg = x.rg;
 
-    x = armijo(x, manifold, criterion, ss_fac, ss_min,
-               30, c1, c2, x.eps);
+    armijo(x, manifold, criterion, ss_fac, ss_min,
+           30, c1, c2, x.eps);
 
     // update gradient
     criterion->gLP(x);
@@ -489,8 +477,8 @@ NTR lbfgs(arguments_rotate x, rotation_manifold *manifold, rotation_criterion *c
     arma::mat old_rg = x.rg;
 
     // Update x.ss, x.T, x.L, x.Phi and x.Inv_T and x.f
-    x = armijo(x, manifold, criterion, ss_fac, ss_min,
-               30, c1, c2, x.eps);
+    armijo(x, manifold, criterion, ss_fac, ss_min,
+           30, c1, c2, x.eps);
 
     // update gradient
     criterion->gLP(x);

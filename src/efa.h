@@ -14,6 +14,33 @@
 // #include "EFA_fit.h"
 // #include "checks.h"
 
+void extract_efa(arguments_efa& x, efa_manifold *manifold, efa_criterion *criterion) {
+
+  efa_NTR x1;
+  // Select the optimization routine:
+  efa_optim* algorithm = choose_efa_optim(x.optim);
+
+  arguments_efa args = x;
+  // args.psi = x.init;
+
+  x1 = algorithm->optim(args, manifold, criterion);
+
+  x.lambda = std::get<0>(x1);
+  x.uniquenesses = std::get<1>(x1);
+  x.Rhat = std::get<2>(x1);
+  x.f = std::get<3>(x1);
+  x.iterations = std::get<4>(x1);
+  x.convergence = std::get<5>(x1);
+
+  // if(!x.convergence) {
+  //
+  //   Rcpp::Rcout << "\n" << std::endl;
+  //   Rcpp::warning("Failed rotation convergence");
+  //
+  // }
+
+}
+
 Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
                int efa_max_iter, double efa_factr, int lmm) {
 
@@ -173,5 +200,74 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
   return result;
 }
 
+Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion,
+               int random_starts, int cores) {
 
+  Rcpp::List result;
 
+  if(x.method == "minres" | x.method == "ml") {
+
+    extract_efa(x, manifold, criterion);
+
+  } else if(x.method == "pa") {
+
+    Rcpp::List pa_result = principal_axis(x.psi, x.R, x.q, x.eps, x.maxit);
+
+    arma::mat w_temp = pa_result["loadings"];
+    arma::vec uniquenesses_temp = pa_result["uniquenesses"];
+    arma::mat Rhat_temp = pa_result["Rhat"];
+
+    result["f"] = pa_result["f"];
+    result["convergence"] = pa_result["convergence"];
+    x.loadings = w_temp;
+    x.uniquenesses = uniquenesses_temp;
+    x.Rhat = Rhat_temp;
+    x.iterations = pa_result["iterations"];
+
+  } else if (x.method == "minrank") {
+
+    arma::vec communalities = sdp_cpp(x.R);
+    x.psi = 1 - communalities;
+    arma::mat reduced_R = x.R - diagmat(x.psi);
+
+    arma::vec eigval;
+    arma::mat eigvec;
+    arma::eig_sym(eigval, eigvec, reduced_R);
+
+    arma::vec eigval2 = reverse(eigval);
+    arma::mat eigvec2 = reverse(eigvec, 1);
+
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, x.q-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, x.q-1));
+    for(int i=0; i < x.q; ++i) {
+      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+    }
+    arma::mat D = arma::diagmat(sqrt(eigenvalues));
+
+    x.lambda = A * D;
+    x.Rhat = x.lambda * x.lambda.t();
+    x.uniquenesses = 1 - arma::diagvec(x.Rhat);
+    x.Rhat.diag() = x.R.diag();
+    x.iterations = 0;
+
+  } else {
+
+    Rcpp::stop("Unkown factor extraction method");
+
+  }
+
+  x.heywood = arma::any( x.uniquenesses <= 0 );
+
+  result["loadings"] = x.lambda;
+  result["uniquenesses"] = x.uniquenesses;
+  result["Rhat"] = x.Rhat;
+  result["residuals"] = x.R - x.Rhat;
+  result["heywood"] = x.heywood;
+  result["f"] = x.f;
+  result["method"] = x.method;
+  result["iterations"] = x.iterations;
+  result["convergence"] = x.convergence;
+
+  return result;
+
+}

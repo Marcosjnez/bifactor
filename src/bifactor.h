@@ -606,10 +606,13 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
   Target.insert_cols(0, add);
   SEXP Target_ = Rcpp::wrap(Target);
   Rcpp::Nullable<arma::mat> nullable_Target = Target_;
+  // arma::mat Weight(Target.n_rows, Target.n_cols, arma::fill::eye);
+  // SEXP Weight_ = Rcpp::wrap(Weight);
+  // Rcpp::Nullable<arma::mat> nullable_Weight = Weight_;
 
   Rcpp::List rot = rotate(unrotated, "target", projection,
                           {0}, {0}, {0}, 0, 0, 0, 0,
-                          nullable_Target, R_NilValue,
+                          nullable_Target, R_NilValue, //nullable_Weight,
                           R_NilValue, R_NilValue, R_NilValue,
                           R_NilValue, R_NilValue,
                           nullable_oblq_blocks,

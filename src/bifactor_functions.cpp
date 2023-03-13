@@ -10,12 +10,21 @@
 // #define ARMA_MAT_PREALLOC 4
 
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(openmp)]]
 
-#include <omp.h>
+#ifdef _OPENMP
+  #include <omp.h>
+#else
+  #define omp_get_num_threads() 1
+  #define omp_set_num_threads() 1
+#endif
+
 #include <RcppArmadillo.h>
 #include <Rcpp/Benchmark/Timer.h>
 #include "structures.h"
+#include "efa_manifolds.h"
+#include "efa_criteria.h"
+#include "auxiliary_efa_optim.h"
+#include "efa_optim.h"
 #include "auxiliary_manifolds.h"
 #include "rotation_manifolds.h"
 #include "auxiliary_criteria.h"
@@ -105,17 +114,16 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method = "minres",
 // [[Rcpp::export]]
 arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double cutoff = 0);
 
-// [[Rcpp::export]]
-Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
-                 std::string projection = "orth",
-                 Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                 double cutoff = 0,
-                 std::string normalization = "none",
-                 Rcpp::Nullable<int> nobs = R_NilValue,
-                 Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
-                 Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
-                 Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
-                 int random_starts = 1, int cores = 1);
+// Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
+//                  std::string projection = "orth",
+//                  Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
+//                  double cutoff = 0,
+//                  std::string normalization = "none",
+//                  Rcpp::Nullable<int> nobs = R_NilValue,
+//                  Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
+//                  Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
+//                  Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
+//                  int random_starts = 1, int cores = 1);
 
 // [[Rcpp::export]]
 Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,

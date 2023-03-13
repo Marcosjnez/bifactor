@@ -96,13 +96,29 @@ typedef struct arguments_efast{
 
 typedef struct arguments_efa{
 
-  arma::mat R;
-  arma::vec psi, sqrt_psi;
+  arma::vec init;
+  arma::mat R, loadings, Rhat;
+  arma::vec psi, sqrt_psi, psi2, uniquenesses;
   int q, p;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
-  arma::vec u, eigval, sc;
+  arma::vec u, eigval, g;
+  std::string method = "minres";
+  double efa_factr = 1e07;
+  std::string optim = "gradient";
+  arma::vec lower = {0.005}, upper = {0.995};
+  arma::vec rg, dir, dpsi, dH;
+  int iteration, iterations = 0L, maxit = 1000L;
+  bool convergence = false, heywood = false;
+  std::string manifold = "identity";
+  int random_starts = 1L, cores = 1L;
+  double ss = 1, inprod = 1, ng = 1, eps = 1e-05,
+    c1 = 10e-04, c2 = 0.5, rho = 0.5;
+  int M = 5L, armijo_maxit = 10L;
+  std::string search = "back";
 
 } args_efa;
+
+typedef std::tuple<arma::mat, arma::vec, arma::mat, double, int, bool> efa_NTR;
 
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NTR;
