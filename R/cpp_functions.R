@@ -398,13 +398,12 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @usage
 #'
 #' bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-#' method = "minres", projection = "oblq", nobs = NULL,
-#' PhiTarget = NULL, PhiWeight = NULL,
-#' blocks = NULL, blocks_list = NULL, block_weights = NULL,
-#' oblq_blocks = NULL, init_Target = NULL, maxit = 20L,
-#' cutoff = 0, normalization = "none, w = 1, random_starts = 1L, cores = 1L,
-#' init = NULL, efa_control = NULL, rot_control = NULL,
-#' first_efa = NULL, second_efa = NULL, verbose = TRUE)
+#' method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
+#' PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL,
+#' oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
+#' normalization = "none", w = 1, random_starts = 1L, cores = 1L,
+#' init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL,
+#' second_efa = NULL, verbose = TRUE)
 #'
 #' @description
 #'
@@ -423,12 +422,12 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @param maxit Maximum number of iterations for the GSLiD algorithm. Defaults to 20L.
 #' @param cutoff Cut-off used to update the target matrix upon each iteration. Defaults to 0.
 #' @param normalization Available normalizations: "kaiser". Defaults to "none".
+#' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
+#' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
 #' @param blocks_list List containing the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
 #' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
-#' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
-#' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
 #' @param cores Number of cores for parallel execution of multiple rotations. Defaults to 1L.
 #' @param init Initial uniquenesses values for exploratory factor analysis estimation. Defaults to NULL.
 #' @param efa_control List of control parameters for efa fitting. Defaults to NULL.
