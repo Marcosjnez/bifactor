@@ -303,7 +303,7 @@ gURhat <- function(p) {
 }
 cudeck <- function(R, lambda, Phi, Psi,
                    fit = "rmsr", misfit = "close",
-                   method = "minres") {
+                   method = "minres", efa = FALSE) {
 
   # Method of Cudeck and Browne (1992):
 
@@ -328,10 +328,20 @@ cudeck <- function(R, lambda, Phi, Psi,
 
   # Create the matrix of derivatives wrt the correlation model:
 
-  dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
-  dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
-  dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
-  gS <- cbind(dS_dL, dS_dP, dS_dU)
+  if(efa) {
+
+    dS_dL <- gLRhat(lambda, Phi)
+    dS_dU <- guRhat(p)
+    gS <- cbind(dS_dL, dS_dU)
+
+  } else {
+
+    dS_dL <- gLRhat(lambda, Phi)[, which(lambda != 0)]
+    dS_dP <- gPRhat(lambda, Phi)[, which(Phi[lower.tri(Phi)] != 0)]
+    dS_dU <- gURhat(p)[, which(Psi[lower.tri(Psi, diag = TRUE)] != 0)]
+    gS <- cbind(dS_dL, dS_dP, dS_dU)
+
+  }
 
   if(method == "minres" || method == "ols") {
 
@@ -372,11 +382,10 @@ cudeck <- function(R, lambda, Phi, Psi,
   y <- diag_u %*% A2 %*% diag_u
   y <- y[lower.tri(y, diag = TRUE)]
   # y <- A2[lower.tri(A2, diag = TRUE)]
+  # v <- MASS::ginv(t(B) %*% B) %*% t(B) %*% y
   # e <- y - B %*% v # equation 7 from Cudeck and Browne (1992)
   Q <- qr.Q(qr(B))
   e <- y - Q %*% t(Q) %*% y
-
-  # Get the error matrix:
 
   # Adjust the error to satisfy the desired amount of misfit:
 
@@ -385,6 +394,7 @@ cudeck <- function(R, lambda, Phi, Psi,
     E <- matrix(0, p, p)
     E[lower.tri(E, diag = TRUE)] <- e
     E <- t(E) + E
+    # diag(E) <- diag(E)/2
     diag(E) <- 0
 
     if(fit == "rmsr") {
@@ -417,6 +427,13 @@ cudeck <- function(R, lambda, Phi, Psi,
     diag(E) <- 0
 
     if(fit == "rmsr") {
+      if(misfit == "close") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.05*r2
+      } else if(misfit == "acceptable") {
+        r2 <- mean(1-uniquenesses)
+        misfit <- 0.10*r2
+      }
       delta <- "A given RMSR is compatible with multiple maximum likelihood discrepancy values and is not provided"
     } else if(fit == "cfi") {
       null_f <- -log(det(R))
@@ -450,6 +467,10 @@ cudeck <- function(R, lambda, Phi, Psi,
   }
 
   R_error <- R + E
+
+  if(method == "ml" & fit == "rmsr") {
+    delta <- log(det(R)) - log(det(R_error)) + sum(R_error*solve(R)) - nrow(R)
+  }
 
   # check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
@@ -485,7 +506,7 @@ yuan <- function(R, lambda, Phi, Psi,
   # lambda_error <- lambda - 1e-04
   # Rerror <- lambda_error %*% Phi %*% t(lambda_error) + Psi; diag(Rerror) <- 1
   Rerror <- R
-  Rerror[lower.tri(R)] <- Rerror[lower.tri(R)] + runif(0.5*p*(p-1), -1e-06, 1e-06)
+  Rerror[lower.tri(R)] <- Rerror[lower.tri(R)] + stats::runif(0.5*p*(p-1), -1e-06, 1e-06)
   Rerror[upper.tri(R)] <- t(Rerror)[upper.tri(R)]
 
   # Create the FA model
@@ -562,6 +583,10 @@ yuan <- function(R, lambda, Phi, Psi,
 
     R_error <- Phat + E
 
+    if(method == "ml" & fit == "rmsr") {
+      delta <- log(det(R)) - log(det(R_error)) + sum(R_error*solve(R)) - nrow(R)
+    }
+
   # check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
   if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of misfit may be too big.")
@@ -569,20 +594,23 @@ yuan <- function(R, lambda, Phi, Psi,
   return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
 
 }
+
 #' @title
-#' Simulate a bi-factor or generalized bifactor population structure.
+#' Simulate a bi-factor structure with either one or multiple general factors.
 #' @description
 #'
-#' Simulate a bi-factor or generalized bifactor population structure with cross-loading, pure items and correlated factors.
+#' Simulate bifactor structures with multiple general factors, cross-loadings, pure items, correlated factors, and more.
 #'
 #' @usage
 #'
-#' sim_factor(n_generals, groups_per_general, items_per_group,
+#' sim_factor(n_generals = 0, groups_per_general = 5,
+#' items_per_group = 6,
 #' loadings_g = "medium", loadings_s = "medium",
 #' crossloadings = 0, pure = FALSE,
 #' generals_rho = 0, groups_rho = 0,
-#' method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan",
-#' lambda = NULL, Phi = NULL)
+#' method = "minres", fit = "rmsr", misfit = 0,
+#' error_method = "cudeck", efa = FALSE,
+#' lambda = NULL, Phi = NULL, Psi = NULL)
 #'
 #' @param n_generals Number of general factors.
 #' @param groups_per_general Number of group factors per general factor.
@@ -596,10 +624,11 @@ yuan <- function(R, lambda, Phi, Psi,
 #' @param method Method used to generate population error: "minres" or "ml".
 #' @param fit Fit index to control the population error.
 #' @param misfit Misfit value to generate population error.
-#' @param error_method Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".
+#' @param error_method Method used to control population error: c("yuan", "cudeck"). Defaults to "cudeck".
+#' @param efa Reproduce the error with EFA or CFA. Defaults to FALSE (CFA).
 #' @param lambda Custom loading matrix. If Phi is NULL, then all the factors will be correlated at the value given in groups_rho.
 #' @param Phi Custom Phi matrix. If lambda is NULL, then Phi should be conformable to the loading matrix specified with the above arguments.
-#' @param Phi Custom Psi matrix. If lambda is NULL, then Psi should be conformable to the loading matrix specified with the above arguments.
+#' @param Psi Custom Psi matrix.
 #'
 #' @details \code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
 #' correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
@@ -628,8 +657,8 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
                        loadings_g = "medium", loadings_s = "medium",
                        crossloadings = 0, pure = FALSE,
                        generals_rho = 0, groups_rho = 0,
-                       method = "minres",
-                       fit = "rmsr", misfit = 0, error_method = "yuan",
+                       method = "minres", fit = "rmsr", misfit = 0,
+                       error_method = "cudeck", efa = FALSE,
                        lambda = NULL, Phi = NULL, Psi = NULL) {
 
   ng <- n_generals # Save the number of general factors for recursive iteration
@@ -709,12 +738,15 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
       start_row <- 1 + i*items_per_group
       end_row <- start_row + items_per_group - 1
-      lambda[start_row:end_row , 1+i+n_generals] <- sequen
+      # Loadings are created by equal increments:
+      # lambda[start_row:end_row , 1+i+n_generals] <- sequen
+      # Loadings are simulated from a uniform distribution:
+      lambda[start_row:end_row , 1+i+n_generals] <- stats::runif(items_per_group, loadings_s.[1], loadings_s.[2])
       # lambda[start_row:end_row , 1+i+n_generals] <- mean(loadings_s.)
 
     }
 
-    # Simulate item loadings on the general factors froma uniform distribution:
+    # Simulate item loadings on the general factors from a uniform distribution:
 
     for(i in 0:(n_generals-1)) {
 
@@ -731,6 +763,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
 
     if(pure) {
 
+      # row_indexes <- seq(from = 1, to = n_items, by = items_per_group)
       value <- sequen[floor(items_per_group/2 + 1)]
       row_indexes <- unlist(apply(lambda, 2, FUN = function(x) which(x == value)))
       column_indexes <- apply(lambda[row_indexes, ], 1, FUN = function(x) which(x > 0))
@@ -855,7 +888,7 @@ sim_factor <- function(n_generals = 0, groups_per_general = 5,
     if(error_method == "cudeck") {
 
       cudeck_ <- cudeck(R = R, lambda = lambda, Phi = Phi, Psi = Psi,
-                        fit = fit, misfit = misfit,
+                        fit = fit, misfit = misfit, efa = efa,
                         method = method)
       R_error <- cudeck_$R_error
       delta <- cudeck_$delta
