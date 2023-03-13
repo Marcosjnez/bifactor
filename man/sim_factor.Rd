@@ -2,14 +2,16 @@
 % Please edit documentation in R/sim_factor.R
 \name{sim_factor}
 \alias{sim_factor}
-\title{Simulate a bi-factor or generalized bifactor population structure.}
+\title{Simulate a bi-factor structure with either one or multiple general factors.}
 \usage{
-sim_factor(n_generals, groups_per_general, items_per_group,
+sim_factor(n_generals = 0, groups_per_general = 5,
+items_per_group = 6,
 loadings_g = "medium", loadings_s = "medium",
 crossloadings = 0, pure = FALSE,
 generals_rho = 0, groups_rho = 0,
-method = "minres", fit = "rmsr", misfit = 0, error_method = "yuan",
-lambda = NULL, Phi = NULL)
+method = "minres", fit = "rmsr", misfit = 0,
+error_method = "cudeck", efa = FALSE,
+lambda = NULL, Phi = NULL, Psi = NULL)
 }
 \arguments{
 \item{n_generals}{Number of general factors.}
@@ -36,34 +38,37 @@ lambda = NULL, Phi = NULL)
 
 \item{misfit}{Misfit value to generate population error.}
 
-\item{error_method}{Method used to control population error: c("yuan", "cudeck"). Defaults to "yuan".}
+\item{error_method}{Method used to control population error: c("yuan", "cudeck"). Defaults to "cudeck".}
+
+\item{efa}{Reproduce the error with EFA or CFA. Defaults to FALSE (CFA).}
 
 \item{lambda}{Custom loading matrix. If Phi is NULL, then all the factors will be correlated at the value given in groups_rho.}
 
 \item{Phi}{Custom Phi matrix. If lambda is NULL, then Phi should be conformable to the loading matrix specified with the above arguments.}
+
+\item{Psi}{Custom Psi matrix.}
 }
 \value{
 List with the following objects:
 \item{lambda}{Population loading matrix.}
 \item{Phi}{Population factor correlation matrix.}
-\item{Psi}{Population matrix of correlated errors and uniquenesses in the diagonal.}
-\item{uniquenesses}{Vector of population uniquenesses.}
-\item{R}{Population correlation matrix according to the model.}
+\item{R}{Population correlation matrix.}
 \item{R_error}{Population correlation matrix with error.}
+\item{uniquenesses}{Vector of population uniquenesses.}
 \item{delta}{Minimum of the objective function that correspond to the misfit value.}
 }
 \description{
-Simulate a bi-factor or generalized bifactor population structure with cross-loading, pure items and correlated factors.
+Simulate bifactor structures with multiple general factors, cross-loadings, pure items, correlated factors, and more.
 }
 \details{
-\code{sim_factor} generates bi-factor and multiple bi-factor patterns with cross-loadings, pure items and
+\code{sim_factor} generates bi-factor and generalized bifactor patterns with cross-loadings, pure items and
 correlations among the general and group factors. When \code{crossloading} is different than 0, one cross-loading
 is introduced for an item pertaining to each group factor. When \code{pure} is TRUE, one item loading of each group
 factor is removed so that the item loads entirely on the general factor. To maintain the item communalities
 constant upon these modifications, the item loading on the other factors may shrunk (if adding cross-loadings)
 or increase (if setting pure items).
 
-Loading magnitudes range between 0.3-0.5 ("low"), 0.4-0.6 ("medium") and 0.5-0.7 ("high").
+Loading magnitudes may range between 0.3-0.5 ("low"), 0.4-0.6 ("medium") and 0.5-0.7 ("high").
 }
 \references{
 Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Exploratory bi-factor analysis with multiple general factors. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
