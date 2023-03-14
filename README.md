@@ -6,7 +6,7 @@ Provides general purpose tools to fit exploratory factor, bi-factor, and bi-fact
 
 Using the `devtools` package:
     
-    devtools::install_github("marcosjnez/bifactor")
+    devtools::install_github("marcosjnez/bifactor", force = TRUE)
 
 # Installation in macOS
 
