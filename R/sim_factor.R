@@ -367,7 +367,7 @@ cudeck <- function(R, lambda, Phi, Psi,
     # B <- t(vecs[which(upper.tri(R, diag = TRUE)), ]) %*% D
     # B <- t(B)
     B <- -apply(gS, 2, FUN = function(x) t((R_inv %*% matrix(x, p, p) %*% R_inv)[which(upper.tri(R, diag = TRUE))]) %*% D)
-    # The error must be orthogonal to the derivative of each parameter derivative wrt the correlation model
+    # The error must be orthogonal to the derivative of each parameter wrt correlation model
 
   }
 
@@ -472,11 +472,15 @@ cudeck <- function(R, lambda, Phi, Psi,
     delta <- log(det(R)) - log(det(R_error)) + sum(R_error*solve(R)) - nrow(R)
   }
 
-  # check for positiveness:
+  # Check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
-  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of misfit may be too big.")
+  positive <- TRUE
+  if(minimum_eigval <= 0) {
+    warning("The matrix was not positive-definite. The amount of misfit may be too big.")
+    positive <- FALSE
+  }
 
-  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
+  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit, positive = positive))
 
 }
 yuan <- function(R, lambda, Phi, Psi,
@@ -518,7 +522,7 @@ yuan <- function(R, lambda, Phi, Psi,
 
   # Get the error matrix:
   E <- Rerror - Phat
-  # Hopefully, the error is orthogonal to the derivative of each parameter derivative wrt the discrepancy function
+  # Hopefully, the error is orthogonal to the derivative of each parameter wrt correlation model
 
   # Adjust the error to satisfy the desired amount of misfit:
 
@@ -581,17 +585,21 @@ yuan <- function(R, lambda, Phi, Psi,
     }
   }
 
-    R_error <- Phat + E
+  R_error <- Phat + E
 
-    if(method == "ml" & fit == "rmsr") {
-      delta <- log(det(R)) - log(det(R_error)) + sum(R_error*solve(R)) - nrow(R)
-    }
+  if(method == "ml" & fit == "rmsr") {
+    delta <- log(det(R)) - log(det(R_error)) + sum(R_error*solve(R)) - nrow(R)
+  }
 
-  # check for positiveness:
+  # Check for positiveness:
   minimum_eigval <- min(eigen(R_error, symmetric = TRUE, only.values = TRUE)$values)
-  if(minimum_eigval <= 0) warning("The matrix was not positive-definite. The amount of misfit may be too big.")
+  positive <- TRUE
+  if(minimum_eigval <= 0) {
+    warning("The matrix was not positive-definite. The amount of misfit may be too big.")
+    positive <- FALSE
+  }
 
-  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit))
+  return(list(R_error = R_error, fit = fit, delta = delta, misfit = misfit, positive = positive))
 
 }
 
