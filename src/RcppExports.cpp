@@ -313,6 +313,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// poly
+Rcpp::List poly(const arma::mat& X, const int cores);
+RcppExport SEXP _bifactor_poly(SEXP XSEXP, SEXP coresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(poly(X, cores));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_random_orth", (DL_FUNC) &_bifactor_random_orth, 2},
@@ -331,6 +343,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 9},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 22},
+    {"_bifactor_poly", (DL_FUNC) &_bifactor_poly, 2},
     {NULL, NULL, 0}
 };
 

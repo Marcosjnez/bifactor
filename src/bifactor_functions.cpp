@@ -44,6 +44,7 @@
 #include "se.h"
 #include "dimensionality.h"
 #include "check_deriv.h"
+#include "polychorics.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -186,3 +187,6 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        arma::vec gamma = 0, arma::vec epsilon = Rcpp::NumericVector::create(0.01),
                        arma::vec k = 0, double w = 1, double alpha = 1,
                        double a = 30, double b = 0.36);
+
+// [[Rcpp::export]]
+Rcpp::List poly(const arma::mat& X, const int cores = 1L);
