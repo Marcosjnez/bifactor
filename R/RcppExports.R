@@ -65,3 +65,7 @@ check_deriv <- function(L, Phi, dL, dP, rotation = as.character( c("oblimin")), 
     .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, gamma, epsilon, k, w, alpha, a, b)
 }
 
+poly <- function(X, cores = 1L) {
+    .Call(`_bifactor_poly`, X, cores)
+}
+

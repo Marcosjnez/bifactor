@@ -671,3 +671,26 @@ cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) 
 check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", gamma = 0, epsilon = 0.01, k = 0L, w = 1, alpha = 1, a = 30, b = 0.36) {
   .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, gamma, epsilon, k, w, alpha, a, b)
 }
+
+#' @title
+#' Fast polychoric correlations.
+#' @usage
+#'
+#' poly(X, cores = 1L)
+#'
+#' @description
+#'
+#' Compute huge polychoric correlation matrices very fast.
+#'
+#' @param X Matrix of categorical scores. The lowest score must start at 0.
+#' @param cores Number of parallel cores to compute the polychoric correlations.
+#'
+#' @details
+#'
+#' None yet.
+#'
+#' @return A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
+#' @export
+poly <- function(X, cores = 1L) {
+  .Call(`_bifactor_poly`, X, cores)
+}
