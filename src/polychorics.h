@@ -90,7 +90,6 @@ const std::array<std::array<double, 3>, 10> X = {{
   {{ 0.0,               0.0,              -0.2277858511416451}},
   {{ 0.0,               0.0,              -0.07652652113349733}}
   }};
-
 const std::array<std::array<double, 3>, 10> W = {{
   {{ 0.1713244923791705,  0.04717533638651177, 0.01761400713915212}},
   {{ 0.3607615730481384,  0.1069393259953183,  0.04060142980038694}},
@@ -182,10 +181,72 @@ double genz(const double sh, const double sk, const double mvphi_h, const double
 
 }
 
+const int NX = 5L;
+const std::vector<double> X2 = {.04691008, .23076534, .5, .76923466, .95308992};
+const std::vector<double> W2 = {.018854042, .038088059, .0452707394, .038088059, .018854042};
+
+double drezner(double h1, double hk, const double mvphi_h, const double mvphi_k, double r) {
+
+  double bv = 0;
+  double r1, r2, rr, rr2, r3, h3, h5, h6, h7, aa, ab, h11;
+  double cor_max = 0.7;
+  double bv_fac1 = 0.13298076;
+  double bv_fac2 = 0.053051647;
+
+  // computation
+  double h2 = hk;
+  double h12 = (h1*h1+h2*h2)/2;
+  double r_abs = std::abs(r);
+  if (r_abs > cor_max){
+    r2 = 1.0 - r*r;
+    r3 = std::sqrt(r2);
+    if (r<0){
+      h2 = -h2;
+    }
+    h3 = h1*h2;
+    h7 = std::exp( -h3 / 2.0);
+    if ( r_abs < 1){
+      h6 = std::abs(h1-h2);
+      h5 = h6*h6 / 2.0;
+      h6 = h6 / r3;
+      aa = 0.5 - h3 / 8.0;
+      ab = 3.0 - 2.0 * aa * h5;
+      bv = bv_fac1*h6*ab*(1-MVPHI(h6))-std::exp(-h5/r2)*(ab + aa*r2)*bv_fac2;
+      for (int ii=0; ii<NX; ii++){
+        r1 = r3*X2[ii];
+        rr = r1*r1;
+        r2 = std::sqrt( 1.0 - rr);
+        bv += - W2[ii]*std::exp(- h5/rr)*(std::exp(-h3/(1.0+r2))/r2/h7 - 1.0 - aa*rr);
+      }
+    }
+    h11 = std::min(h1, h2);
+    bv = bv*r3*h7 + MVPHI(h11);
+    // if(h1 < h2) {
+    //   bv = bv*r3*h7 + mvphi_h;
+    // } else {
+    //   bv = bv*r3*h7 + mvphi_k;
+    // }
+    if (r < 0){
+      bv = mvphi_h - bv;
+    }
+
+  } else {
+    h3=h1*h2;
+    for (int ii=0; ii<NX; ii++){
+      r1 = r*X2[ii];
+      rr2 = 1.0 - r1*r1;
+      bv += W2[ii] * std::exp(( r1*h3 - h12)/rr2)/ std::sqrt(rr2);
+    }
+    bv = mvphi_h*mvphi_k + r*bv;
+  }
+  //--- OUTPUT
+  return bv;
+}
+
 const double neg_inf = -std::numeric_limits<double>::infinity();
 const double pos_inf = std::numeric_limits<double>::infinity();
 
-double bivariatenormal_pdf(double p, double x, double y) {
+double dbinorm(double p, double x, double y) {
 
   /*
    * Function for the bivariate normal density
@@ -202,8 +263,8 @@ double bivariatenormal_pdf(double p, double x, double y) {
   return pd;
 }
 
-double PBINORM(const double lower0, const double lower1, const double upper0, const double upper1, const double rho,
-                const double mvphi0, const double mvphi1, const double mvphi2, const double mvphi3) {
+double pbinorm(const double lower0, const double lower1, const double upper0, const double upper1, const double rho,
+               const double mvphi0, const double mvphi1, const double mvphi2, const double mvphi3) {
 
   bool ll1 = lower0 == pos_inf;
   bool ll2 = lower1 == pos_inf;
@@ -242,7 +303,7 @@ double PBINORM(const double lower0, const double lower1, const double upper0, co
     if(u2) {
       return genz(-upper0, lower1, 1.00-mvphi2, mvphi1, -rho);
     }
-    return genz(-upper0, -upper1, 1.00-mvphi2, 1-mvphi3, rho) -
+    return genz(-upper0, -upper1, 1.00-mvphi2, 1.00-mvphi3, rho) -
       genz(-upper0, -lower1, 1.00-mvphi2, 1.00-mvphi1, rho);
   }
 
@@ -282,12 +343,12 @@ double PBINORM(const double lower0, const double lower1, const double upper0, co
 }
 
 double fpoly(double p, const std::vector<double>& a, const std::vector<double>& b, const std::vector<std::vector<int>>& n,
-              const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2) {
+             const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2) {
 
   double f = 0.0;
   for (size_t i = 0; i < s1; ++i) {
     for (size_t j = 0; j < s2; ++j) {
-      f -= n[i][j] * std::log(PBINORM(a[i], b[j], a[i + 1], b[j + 1], p,
+      f -= n[i][j] * std::log(pbinorm(a[i], b[j], a[i + 1], b[j + 1], p,
                                       mvphi1[i], mvphi2[j], mvphi1[i+1], mvphi2[j+1]));
     }
   }
@@ -300,8 +361,8 @@ const double GOLDEN_RATIO = (3.0 - std::sqrt(5.0)) / 2.0;
 constexpr double ZEPS = 1.0e-10;
 
 std::vector<double> optimize(const std::vector<double>& tau1, const std::vector<double>& tau2, const std::vector<std::vector<int>>& n,
-                              const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2,
-                              const int nobs, const double cor) {
+                             const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2,
+                             const int nobs, const double cor) {
 
   // tau1 = Vector of thresholds for the first variable (It must start at -Infinite and end at Infinite)
   // tau2 = Vector of thresholds for the second variable (It must start at -Infinite and end at Infinite)
@@ -320,18 +381,18 @@ std::vector<double> optimize(const std::vector<double>& tau1, const std::vector<
   for(int i=0; i < 20L; ++i) {
     // double f = 0.0;  // Objective value (no needed)
     double g = 0.0;     // Gradient
-    double score = 0.0; // Approximated Hessian
+    double score = 0.0; // Approximated Hessian (asymptotic formula)
 
     for (size_t i = 0; i < s1; ++i) {
       for (size_t j = 0; j < s2; ++j) {
         // CDF of the bivariate normal:
-        double prop = PBINORM(tau1[i], tau2[j], tau1[i + 1], tau2[j + 1], p,
-                               mvphi1[i], mvphi2[j], mvphi1[i+1], mvphi2[j+1]);
+        double prop = pbinorm(tau1[i], tau2[j], tau1[i + 1], tau2[j + 1], p,
+                              mvphi1[i], mvphi2[j], mvphi1[i+1], mvphi2[j+1]);
         // PDF of the Bivariate normal:
-        double gij = bivariatenormal_pdf(p, tau1[i+1], tau2[j+1]) -
-          bivariatenormal_pdf(p, tau1[i], tau2[j+1]) -
-          bivariatenormal_pdf(p, tau1[i+1], tau2[j]) +
-          bivariatenormal_pdf(p, tau1[i], tau2[j]);
+        double gij = dbinorm(p, tau1[i+1], tau2[j+1]) -
+          dbinorm(p, tau1[i], tau2[j+1]) -
+          dbinorm(p, tau1[i+1], tau2[j]) +
+          dbinorm(p, tau1[i], tau2[j]);
         // f -= n[i][j] * std::log(prop) / nobs; // No need to compute the objective value
         if(prop < 1e-09) prop = 1e-09; // Avoid division by zero
         g -= n[i][j] / prop * gij / nobs; // Update Gradient
@@ -340,7 +401,7 @@ std::vector<double> optimize(const std::vector<double>& tau1, const std::vector<
     }
     double dir = g/score; // Approximated Newton's Descent direction
     p -= dir;             // Update parameter (no need for step-size)
-    if(std::abs(g*g) < 1e-09) break; // Tolerance criteria
+    if((g*g) < 1e-09) break; // Tolerance criteria
     ++ iteration;
   }
 
@@ -372,6 +433,8 @@ Rcpp::List poly(const arma::mat& X, const int cores) {
   std::vector<size_t> s(q);
   std::vector<std::vector<double>> mvphi(q);
 
+  omp_set_num_threads(cores);
+#pragma omp parallel for
   for(size_t i = 0; i < q; ++i) {
     cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
     maxs[i] = *max_element(cols[i].begin(), cols[i].end());
@@ -389,15 +452,17 @@ Rcpp::List poly(const arma::mat& X, const int cores) {
     s[i] = taus[i].size() -1L;
   }
 
-  timer.step("precomputations");
+  timer.step("Thresholds");
 
   arma::mat polys(q, q, arma::fill::eye);
   arma::mat iters(q, q, arma::fill::zeros);
 
-#ifdef _OPENMP
+  // #ifdef _OPENMP
+  //   omp_set_num_threads(cores);
+  // #pragma omp parallel for
+  // #endif
   omp_set_num_threads(cores);
 #pragma omp parallel for
-#endif
   for(size_t i=0; i < (q-1L); ++i) {
     for(int j=(i+1L); j < q; ++j) {
       std::vector<std::vector<int>> tab = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
@@ -418,5 +483,4 @@ Rcpp::List poly(const arma::mat& X, const int cores) {
   return result;
 
 }
-
 
