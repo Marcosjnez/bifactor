@@ -562,7 +562,7 @@ se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
 #' Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).
 #' @usage
 #'
-#' parallel(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE,
+#' parallel(X, n_boot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
 #' PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
@@ -571,6 +571,7 @@ se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
 #'
 #' @param X Raw data matrix.
 #' @param n_boot Number of bootstrap samples.
+#' @param type Type of correlations: "pearson" or "poly".
 #' @param quant Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
 #' @param mean Logical. Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to TRUE.
 #' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
@@ -590,8 +591,8 @@ se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
 #' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85. https://doi.org/10.1007/BF02289447
 #'
 #' @export
-parallel <- function(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores)
+parallel <- function(X, n_boot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_parallel`, X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 #' @title

@@ -53,8 +53,8 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
     .Call(`_bifactor_se`, fit, nobs, X, type, eta)
 }
 
-parallel <- function(X, n_boot = 100L, quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-    .Call(`_bifactor_parallel`, X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores)
+parallel <- function(X, n_boot = 100L, type = "pearson", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_parallel`, X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {

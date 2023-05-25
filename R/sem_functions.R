@@ -318,7 +318,7 @@ MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
   }
 
   # Degrees of freedom:
-  df <- sum(p*(p+1)/2) - (lambda_p + phi_p + psi_p)
+  df <- sum(p*(p+1)/2) - length(parameter_vector)
 
   results <- list(f = cfa$objective, convergence = cfa$convergence,
                   iterations = cfa$iterations, df = df,
