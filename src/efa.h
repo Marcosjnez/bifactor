@@ -57,11 +57,11 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
-    arma::mat reduced_R = R - diagmat(psi);
+    arma::mat reduced_R = R - arma::diagmat(psi);
 
     arma::vec eigval;
     arma::mat eigvec;
-    eig_sym(eigval, eigvec, reduced_R);
+    arma::eig_sym(eigval, eigvec, reduced_R);
 
     arma::vec eigval2 = reverse(eigval);
     arma::mat eigvec2 = reverse(eigvec, 1);
@@ -71,12 +71,12 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     for(int i=0; i < nfactors; ++i) {
       if(eigenvalues(i) < 0) eigenvalues(i) = 0;
     }
-    arma::mat D = diagmat(sqrt(eigenvalues));
+    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
 
     w = A * D;
     arma::mat ww = w * w.t();
 
-    uniquenesses = 1 - diagvec(ww);
+    uniquenesses = 1 - arma::diagvec(ww);
 
     Rhat = ww;
     Rhat.diag() = R.diag();
@@ -95,28 +95,28 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
 
-    arma::vec sqrt_psi = sqrt(psi);
-    arma::mat sc = diagmat(1/sqrt_psi);
+    arma::vec sqrt_psi = arma::sqrt(psi);
+    arma::mat sc = arma::diagmat(1/sqrt_psi);
     arma::mat Sstar = sc * R * sc;
 
     arma::vec eigval;
     arma::mat eigvec;
-    eig_sym(eigval, eigvec, Sstar);
+    arma::eig_sym(eigval, eigvec, Sstar);
 
-    arma::vec eigval2 = reverse(eigval);
-    arma::mat eigvec2 = reverse(eigvec, 1);
+    arma::vec eigval2 = arma::reverse(eigval);
+    arma::mat eigvec2 = arma::reverse(eigvec, 1);
 
     arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
     arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1)) - 1;
     for(int i=0; i < nfactors; ++i) {
       if(eigenvalues[i] < 0) eigenvalues[i] = 0;
     }
-    arma::mat D = diagmat(sqrt(eigenvalues));
+    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
 
     w = A * D;
-    w = diagmat(sqrt_psi) * w;
+    w = arma::diagmat(sqrt_psi) * w;
     arma::mat ww = w * w.t();
-    uniquenesses = 1 - diagvec(ww);
+    uniquenesses = 1 - arma::diagvec(ww);
 
     Rhat = ww;
     Rhat.diag() = R.diag();
@@ -126,7 +126,10 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
     if(convergence_result == 0) convergence = true;
 
-    result["f"] = optim_result["value"];
+    int p = R.n_cols;
+    double value = optim_result["value"];
+    double f = arma::log_det_sympd(Rhat) - arma::log_det_sympd(R) + arma::trace(R * arma::inv_sympd(Rhat)) - p;
+    result["f"] = f;
     result["convergence"] = convergence;
 
   } else if (method == "pa") {
@@ -151,21 +154,21 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
     psi = 1 - communalities;
 
-    arma::mat reduced_R = R - diagmat(psi);
+    arma::mat reduced_R = R - arma::diagmat(psi);
 
     arma::vec eigval;
     arma::mat eigvec;
     arma::eig_sym(eigval, eigvec, reduced_R);
 
-    arma::vec eigval2 = reverse(eigval);
-    arma::mat eigvec2 = reverse(eigvec, 1);
+    arma::vec eigval2 = arma::reverse(eigval);
+    arma::mat eigvec2 = arma::reverse(eigvec, 1);
 
     arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
     arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
     for(int i=0; i < nfactors; ++i) {
       if(eigenvalues(i) < 0) eigenvalues(i) = 0;
     }
-    arma::mat D = arma::diagmat(sqrt(eigenvalues));
+    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
 
     w = A * D;
     arma::mat ww = w * w.t();

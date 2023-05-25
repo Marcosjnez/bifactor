@@ -8,7 +8,7 @@
 #include <limits>
 #include <unordered_map>
 
-std::vector<int> count(const std::vector<int>& X, const int n, const int max_X){
+std::vector<int> count(const std::vector<int>& X, const int n, const int max_X) {
 
   // Allocate memory space for table
   std::vector<int> frequency(max_X + 1);
@@ -25,7 +25,7 @@ std::vector<int> count(const std::vector<int>& X, const int n, const int max_X){
 }
 
 std::vector<std::vector<int>> joint_frequency_table(const std::vector<int>& X, const int n, const int max_X,
-                                                    const std::vector<int>& Y, const int max_Y){
+                                                    const std::vector<int>& Y, const int max_Y) {
 
   // Allocate memory space for table
   std::vector<std::vector<int>> joint_frequency(max_X + 1L, std::vector<int>(max_Y + 1L, 0));
@@ -67,6 +67,12 @@ double erf_inverse (double a) {
   }
   r = a * p;
   return r;
+}
+
+double Dnorm(double x) {
+
+  return std::exp(-0.5*x*x) / M_2_SQRTPI;
+
 }
 
 double Qnorm(double p) {
@@ -342,6 +348,30 @@ double pbinorm(const double lower0, const double lower1, const double upper0, co
     genz(lower0, lower1, mvphi0, mvphi1, rho);
 }
 
+double ddbinorm(const double p, const double x, const double y) {
+
+  /*
+   * Function for the derivative of the bivariate normal density
+   */
+
+  if(!std::isfinite(x) | !std::isfinite(y)) {
+    return 0;
+  }
+
+  const double z1 = x*x + y*y - 2*p*x*y;
+  const double p2 = p*p;
+  const double C = 1-p2;
+  const double z2 = std::exp(-0.5*z1/C);
+  const double dz1 = -2*x*y;
+  const double dp2 = 2*p;
+  const double dz2 = -z2 * 0.5*(dz1*C + 2*p*z1)/(C*C);
+  const double denom = sqrt(C);
+  const double ddenom = 1/(2*denom);
+  const double dpd = (1/(2*M_PI)) * (dz2*denom + 2*ddenom*p*z2)/C;
+
+  return dpd;
+}
+
 double fpoly(double p, const std::vector<double>& a, const std::vector<double>& b, const std::vector<std::vector<int>>& n,
              const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2) {
 
@@ -359,6 +389,66 @@ double fpoly(double p, const std::vector<double>& a, const std::vector<double>& 
 
 const double GOLDEN_RATIO = (3.0 - std::sqrt(5.0)) / 2.0;
 constexpr double ZEPS = 1.0e-10;
+
+std::vector<double> optimize2(const std::vector<double>& tau1, const std::vector<double>& tau2, const std::vector<std::vector<int>>& n,
+                              const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2,
+                              const int nobs, const double cor) {
+
+  // tau1 = Vector of thresholds for the first variable (It must start at -Infinite and end at Infinite)
+  // tau2 = Vector of thresholds for the second variable (It must start at -Infinite and end at Infinite)
+  // n =  Contingency table for the variables
+  // s1 = Length of tau1 - 1L
+  // s2 = Length of tau2 - 1L
+  // mvphi1 = pnorm of tau1
+  // mvphi1 = pnorm of tau2
+  // nobs =  Sample size
+  // cor = Initial value for the correlation
+
+  double asin_p = std::asin(cor);
+  double p = cor; // Parameters to be estimated
+  double cos_asin_p = std::cos(asin_p);
+  double iteration = 1;
+
+  // Start the iterative algorithm
+  for(int i=0; i < 20L; ++i) {
+    // double f = 0.0;  // Objective value (no needed)
+    double g = 0.0;     // Gradient
+    double h = 0.0; // Approximated Hessian (asymptotic formula)
+
+    for (size_t i = 0; i < s1; ++i) {
+      for (size_t j = 0; j < s2; ++j) {
+        // CDF of the bivariate normal:
+        double prop = pbinorm(tau1[i], tau2[j], tau1[i + 1], tau2[j + 1], p,
+                              mvphi1[i], mvphi2[j], mvphi1[i+1], mvphi2[j+1]);
+        // PDF of the Bivariate normal:
+        double gij = dbinorm(p, tau1[i+1], tau2[j+1]) -
+          dbinorm(p, tau1[i], tau2[j+1]) -
+          dbinorm(p, tau1[i+1], tau2[j]) +
+          dbinorm(p, tau1[i], tau2[j]);
+        // Derivative of the PDF of the Bivariate normal:
+        double hij = ddbinorm(p, tau1[i+1], tau2[j+1]) -
+          ddbinorm(p, tau1[i], tau2[j+1]) -
+          ddbinorm(p, tau1[i+1], tau2[j]) +
+          ddbinorm(p, tau1[i], tau2[j]);
+        // f -= n[i][j] * std::log(prop) / nobs; // No need to compute the objective value
+        if(prop < 1e-09) prop = 1e-09; // Avoid division by zero
+        double gij_cos = gij*cos_asin_p;
+        g -= n[i][j] / prop * gij_cos / nobs; // Update Gradient
+        double term = hij*cos_asin_p*cos_asin_p - gij*p;
+        h += n[i][j]*(gij_cos*gij_cos - prop*term)/(prop*prop) / nobs; // Update Hessian
+      }
+    }
+    double dir = g/h; // Approximated Newton's Descent direction
+    asin_p -= dir;             // Update parameter (no need for step-size)
+    p = std::sin(asin_p);
+    if((g*g) < 1e-09) break; // Tolerance criteria
+    ++ iteration;
+    cos_asin_p = std::cos(asin_p);
+  }
+
+  return {p, iteration};
+
+}
 
 std::vector<double> optimize(const std::vector<double>& tau1, const std::vector<double>& tau2, const std::vector<std::vector<int>>& n,
                              const size_t s1, const size_t s2, const std::vector<double>& mvphi1, const std::vector<double>& mvphi2,
@@ -401,6 +491,9 @@ std::vector<double> optimize(const std::vector<double>& tau1, const std::vector<
     }
     double dir = g/score; // Approximated Newton's Descent direction
     p -= dir;             // Update parameter (no need for step-size)
+    if(p > 1 || p < -1) {
+      return optimize2(tau1, tau2, n, s1, s2, mvphi1, mvphi2, nobs, cor);
+    }
     if((g*g) < 1e-09) break; // Tolerance criteria
     ++ iteration;
   }
@@ -423,6 +516,7 @@ Rcpp::List poly(const arma::mat& X, const int cores) {
 
   Rcpp::Timer timer;
 
+  Rcpp::List result;
   const int n = X.n_rows;
   const int q = X.n_cols;
 
@@ -453,31 +547,280 @@ Rcpp::List poly(const arma::mat& X, const int cores) {
   }
 
   timer.step("Thresholds");
-
+// return result;
   arma::mat polys(q, q, arma::fill::eye);
   arma::mat iters(q, q, arma::fill::zeros);
 
-  // #ifdef _OPENMP
-  //   omp_set_num_threads(cores);
-  // #pragma omp parallel for
-  // #endif
-  omp_set_num_threads(cores);
-#pragma omp parallel for
+  int K = 0.5*q*(q-1);
+  std::vector<std::vector<std::vector<int>>> tabs(K);
+  int k = 0;
+
+  #ifdef _OPENMP
+    omp_set_num_threads(cores);
+  #pragma omp parallel for
+  #endif
   for(size_t i=0; i < (q-1L); ++i) {
     for(int j=(i+1L); j < q; ++j) {
-      std::vector<std::vector<int>> tab = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
-      std::vector<double> rho = optimize(taus[i], taus[j], tab, s[i], s[j], mvphi[i], mvphi[j], n, cor(i, j));
+      tabs[k] = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
+      std::vector<double> rho = optimize(taus[i], taus[j], tabs[k], s[i], s[j], mvphi[i], mvphi[j], n, cor(i, j));
       polys(i, j) = polys(j, i) = rho[0];
       iters(i, j) = iters(j, i) = rho[1];
+      ++k;
     }
   }
 
   timer.step("polychorics");
 
-  Rcpp::List result;
   result["polychorics"] = polys;
   result["thresholds"] = taus;
+  result["contingency_tables"] = tabs;
   result["iters"] = iters;
+  result["elapsed"] = timer;
+
+  return result;
+
+}
+
+Rcpp::List poly_derivatives(double rho, std::vector<double> tau1, std::vector<double> tau2,
+                            std::vector<double> mvphi1, std::vector<double> mvphi2) {
+
+  int s = tau1.size()-1L;
+  int r = tau2.size()-1L;
+  arma::mat ppi(s, r);
+  arma::mat dppidp(s, r);
+  double denominator = std::sqrt(1-rho*rho);
+  for (size_t i = 0; i < s; ++i) {
+    for (size_t j = 0; j < r; ++j) {
+      // CDF of the bivariate normal:
+      ppi(i, j) = pbinorm(tau1[i], tau2[j], tau1[i + 1], tau2[j + 1], rho,
+          mvphi1[i], mvphi2[j], mvphi1[i+1], mvphi2[j+1]);
+      // PDF of the Bivariate normal:
+      dppidp(i, j) = dbinorm(rho, tau1[i+1], tau2[j+1]) -
+        dbinorm(rho, tau1[i], tau2[j+1]) -
+        dbinorm(rho, tau1[i+1], tau2[j]) +
+        dbinorm(rho, tau1[i], tau2[j]);
+    }
+  }
+
+  arma::mat dppidtau1(s*r, s-1, arma::fill::zeros);
+  for(int k=0; k < (s-1); ++k) {
+    for(int j=0; j < r; ++j) {
+      double numerator1 = tau2[j+1]-rho*tau1[k+1];
+      double numerator2 = tau2[j]-rho*tau1[k+1];
+      dppidtau1(j*s+k, k) = Dnorm(tau1[k+1])*(MVPHI(numerator1/denominator) -
+        MVPHI(numerator2/denominator));
+      dppidtau1(j*s+k+1, k) = -dppidtau1(j*s+k, k);
+    }
+  }
+  arma::mat dppidtau2(r*s, r-1, arma::fill::zeros);
+  for(int m=0; m < (r-1); ++m) {
+    for(int i=0; i < s; ++i) {
+      double numerator1 = tau1[i+1]-rho*tau2[m+1];
+      double numerator2 = tau1[i]-rho*tau2[m+1];
+      dppidtau2(m*s+i, m) = Dnorm(tau2[m+1])*(MVPHI(numerator1/denominator) -
+        MVPHI(numerator2/denominator));
+      dppidtau2(m*s+i+s, m) = -dppidtau2(m*s+i, m);
+    }
+  }
+
+  Rcpp::List result;
+  result["ppi"] = ppi;
+  result["dppidp"] = dppidp;
+  result["dppidtau1"] = dppidtau1;
+  result["dppidtau2"] = dppidtau2;
+
+  return result;
+}
+
+Rcpp::List COV(arma::mat X, double rho, std::vector<double> tau1, std::vector<double> tau2,
+               std::vector<double> mvphi1, std::vector<double> mvphi2,
+               arma::mat ppi, arma::mat dppidp, arma::mat dppidtau1, arma::mat dppidtau2) {
+
+  tau1.erase(tau1.begin());  // remove the first element
+  tau1.erase(tau1.end() - 1);  // remove the last element
+  tau2.erase(tau2.begin());  // remove the first element
+  tau2.erase(tau2.end() - 1);  // remove the last element
+
+  mvphi1.erase(mvphi1.begin());  // remove the first element
+  mvphi1.erase(mvphi1.end() - 1);  // remove the last element
+  mvphi2.erase(mvphi2.begin());  // remove the first element
+  mvphi2.erase(mvphi2.end() - 1);  // remove the last element
+
+  int s = tau1.size() + 1L;
+  arma::mat Ag(s, s-1L, arma::fill::zeros);
+  arma::vec dnorm_tau1(s-1L);
+  for(int i=0; i < (s-1L); ++i) dnorm_tau1(i) = Dnorm(tau1[i]);
+  Ag.diag() = dnorm_tau1;
+  Ag.diag(-1) = -dnorm_tau1;
+  arma::mat Dg = arma::diagmat(1/arma::sum(ppi, 1));
+  arma::mat Bg = (arma::inv(Ag.t() * Dg * Ag) * Ag.t() * Dg).t();
+
+  int r = tau2.size() + 1L;
+  arma::mat Ah(r, r-1L, arma::fill::zeros);
+  arma::vec dnorm_tau2(r-1L);
+  for(int i=0; i < (r-1L); ++i) dnorm_tau2(i) = Dnorm(tau2[i]);
+  Ah.diag() = dnorm_tau2;
+  Ah.diag(-1) = -dnorm_tau2;
+  arma::mat Dh = arma::diagmat(1/arma::sum(ppi, 0));
+  arma::mat Bh = (arma::inv(Ah.t() * Dh * Ah) * Ah.t() * Dh).t();
+
+  double D = arma::accu(dppidp % dppidp / ppi);
+  arma::mat alpha = (1/D) * (1/ppi) % dppidp;
+
+  // Set alpha cells to zero?
+
+  arma::vec Betag(s-1L);
+  for(int i=0; i < (s-1L); ++i) {
+    Betag[i] = 1/D * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau1.col(i));
+  }
+  arma::vec Betah(r-1L);
+  for(int i=0; i < (r-1L); ++i) {
+    Betah[i] = 1/D * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau2.col(i));
+  }
+  arma::rowvec ones_r(r, arma::fill::ones);
+  arma::vec ones_s(s, arma::fill::ones);
+  // Rcpp::List result;
+  // result["ppi"] = ppi;
+  // result["dppidp"] = dppidp;
+  // result["D"] = D;
+  // result["tau1"] = tau1;
+  // result["tau2"] = tau2;
+  // result["dnorm_tau1"] = dnorm_tau1;
+  // result["dnorm_tau2"] = dnorm_tau2;
+  // result["alpha"] = alpha;
+  // result["Bg"] = Bg;
+  // result["Betag"] = Betag;
+  // result["ones_r"] = ones_r;
+  // result["dppidtau1"] = dppidtau1;
+  // result["dppidtau2"] = dppidtau2;
+  // result["alpha"] = alpha;
+  // return result;
+  arma::mat Gamma = alpha + Bg * Betag * ones_r + ones_s * Betah.t() * Bh.t();
+  double omega = arma::accu(Gamma % ppi);
+
+  Rcpp::List result;
+  result["Gamma"] = Gamma;
+  result["omega"] = omega;
+
+  return result;
+
+}
+
+Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
+
+  /*
+   * Function to estimate the Asymptotic covariance matrix of the polychoric correlations
+   */
+
+  Rcpp::Timer timer;
+
+  Rcpp::List result;
+  const int n = X.n_rows;
+  const int q = X.n_cols;
+
+  std::vector<std::vector<int>> cols(q);
+  std::vector<int> maxs(q);
+  std::vector<std::vector<double>> taus(q);
+  std::vector<std::vector<double>> mvphi(q);
+
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+  for(size_t i = 0; i < q; ++i) {
+    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
+    maxs[i] = *max_element(cols[i].begin(), cols[i].end());
+    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
+    mvphi[i] = cumsum(frequencies);
+    taus[i] = mvphi[i]; // Cumulative frequencies
+    for (size_t j = 0; j < maxs[i]; ++j) {
+      mvphi[i][j] /= n;
+      taus[i][j] = Qnorm(mvphi[i][j]);
+    }
+    mvphi[i].push_back(1.0);
+    mvphi[i].insert(mvphi[i].begin(), 0.0);
+    taus[i].push_back(pos_inf);
+    taus[i].insert(taus[i].begin(), neg_inf);
+  }
+
+  timer.step("Thresholds");
+  result["taus"] = taus;
+
+  int dq = 0.5*q*(q-1);
+  int k = 0;
+  std::vector<std::vector<int>> indexes(dq, std::vector<int>(2));
+  for(int i=0; i < (q-1); ++i) {
+    for(int j=i+1L; j < q; ++j) {
+      indexes[k][0] = i;
+      indexes[k][1] = j;
+      ++k;
+    }
+  }
+
+  arma::mat ACOV(dq, dq);
+  double f = 0.00;
+
+  for(int i=0; i < dq; ++i) {
+    int indexes1 = indexes[i][0];
+    int indexes2 = indexes[i][1];
+    int s = taus[indexes1].size()+1L;
+    int r = taus[indexes2].size()+1L;
+    double rho1 = R(indexes1, indexes2);
+    Rcpp::List deriv = poly_derivatives(rho1, taus[indexes1], taus[indexes2],
+                                        mvphi[indexes1], mvphi[indexes2]);
+    arma::mat ppi = deriv["ppi"];
+    arma::mat dppidp = deriv["dppidp"];
+    arma::mat dppidtau1 = deriv["dppidtau1"];
+    arma::mat dppidtau2 = deriv["dppidtau2"];
+    // result["ppi"] = ppi;
+    // result["dppidp"] = dppidp;
+    // result["dppidtau1"] = dppidtau1;
+    // result["dppidtau2"] = dppidtau2;
+    // return result;
+    Rcpp::List x1 = COV(X.cols(indexes1, indexes2), rho1, taus[indexes1], taus[indexes2],
+                        mvphi[indexes1], mvphi[indexes2], ppi, dppidp,
+                        dppidtau1, dppidtau2);
+    // return x1;
+    arma::mat Gamma1 = x1["Gamma"];
+    double omega1 = x1["omega"];
+    for(int j=0; j < dq; ++j) {
+      int indexes3 = indexes[j][0];
+      int indexes4 = indexes[j][1];
+      int y = taus[indexes3].size()+1L;
+      int w = taus[indexes4].size()+1L;
+      double rho2 = R(indexes3, indexes4);
+      Rcpp::List deriv = poly_derivatives(rho2, taus[indexes3], taus[indexes4],
+                                          mvphi[indexes3], mvphi[indexes4]);
+      arma::mat ppi = deriv["ppi"];
+      arma::mat dppidp = deriv["dppidp"];
+      arma::mat dppidtau3 = deriv["dppidtau1"];
+      arma::mat dppidtau4 = deriv["dppidtau2"];
+      Rcpp::List x2 = COV(X.cols(indexes3, indexes4), rho2, taus[indexes3], taus[indexes4],
+                          mvphi[indexes3], mvphi[indexes4], ppi, dppidp,
+                          dppidtau3, dppidtau4);
+      arma::mat Gamma2 = x2["Gamma"];
+      double omega2 = x2["omega"];
+      double omega_prod = omega1*omega2;
+      for(int a=0; a < s; ++a) {
+        for(int b=0; b < r; ++b) {
+          for(int c=0; c < y; ++c) {
+            for(int d=0; d < w; ++d) {
+              for(int l=0; l < n; ++l) {
+                if(X(l, indexes1) == a && X(l, indexes2) == b &&
+                   X(l, indexes3) == c && X(l, indexes4) == d) {
+                  f += Gamma1(a, b) * Gamma2(c, d) - omega_prod;
+                }
+              }
+            }
+          }
+        }
+      }
+      ACOV(i, j) = ACOV(j, i) = f/n;
+      f = 0.00;
+    }
+  }
+
+  timer.step("ACOV");
+
+  result["ACOV"] = ACOV;
   result["elapsed"] = timer;
 
   return result;

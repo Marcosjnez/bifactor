@@ -248,13 +248,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // parallel
-Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> quant, bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> PA, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
-RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP n_bootSEXP, SEXP quantSEXP, SEXP meanSEXP, SEXP replaceSEXP, SEXP PASEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
+Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> quant, bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> PA, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP n_bootSEXP, SEXP typeSEXP, SEXP quantSEXP, SEXP meanSEXP, SEXP replaceSEXP, SEXP PASEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< int >::type n_boot(n_bootSEXP);
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type quant(quantSEXP);
     Rcpp::traits::input_parameter< bool >::type mean(meanSEXP);
     Rcpp::traits::input_parameter< bool >::type replace(replaceSEXP);
@@ -262,7 +263,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type hierarchical(hierarchicalSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(parallel(X, n_boot, quant, mean, replace, PA, hierarchical, efa, cores));
+    rcpp_result_gen = Rcpp::wrap(parallel(X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -340,7 +341,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_bifactor", (DL_FUNC) &_bifactor_bifactor, 26},
     {"_bifactor_asymp_cov", (DL_FUNC) &_bifactor_asymp_cov, 4},
     {"_bifactor_se", (DL_FUNC) &_bifactor_se, 5},
-    {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 9},
+    {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 10},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 22},
     {"_bifactor_poly", (DL_FUNC) &_bifactor_poly, 2},

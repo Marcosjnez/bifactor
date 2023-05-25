@@ -42,9 +42,9 @@
 #include "asymptotic_cov.h"
 #include "method_derivatives.h"
 #include "se.h"
+#include "polychorics.h"
 #include "dimensionality.h"
 #include "check_deriv.h"
-#include "polychorics.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -160,7 +160,8 @@ Rcpp::List se(Rcpp::List fit = R_NilValue,
               std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
-Rcpp::List parallel(arma::mat X, int n_boot = 100, Rcpp::Nullable<arma::vec> quant = R_NilValue,
+Rcpp::List parallel(arma::mat X, int n_boot = 100, std::string type = "pearson",
+                    Rcpp::Nullable<arma::vec> quant = R_NilValue,
                     bool mean = false, bool replace = false,
                     Rcpp::Nullable<std::vector<std::string>> PA = R_NilValue,
                     bool hierarchical = false, Rcpp::Nullable<Rcpp::List> efa = R_NilValue,

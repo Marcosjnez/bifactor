@@ -68,6 +68,9 @@ typedef struct arguments_rotate{
   f1i, f2i, Hi, Ii, HL2i, I_gamma_Ci;
   std::vector<arma::vec> termi;
 
+  Rcpp::Nullable<arma::mat> nullable_indexes1, nullable_indexes2;
+  arma::mat indexes1, indexes2;
+
 } args;
 
 typedef struct arguments_efast{
@@ -118,6 +121,21 @@ typedef struct arguments_efa{
   std::string search = "back";
 
 } args_efa;
+
+typedef struct arguments_cor{
+
+  int nobs, q, iteration = 0L, maxit = 1e04;
+  double f, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
+  bool convergence = false;
+  size_t s;
+  std::vector<std::vector<std::vector<std::vector<double>>>> n;
+  std::vector<std::vector<double>> taus;
+  arma::mat T, cor, dT;
+  arma::vec g, rg;
+  arma::vec dg, dH;
+  arma::vec dcor, dgcor;
+
+} args_cor;
 
 typedef std::tuple<arma::mat, arma::vec, arma::mat, double, int, bool> efa_NTR;
 

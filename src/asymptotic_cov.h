@@ -117,11 +117,11 @@ arma::mat asymp_cov(arma::mat S,
     if(nullable_X.isNotNull()) {
       X = Rcpp::as<arma::mat>(nullable_X);
     } else {
-      Rcpp::stop("The asymptotic covariance matrix of a general correlation matrix requires raw data");
+      Rcpp::stop("The asymptotic covariance matrix of a general correlation matrix requires the raw data");
     }
     asymptotic_cov = asymptotic_general(X);
   } else{
-    Rcpp::stop("Available asymptotic covariance estimators are 'normal', 'elliptical' and 'general'");
+    Rcpp::stop("The available asymptotic covariance estimators are 'normal', 'elliptical', and 'general'");
   }
 
   return asymptotic_cov;

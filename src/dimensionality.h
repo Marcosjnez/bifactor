@@ -149,8 +149,8 @@ Rcpp::List out_pa(arma::umat dimensions, Rcpp::Nullable<arma::vec> nullable_quan
 
 }
 
-Rcpp::List pa(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quantile,
-              bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA){
+Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
+              bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA) {
 
   /*
    * Perform parallel analysis with either PCA or PAF
@@ -200,12 +200,32 @@ Rcpp::List pa(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quanti
 
   // Generate the bootstrap samples
 
-  for(int i=0; i < n_boot; ++i) {
+  if(type == "pearson") {
 
-    X_boots.slice(i) = boot_sample(X, replace);
-    arma::mat S_boot = arma::cor(X_boots.slice(i));
-    if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
-    if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
+    for(int i=0; i < n_boot; ++i) {
+
+      X_boots.slice(i) = boot_sample(X, replace);
+      arma::mat S_boot = arma::cor(X_boots.slice(i));
+      if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
+      if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
+
+    }
+
+  } else if(type == "poly") {
+
+    for(int i=0; i < n_boot; ++i) {
+
+      X_boots.slice(i) = boot_sample(X, replace);
+      Rcpp::List polychor = poly(X_boots.slice(i), 1L);
+      arma::mat S_boot = polychor["polychorics"];
+      if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
+      if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
+
+    }
+
+  } else {
+
+    Rcpp::stop("Available correlation types: 'pearson' and 'poly'");
 
   }
 
@@ -314,12 +334,12 @@ Rcpp::List pa(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quanti
 
 }
 
-Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_quantile,
+Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
                     bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA,
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
                     int cores) {
 
-  Rcpp::List first_order = pa(X, n_boot, nullable_quantile, mean, replace, nullable_PA);
+  Rcpp::List first_order = pa(X, n_boot, type, nullable_quantile, mean, replace, nullable_PA);
 
   if(!hierarchical) return first_order;
 
@@ -375,7 +395,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, Rcpp::Nullable<arma::vec> nullable_
       arma::mat W = arma::solve(S, L);
       arma::mat fs = X * W;
 
-      Rcpp::List second_order = pa(fs, n_boot, nullable_quantile, mean, replace, R_NilValue);
+      Rcpp::List second_order = pa(fs, n_boot, "pearson", nullable_quantile, mean, replace, R_NilValue);
 
       arma::uvec indexes = arma::find(dims == unique[i]);
       arma::umat temp_dims = second_order["dimensions"];

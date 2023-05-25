@@ -156,7 +156,7 @@ Rcpp::List se(Rcpp::List fit,
   // Find A^{-1}BA^{-1}:
   arma::mat A_inv = H_inv(arma::span(0, m-1), arma::span(0, m-1));
   arma::mat BB = B(x.S, x.L, x.Phi, loblq_indexes, nullable_X, method, x.projection,
-                   type, eta); // Variance of the correlation matrix
+                   type, eta); // Asymptotic covariance of the correlation matrix
   arma::mat VAR = A_inv * BB * A_inv;
   arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));
 

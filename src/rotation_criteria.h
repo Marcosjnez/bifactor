@@ -658,6 +658,69 @@ public:
 };
 
 /*
+ * Invariance
+ */
+
+class invar: public rotation_criterion {
+
+public:
+
+  void F(arguments_rotate& x) {
+
+    x.f = 0;
+    int k = x.indexes1.n_rows;
+    for(int i=0; i < k; ++i) {
+
+      double dif = x.L(x.indexes1(i, 0), x.indexes1(i, 1)) -
+        x.L(x.indexes2(i, 0), x.indexes2(i, 1));
+      x.f += dif*dif;
+
+    }
+
+  }
+
+  void gLP(arguments_rotate& x) {
+
+    int k = x.indexes1.n_rows;
+    x.gL.set_size(arma::size(x.L));
+    x.gL.zeros();
+
+    for(int i=0; i < k; ++i) {
+
+      double dif = x.L(x.indexes1(i, 0), x.indexes1(i, 1)) -
+        x.L(x.indexes2(i, 0), x.indexes2(i, 1));
+      x.gL(x.indexes1(i, 0), x.indexes1(i, 1)) = 2*dif;
+      x.gL(x.indexes2(i, 0), x.indexes2(i, 1)) = -x.gL(x.indexes1(i, 0), x.indexes1(i, 1));
+
+    }
+
+  }
+
+  void hLP(arguments_rotate& x) {
+
+    Rcpp::warning("Standard errors not implement yet for simplix");
+
+  }
+
+  void dgLP(arguments_rotate& x) {
+
+    x.dgL.set_size(arma::size(x.L));
+    x.dgL.zeros();
+    int k = x.indexes1.n_rows;
+
+    for(int i=0; i < k; ++i) {
+
+      x.dgL(x.indexes1(i, 0), x.indexes1(i, 1)) = 2*(x.dL(x.indexes1(i, 0), x.indexes1(i, 1))) -
+        x.dL(x.indexes2(i, 0), x.indexes2(i, 1));
+      x.dgL(x.indexes2(i, 0), x.indexes2(i, 1)) = -x.dgL(x.indexes1(i, 0), x.indexes1(i, 1));
+
+    }
+
+  }
+
+};
+
+/*
  * Repeated Crawford-Ferguson family
  */
 
@@ -1322,7 +1385,7 @@ public:
 };
 
 /*
- * Linear CLF
+ * Repeated Linear CLF
  */
 
 class rep_clf_l: public rotation_criterion {
@@ -1374,6 +1437,79 @@ public:
     double b = 1 / (2*x.clf_epsilon[x.i]);
     arma::mat dgLi(arma::size(x.Li[x.i]), arma::fill::zeros);
     dgLi.elem(x.loweri[x.i]) = 2*b*dLi.elem(x.loweri[x.i]);
+
+    x.dgL.cols(indexes) += dgLi * x.block_weights[x.i];
+
+  }
+
+};
+
+/*
+ * Repeated Invariance
+ */
+
+class rep_invar: public rotation_criterion {
+
+public:
+
+  void F(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.Li[x.i] = x.L.cols(indexes);
+
+    int k = x.indexes1.n_rows;
+    for(int i=0; i < k; ++i) {
+
+      double dif = x.Li[x.i](x.indexes1(i, 0), x.indexes1(i, 1)) -
+        x.Li[x.i](x.indexes2(i, 0), x.indexes2(i, 1));
+      x.f += dif*dif*x.block_weights[x.i];
+
+    }
+
+  }
+
+  void gLP(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    x.Li[x.i] = x.L.cols(indexes);
+
+    int k = x.indexes1.n_rows;
+    arma::mat gLi(arma::size(x.Li[x.i]), arma::fill::zeros);
+
+    for(int i=0; i < k; ++i) {
+
+      double dif = x.Li[x.i](x.indexes1(i, 0), x.indexes1(i, 1)) -
+        x.Li[x.i](x.indexes2(i, 0), x.indexes2(i, 1));
+      gLi(x.indexes1(i, 0), x.indexes1(i, 1)) = 2*dif;
+      gLi(x.indexes2(i, 0), x.indexes2(i, 1)) = -gLi(x.indexes1(i, 0), x.indexes1(i, 1));
+
+    }
+
+    x.gL.cols(indexes) += gLi * x.block_weights[x.i];
+
+  }
+
+  void hLP(arguments_rotate& x) {
+
+    Rcpp::stop("Standard errors not implement yet for block criteria");
+
+  }
+
+  void dgLP(arguments_rotate& x) {
+
+    arma::uvec indexes = x.blocks_list[x.i];
+    arma::mat dLi = x.dL.cols(indexes);
+
+    int k = x.indexes1.n_rows;
+    arma::mat dgLi(arma::size(x.Li[x.i]), arma::fill::zeros);
+
+    for(int i=0; i < k; ++i) {
+
+      dgLi(x.indexes1(i, 0), x.indexes1(i, 1)) = 2*(dLi(x.indexes1(i, 0), x.indexes1(i, 1))) -
+        dLi(x.indexes2(i, 0), x.indexes2(i, 1));
+      dgLi(x.indexes2(i, 0), x.indexes2(i, 1)) = -dgLi(x.indexes1(i, 0), x.indexes1(i, 1));
+
+    }
 
     x.dgL.cols(indexes) += dgLi * x.block_weights[x.i];
 
@@ -1558,13 +1694,17 @@ rotation_criterion* choose_rep_criterion(std::string rotation, std::string proje
 
     criterion = new rep_clf_l();
 
+  } else if(rotation == "invar") {
+
+    criterion = new rep_invar();
+
   } else if(rotation == "none") {
 
     criterion = new none();
 
   } else {
 
-    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
+    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl, invar");
 
   }
 
@@ -1781,11 +1921,15 @@ rotation_criterion* choose_criterion(std::vector<std::string> rotations, std::st
 
     criterion = new clf_l();
 
+  } else if(rotations[0] == "invar") {
+
+    criterion = new invar();
+
   } else if(rotations[0] == "none") {
 
   } else {
 
-    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
+    Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl, invar");
 
   }
 

@@ -139,12 +139,12 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   std::vector<std::string> all_rotations = {"cf", "oblimin", "geomin", "target",
                                             "xtarget", "varimax", "varimin",
-                                            "equavar", "simplix", "clfl", "none"};
+                                            "equavar", "simplix", "clfl", "invar", "none"};
 
   // Check for invalid rotations:
   for (auto i: x.rotations) {
     if (std::find(all_rotations.begin(), all_rotations.end(), i) == all_rotations.end()) {
-      Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl");
+      Rcpp::stop("Available rotations: \n cf, oblimin, geomin, varimax, varimin, target, xtarget, equavar, simplix, clfl, invar");
     }
   }
 
@@ -421,17 +421,50 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     x.maxit = rot_control["maxit"];
 
   }
+
   if(rot_control.containsElementNamed("eps")) {
 
     x.eps = rot_control["eps"];
 
   }
+
   if(rot_control.containsElementNamed("optim")) {
 
     std::string optim = rot_control["optim"];
     x.optim = optim;
 
   }
+
+  if(rot_control.containsElementNamed("indexes1")) {
+
+    arma::mat indexes1 = rot_control["indexes1"];
+    x.indexes1 = indexes1;
+
+  }
+
+  if(rot_control.containsElementNamed("indexes2")) {
+
+    arma::mat indexes2 = rot_control["indexes2"];
+    x.indexes2 = indexes2;
+
+  }
+
+  // INVARIANCE ROTATION
+  // if(std::find(x.rotations.begin(), x.rotations.end(), "invar") != x.rotations.end()) {
+  //
+  //   if (x.nullable_indexes1.isNotNull()) {
+  //     x.indexes1 = Rcpp::as<arma::mat>(x.nullable_indexes1);
+  //   } else {
+  //     Rcpp::stop("Provide a matrix with the indexes of the fixed loadings");
+  //   }
+  //
+  //   if (x.nullable_indexes2.isNotNull()) {
+  //     x.indexes2 = Rcpp::as<arma::mat>(x.nullable_indexes2);
+  //   } else {
+  //     Rcpp::stop("Provide a matrix with the indexes of the fixed loadings");
+  //   }
+  //
+  // }
 
   // Check parallelization setup:
 
