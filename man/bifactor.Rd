@@ -6,8 +6,8 @@
 \usage{
 bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
 method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
-PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL,
-oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
+PhiWeight = NULL, blocks = NULL, block_weights = NULL,
+oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
 normalization = "none", w = 1, random_starts = 1L, cores = 1L,
 init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL,
 second_efa = NULL, verbose = TRUE)
@@ -33,11 +33,9 @@ second_efa = NULL, verbose = TRUE)
 
 \item{blocks}{Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.}
 
-\item{blocks_list}{List containing the columns to which applying the rotation criterion.}
-
 \item{block_weights}{Vector of weights for each block of factors.}
 
-\item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
+\item{oblq_factors}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
 \item{init_Target}{Initial target matrix for the loadings. Defaults to NULL.}
 
@@ -114,8 +112,8 @@ s <- cor(scores)
 
 # Fit an Generalized exploratory bi-factor model with GSLiD:
 GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
-method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
-random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization)
+method = "minres", projection = "poblq", nobs = NULL, oblq_factors = 3,
+random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization = "none")
 }
 
 }

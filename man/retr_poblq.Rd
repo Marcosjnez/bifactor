@@ -4,12 +4,12 @@
 \alias{retr_poblq}
 \title{Retraction of a matrix onto the partially oblique manifold.}
 \usage{
-retr_poblq(X, oblq_blocks)
+retr_poblq(X, oblq_factors)
 }
 \arguments{
 \item{X}{A matrix.}
 
-\item{oblq_blocks}{A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.}
+\item{oblq_factors}{A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.}
 }
 \value{
 A partially oblique matrix.

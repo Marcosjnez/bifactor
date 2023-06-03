@@ -4,13 +4,15 @@
 \alias{parallel}
 \title{Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).}
 \usage{
-parallel(X, n_boot = 100L, quant = NULL, mean = TRUE, replace = FALSE,
+parallel(X, n_boot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
 PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 }
 \arguments{
 \item{X}{Raw data matrix.}
 
 \item{n_boot}{Number of bootstrap samples.}
+
+\item{type}{Type of correlations: "pearson" or "poly".}
 
 \item{quant}{Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.}
 

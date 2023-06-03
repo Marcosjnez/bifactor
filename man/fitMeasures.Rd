@@ -4,7 +4,7 @@
 \alias{fitMeasures}
 \title{Compute fit measures for exploratory factor models.}
 \usage{
-fitMeasures(efa, nobs=NULL)
+fitMeasures(efa, nobs = NULL)
 }
 \arguments{
 \item{efa}{Object of class efa.}

@@ -7,9 +7,9 @@
 efast(R, nfactors, method = "minres",
 rotation = "oblimin", projection = "oblq", nobs = NULL,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-blocks = NULL, blocks_list = NULL, block_weights = NULL,
-oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0,
-epsilon = 1e-02, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
+blocks = NULL, block_weights = NULL,
+oblq_factors = NULL, gamma = 0,
+epsilon = 1e-02, k = 0, w = 1,
 random_starts = 1L, cores = 1L,
 init = NULL, efa_control = NULL, rot_control = NULL)
 }
@@ -36,15 +36,9 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 
 \item{blocks}{Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.}
 
-\item{blocks_list}{List containing the columns to which applying the rotation criterion.}
-
 \item{block_weights}{Vector of weights for each block of factors.}
 
-\item{oblq_blocks}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
-
-\item{normalization}{Available normalizations: "kaiser". Defaults to "none".}
-
-\item{between_blocks}{Available between_blocks: "TL" and "TLM". Defaults to none.}
+\item{oblq_factors}{Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.}
 
 \item{gamma}{\eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).}
 
@@ -53,12 +47,6 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 \item{k}{\eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.}
 
 \item{w}{\eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.}
-
-\item{alpha}{\eqn{\alpha} parameter for the Tian and Liu between_blocks. Defaults to 1.}
-
-\item{a}{Discrimination parameter for simplix rotation. Defaults to 30.}
-
-\item{b}{Difficulty parameter for simplix rotation. Defaults to 0.36.}
 
 \item{random_starts}{Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.}
 

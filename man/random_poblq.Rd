@@ -4,14 +4,14 @@
 \alias{random_poblq}
 \title{Generate a random partially oblique matrix.}
 \usage{
-random_poblq(p, q, oblq_blocks)
+random_poblq(p, q, oblq_factors)
 }
 \arguments{
 \item{p}{Number of rows.}
 
 \item{q}{Number of columns. Should not be greater than p.}
 
-\item{oblq_blocks}{A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.}
+\item{oblq_factors}{A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.}
 }
 \value{
 A partially oblique matrix.
@@ -21,7 +21,7 @@ First, a matrix is simulated from a standard normal distribution. Second,the mat
 }
 \examples{
 
-random_poblq(p = 7, q = 7, oblq_blocks = c(3, 2))
+random_poblq(p = 7, q = 7, oblq_factors = c(3, 2))
 
 }
 \references{
