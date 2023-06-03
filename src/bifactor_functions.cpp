@@ -53,7 +53,7 @@ arma::mat random_orth(int p, int q);
 arma::mat random_oblq(int p, int q);
 
 // [[Rcpp::export]]
-arma::mat random_poblq(int p, int q, arma::uvec oblq_blocks);
+arma::mat random_poblq(int p, int q, arma::uvec oblq_factors);
 
 // [[Rcpp::export]]
 arma::mat retr_orth(arma::mat X);
@@ -62,7 +62,7 @@ arma::mat retr_orth(arma::mat X);
 arma::mat retr_oblq(arma::mat X);
 
 // [[Rcpp::export]]
-arma::mat retr_poblq(arma::mat X, arma::uvec oblq_blocks);
+arma::mat retr_poblq(arma::mat X, arma::uvec oblq_factors);
 
 // [[Rcpp::export]]
 Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
@@ -75,17 +75,14 @@ Rcpp::List rotate(arma::mat loadings,
                   Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                   std::string projection = "oblq",
                   arma::vec gamma = 0, arma::vec epsilon = Rcpp::NumericVector::create(0.01),
-                  arma::vec k = 0, double w = 1, double alpha = 1,
-                  double a = 30, double b = 0.36,
+                  arma::vec k = 0, double w = 1,
                   Rcpp::Nullable<arma::mat> Target = R_NilValue,
                   Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                   Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
-                  Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
-                  Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                  Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
                   Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
-                  Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                  std::string between_blocks = "none",
+                  Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
                   std::string normalization = "none",
                   Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
                   int random_starts = 1, int cores = 1);
@@ -99,14 +96,11 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method = "minres",
                  Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                  Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
-                 Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
-                 Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                 Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
                  Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
-                 Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                 std::string normalization = "none", std::string between_blocks = "none",
+                 Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
                  arma::vec gamma = 0, arma::vec epsilon = Rcpp::NumericVector::create(0.01),
-                 arma::vec k = 0, double w = 1, double alpha = 1,
-                 double a = 30, double b = 0.36,
+                 arma::vec k = 0, double w = 1,
                  int random_starts = 1, int cores = 1,
                  Rcpp::Nullable<arma::vec> init = R_NilValue,
                  Rcpp::Nullable<Rcpp::List> efa_control = R_NilValue,
@@ -117,7 +111,7 @@ arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double c
 
 // Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 //                  std::string projection = "orth",
-//                  Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
+//                  Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
 //                  double cutoff = 0,
 //                  std::string normalization = "none",
 //                  Rcpp::Nullable<int> nobs = R_NilValue,
@@ -134,10 +128,9 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                    Rcpp::Nullable<int> nobs = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
-                   Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
-                   Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                   Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
                    Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
-                   Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
+                   Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
                    Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
                    int maxit = 20, double cutoff = 0, std::string normalization = "none",
                    double w = 1, int random_starts = 1, int cores = 1,
@@ -180,14 +173,11 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        Rcpp::Nullable<arma::mat> Weight = R_NilValue,
                        Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                        Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
-                       Rcpp::Nullable<arma::uvec> blocks = R_NilValue,
-                       Rcpp::Nullable<std::vector<arma::uvec>> blocks_list = R_NilValue,
+                       Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
                        Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
-                       Rcpp::Nullable<arma::uvec> oblq_blocks = R_NilValue,
-                       std::string between_blocks = "none",
+                       Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
                        arma::vec gamma = 0, arma::vec epsilon = Rcpp::NumericVector::create(0.01),
-                       arma::vec k = 0, double w = 1, double alpha = 1,
-                       double a = 30, double b = 0.36);
+                       arma::vec k = 0, double w = 1);
 
 // [[Rcpp::export]]
 Rcpp::List poly(const arma::mat& X, const int cores = 1L);

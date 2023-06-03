@@ -12,10 +12,10 @@ typedef struct arguments_rotate{
    */
 
   int p, q, iteration = 0;
-  std::vector<int> qi;
-  double w = 1, alpha = 10, f, q2;
+  std::vector<int> pi, qi;
+  double w = 1, f, q2;
   arma::vec k = {0}, gamma = {0}, epsilon = {0.01}, clf_epsilon = {0.01};
-  double a = 30, b = 0.36, ss = 1, inprod = 1, ng = 1;
+  double ss = 1, inprod = 1, ng = 1;
   bool convergence = false;
   int maxit = 1e04;
   double eps = 1e-05;
@@ -24,10 +24,8 @@ typedef struct arguments_rotate{
 
   Rcpp::Nullable<arma::mat> nullable_Target, nullable_Weight,
   nullable_PhiTarget, nullable_PhiWeight;
-  Rcpp::Nullable<arma::uvec> nullable_blocks, nullable_oblq_blocks,
-  nullable_block_weights;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_between_blocks_list;
+  Rcpp::Nullable<arma::uvec> nullable_oblq_factors, nullable_block_weights;
+  Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks; // NEW
   Rcpp::Nullable<Rcpp::List> nullable_rot_control;
 
   arma::mat lambda, T, L, Phi, Inv_T, dL, dP, Inv_T_dt, dT, g,
@@ -53,18 +51,16 @@ typedef struct arguments_rotate{
   std::vector<double> prodvari, prodvarqi, prodc2i;
 
   arma::vec term;
-  arma::uvec oblq_indexes, loblq_indexes, orth_indexes, blocks_vector; // REMOVE blocks_vector?
-  std::vector<arma::uvec> list_oblq_indexes, blocks_list;
+  arma::uvec oblq_indexes, loblq_indexes, orth_indexes;
+  std::vector<arma::uvec> list_oblq_indexes;
+  std::vector<std::vector<arma::uvec>> blocks;
+  std::vector<arma::uvec> rows_list, cols_list;
   arma::vec block_weights;
   int n_blocks = 1, n_rotations = 1, i, n_loads;
 
-  std::string between_blocks = "none";
-  bool between = false;
-  std::vector<arma::uvec> between_blocks_list;
-
   std::vector<std::string> rotations = {"oblimin"};
   std::string projection = "oblq";
-  std::vector<arma::mat> Li, Phii, Li2, Ni, HLi2, LoLi2, IgCL2Ni, V,
+  std::vector<arma::mat> Li, Phii, Li2, Mi, Ni, HLi2, LoLi2, IgCL2Ni, V,
   f1i, f2i, Hi, Ii, HL2i, I_gamma_Ci;
   std::vector<arma::vec> termi;
 
@@ -81,15 +77,12 @@ typedef struct arguments_efast{
   Rcpp::Nullable<int> nullable_nobs = R_NilValue;
   Rcpp::Nullable<arma::mat> nullable_Target = R_NilValue, nullable_Weight = R_NilValue,
     nullable_PhiTarget = R_NilValue, nullable_PhiWeight = R_NilValue;
-  Rcpp::Nullable<arma::uvec> nullable_blocks = R_NilValue;
-  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list = R_NilValue;
+  Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks = R_NilValue;
   Rcpp::Nullable<arma::vec> nullable_block_weights = R_NilValue;
-  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks = R_NilValue;
+  Rcpp::Nullable<arma::uvec> nullable_oblq_factors = R_NilValue;
   std::string normalization = "none";
-  std::string between_blocks = "none";
-  double w = 1, alpha = 1;
+  double w = 1;
   arma::vec k = {0}, gamma = {0}, epsilon = {0.01}, clf_epsilon = {0.1};
-  double a = 30, b = 0.36;
   int random_starts = 10L, cores = 1L;
   Rcpp::Nullable<arma::vec> nullable_init = R_NilValue;
   Rcpp::Nullable<Rcpp::List> nullable_efa_control = R_NilValue,
@@ -119,6 +112,7 @@ typedef struct arguments_efa{
     c1 = 10e-04, c2 = 0.5, rho = 0.5;
   int M = 5L, armijo_maxit = 10L;
   std::string search = "back";
+  std::string normalization = "none";
 
 } args_efa;
 

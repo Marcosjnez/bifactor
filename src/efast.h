@@ -85,13 +85,10 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                  Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                 Rcpp::Nullable<arma::uvec> nullable_blocks,
-                 Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                 Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
-                 Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                 std::string normalization, std::string between_blocks,
+                 Rcpp::Nullable<arma::uvec> nullable_oblq_factors,
                  arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
-                 double alpha, double a, double b,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -180,19 +177,14 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   arma::vec clf_epsilon = {0.01};
   modelInfo["clf_epsilon"] = clf_epsilon;
   modelInfo["w"] = w;
-  modelInfo["alpha"] = alpha;
-  modelInfo["a"] = a;
-  modelInfo["b"] = b;
-  modelInfo["normalization"] = normalization;
-  modelInfo["between_blocks"] = between_blocks;
+  modelInfo["normalization"] = xefa.normalization;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
   modelInfo["PhiTarget"] = nullable_PhiTarget;
   modelInfo["PhiWeight"] = nullable_PhiWeight;
   modelInfo["blocks"] = nullable_blocks;
-  modelInfo["blocks_list"] = nullable_blocks_list;
   modelInfo["block_weights"] = nullable_block_weights;
-  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
+  modelInfo["oblq_factors"] = nullable_oblq_factors;
   modelInfo["lower"] = xefa.lower;
   modelInfo["upper"] = xefa.upper;
 
@@ -205,19 +197,16 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
-    x.a = a, x.b = b, x.clf_epsilon = clf_epsilon;
-  x.between_blocks = between_blocks;
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.clf_epsilon = clf_epsilon;
   x.rotations = rotation;
   x.projection = projection;
   x.nullable_Target = nullable_Target;
   x.nullable_Weight = nullable_Weight;
   x.nullable_PhiTarget = nullable_PhiTarget;
   x.nullable_PhiWeight = nullable_PhiWeight;
-  x.nullable_blocks = nullable_blocks;
-  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_oblq_factors = nullable_oblq_factors;
   x.nullable_block_weights = nullable_block_weights;
-  x.nullable_blocks_list = nullable_blocks_list;
+  x.nullable_blocks = nullable_blocks;
   x.nullable_rot_control = nullable_rot_control;
 
   // Check rotation inputs and compute constants for rotation criteria:
@@ -227,17 +216,17 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
   // Select one specific criteria or mixed criteria:
-  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.cols_list);
 
   Rcpp::List rotation_result;
 
   arma::vec weigths;
-  if (normalization == "kaiser") {
+  if (xefa.normalization == "kaiser") {
 
     weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
 
-  } else if(normalization == "none") {
+  } else if(xefa.normalization == "none") {
 
   } else {
 
@@ -269,7 +258,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   arma::mat L = rotation_result["loadings"];
   arma::mat Phi = rotation_result["Phi"];
 
-  if (normalization == "kaiser") {
+  if (xefa.normalization == "kaiser") {
 
     L.each_col() %= weigths;
 
@@ -318,13 +307,10 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                  Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                 Rcpp::Nullable<arma::uvec> nullable_blocks,
-                 Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                 Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
-                 Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                 std::string normalization, std::string between_blocks,
+                 Rcpp::Nullable<arma::uvec> nullable_oblq_factors,
                  arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
-                 double alpha, double a, double b,
                  int random_starts, int cores,
                  Rcpp::Nullable<arma::vec> nullable_init,
                  Rcpp::Nullable<Rcpp::List> nullable_efa_control,
@@ -389,19 +375,16 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.alpha = alpha,
-    x.a = a, x.b = b, x.clf_epsilon = {0.01};
-  x.between_blocks = between_blocks;
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.clf_epsilon = {0.01};
   x.rotations = rotation;
   x.projection = projection;
   x.nullable_Target = nullable_Target;
   x.nullable_Weight = nullable_Weight;
   x.nullable_PhiTarget = nullable_PhiTarget;
   x.nullable_PhiWeight = nullable_PhiWeight;
-  x.nullable_blocks = nullable_blocks;
-  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_oblq_factors = nullable_oblq_factors;
   x.nullable_block_weights = nullable_block_weights;
-  x.nullable_blocks_list = nullable_blocks_list;
+  x.nullable_blocks = nullable_blocks;
   x.nullable_rot_control = nullable_rot_control;
 
   // Check inputs and compute constants for rotation criteria:
@@ -438,36 +421,31 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   modelInfo["epsilon"] = x.epsilon;
   modelInfo["clf_epsilon"] = x.clf_epsilon;
   modelInfo["w"] = x.w;
-  modelInfo["alpha"] = x.alpha;
-  modelInfo["a"] = x.a;
-  modelInfo["b"] = x.b;
   modelInfo["normalization"] = x.normalization;
-  modelInfo["between_blocks"] = x.between_blocks;
   modelInfo["Target"] = x.nullable_Target;
   modelInfo["Weight"] = x.nullable_Weight;
   modelInfo["PhiTarget"] = x.nullable_PhiTarget;
   modelInfo["PhiWeight"] = x.nullable_PhiWeight;
   modelInfo["blocks"] = x.nullable_blocks;
-  modelInfo["blocks_list"] = x.nullable_blocks_list;
   modelInfo["block_weights"] = x.nullable_block_weights;
-  modelInfo["oblq_blocks"] = x.nullable_oblq_blocks;
+  modelInfo["oblq_factors"] = x.nullable_oblq_factors;
   modelInfo["lower"] = xefa.lower;
   modelInfo["upper"] = xefa.upper;
 
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
   // Select one specific criteria or mixed criteria:
-  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.cols_list);
 
   Rcpp::List rotation_result;
 
   arma::vec weigths;
-  if (normalization == "kaiser") {
+  if (xefa.normalization == "kaiser") {
 
     weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
 
-  } else if(normalization == "none") {
+  } else if(xefa.normalization == "none") {
 
   } else {
 
@@ -499,7 +477,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   arma::mat L = rotation_result["loadings"];
   arma::mat Phi = rotation_result["Phi"];
 
-  if (normalization == "kaiser") {
+  if (xefa.normalization == "kaiser") {
 
     L.each_col() %= weigths;
 

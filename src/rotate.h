@@ -16,17 +16,14 @@
 
 Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
                   std::string projection,
-                  arma::vec gamma, arma::vec epsilon, arma::vec k,
-                  double w, double alpha, double a, double b,
+                  arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
                   Rcpp::Nullable<arma::mat> nullable_Target,
                   Rcpp::Nullable<arma::mat> nullable_Weight,
                   Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                   Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                  Rcpp::Nullable<arma::uvec> nullable_blocks,
-                  Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                  Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks,
                   Rcpp::Nullable<arma::vec> nullable_block_weights,
-                  Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                  std::string between_blocks,
+                  Rcpp::Nullable<arma::uvec> nullable_oblq_factors,
                   std::string normalization,
                   Rcpp::Nullable<Rcpp::List> nullable_rot_control,
                   int random_starts, int cores) {
@@ -41,9 +38,7 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   x.p = loadings.n_rows, x.q = loadings.n_cols;
   x.lambda = loadings;
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w,
-    x.alpha = alpha, x.a = a, x.b = b;
-  x.between_blocks = between_blocks;
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w;
   x.rotations = rotation;
   x.projection = projection;
   x.nullable_Target = nullable_Target;
@@ -51,9 +46,8 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   x.nullable_PhiTarget = nullable_PhiTarget;
   x.nullable_PhiWeight = nullable_PhiWeight;
   x.nullable_blocks = nullable_blocks;
-  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_oblq_factors = nullable_oblq_factors;
   x.nullable_block_weights = nullable_block_weights;
-  x.nullable_blocks_list = nullable_blocks_list;
   x.nullable_rot_control = nullable_rot_control;
 
   // Check inputs and compute constants for rotation criteria:
@@ -62,7 +56,7 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
   // Select one specific criteria or mixed criteria:
-  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.cols_list);
   // Select the optimization rutine:
   rotation_optim* algorithm = choose_optim(x.optim);
 
@@ -152,19 +146,14 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   modelInfo["gamma"] = gamma;
   modelInfo["epsilon"] = epsilon;
   modelInfo["w"] = w;
-  modelInfo["alpha"] = alpha;
-  modelInfo["a"] = a;
-  modelInfo["b"] = b;
   modelInfo["normalization"] = normalization;
-  modelInfo["between_blocks"] = between_blocks;
   modelInfo["Target"] = nullable_Target;
   modelInfo["Weight"] = nullable_Weight;
   modelInfo["PhiTarget"] = nullable_PhiTarget;
   modelInfo["PhiWeight"] = nullable_PhiWeight;
   modelInfo["blocks"] = nullable_blocks;
-  modelInfo["blocks_list"] = nullable_blocks_list;
   modelInfo["block_weights"] = nullable_block_weights;
-  modelInfo["oblq_blocks"] = nullable_oblq_blocks;
+  modelInfo["oblq_factors"] = nullable_oblq_factors;
 
   Rcpp::List result;
   result["loadings"] = L;

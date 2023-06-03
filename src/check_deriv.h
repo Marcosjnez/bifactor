@@ -6,13 +6,10 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                  Rcpp::Nullable<arma::mat> nullable_PhiWeight,
-                 Rcpp::Nullable<arma::uvec> nullable_blocks,
-                 Rcpp::Nullable<std::vector<arma::uvec>> nullable_blocks_list,
+                 Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> nullable_blocks,
                  Rcpp::Nullable<arma::vec> nullable_block_weights,
-                 Rcpp::Nullable<arma::uvec> nullable_oblq_blocks,
-                 std::string between_blocks,
-                 arma::vec gamma, arma::vec epsilon, arma::vec k,
-                 double w, double alpha, double a, double b) {
+                 Rcpp::Nullable<arma::uvec> nullable_oblq_factors,
+                 arma::vec gamma, arma::vec epsilon, arma::vec k, double w) {
 
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
@@ -23,9 +20,7 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
   x.lambda = L;
   x.L = L;
   x.Phi = Phi;
-  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w,
-    x.alpha = alpha, x.a = a, x.b = b;
-  x.between_blocks = between_blocks;
+  x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w;
   x.rotations = rotation;
   x.projection = projection;
   x.nullable_Target = nullable_Target;
@@ -33,9 +28,8 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
   x.nullable_PhiTarget = nullable_PhiTarget;
   x.nullable_PhiWeight = nullable_PhiWeight;
   x.nullable_blocks = nullable_blocks;
-  x.nullable_oblq_blocks = nullable_oblq_blocks;
+  x.nullable_oblq_factors = nullable_oblq_factors;
   x.nullable_block_weights = nullable_block_weights;
-  x.nullable_blocks_list = nullable_blocks_list;
   x.nullable_rot_control = R_NilValue;
 
   // Check rotation inputs and compute constants for rotation criteria:
@@ -62,7 +56,7 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);
   // Select one specific criteria or mixed criteria:
-  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.blocks_list);
+  rotation_criterion* criterion = choose_criterion(x.rotations, x.projection, x.cols_list);
 
   x.T = arma::eye(x.q, x.q);
 
