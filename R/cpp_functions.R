@@ -54,25 +54,25 @@ random_oblq <- function(p, q) {
 #'
 #' @usage
 #'
-#' random_poblq(p, q, oblq_blocks)
+#' random_poblq(p, q, oblq_factors)
 #'
 #' @param p Number of rows.
 #' @param q Number of columns. Should not be greater than p.
-#' @param oblq_blocks A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
+#' @param oblq_factors A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
 #'
 #' @return A partially oblique matrix.
 #'
 #' @examples
 #'
-#' random_poblq(p = 7, q = 7, oblq_blocks = c(3, 2))
+#' random_poblq(p = 7, q = 7, oblq_factors = c(3, 2))
 #'
 #' @references
 #'
 #' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
 #'
 #' @export
-random_poblq <- function(p, q, oblq_blocks) {
-  .Call(`_bifactor_random_poblq`, p, q, oblq_blocks)
+random_poblq <- function(p, q, oblq_factors) {
+  .Call(`_bifactor_random_poblq`, p, q, oblq_factors)
 }
 
 #' @title
@@ -129,10 +129,10 @@ retr_oblq <- function(X) {
 #'
 #' @usage
 #'
-#' retr_poblq(X, oblq_blocks)
+#' retr_poblq(X, oblq_factors)
 #'
 #' @param X A matrix.
-#' @param oblq_blocks A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
+#' @param oblq_factors A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
 #'
 #' @return A partially oblique matrix.
 #'
@@ -146,8 +146,8 @@ retr_oblq <- function(X) {
 #' retr_poblq(X, c(2, 3, 3))
 #'
 #' @export
-retr_poblq <- function(X, oblq_blocks) {
-  .Call(`_bifactor_retr_poblq`, X, oblq_blocks)
+retr_poblq <- function(X, oblq_factors) {
+  .Call(`_bifactor_retr_poblq`, X, oblq_factors)
 }
 
 #' @title
@@ -215,10 +215,10 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' @usage
 #'
 #' rotate(loadings, rotation = "oblimin", projection = "oblq",
-#' gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
+#' gamma = 0, epsilon = 0.01, k = 0, w = 1,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-#' blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL,
-#' between_blocks = "none", normalization = "none",
+#' blocks = NULL, block_weights = NULL, oblq_factors = NULL,
+#' normalization = "none",
 #' rot_control = NULL, random_starts = 1L, cores = 1L)
 #'
 #' @param loadings Unrotated loading matrix.
@@ -228,18 +228,13 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' @param epsilon \eqn{\epsilon} parameter for the geomin criterion. Defaults to 0.01.
 #' @param k \eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.
 #' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1.
-#' @param alpha \eqn{\alpha} parameter for the Tian and Liu between_blocks. Defaults to 1.
-#' @param a Discrimination parameter for simplix rotation. Defaults to 30.
-#' @param b Difficulty parameter for simplix rotation. Defaults to 0.36.
 #' @param Target Target matrix for the loadings. Defaults to NULL.
 #' @param Weight Weight matrix for the loadings. Defaults to NULL.
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
-#' @param blocks_list List containing the vectors with the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
-#' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
-#' @param between_blocks Available between_blocks: "TL" and "TLM". Defaults to none.
+#' @param oblq_factors Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param normalization Available normalizations: "kaiser". Defaults to "none".
 #' @param rot_control List of control parameters for the rotation algorithm. Defaults to NULL.
 #' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
@@ -266,8 +261,8 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #' Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 #'
 #' @export
-rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 0, epsilon = 0.01, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
-  .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, alpha, a, b, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, normalization, rot_control, random_starts, cores)
+rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 0, epsilon = 0.01, k = 0, w = 1, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
+  .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, normalization, rot_control, random_starts, cores)
 }
 
 #' @title
@@ -281,9 +276,9 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' efast(R, nfactors, method = "minres",
 #' rotation = "oblimin", projection = "oblq", nobs = NULL,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-#' blocks = NULL, blocks_list = NULL, block_weights = NULL,
-#' oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0,
-#' epsilon = 1e-02, k = 0, w = 1, alpha = 1, a = 30, b = 0.36,
+#' blocks = NULL, block_weights = NULL,
+#' oblq_factors = NULL, gamma = 0,
+#' epsilon = 1e-02, k = 0, w = 1,
 #' random_starts = 1L, cores = 1L,
 #' init = NULL, efa_control = NULL, rot_control = NULL)
 #'
@@ -298,18 +293,12 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
-#' @param blocks_list List containing the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
-#' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
-#' @param normalization Available normalizations: "kaiser". Defaults to "none".
-#' @param between_blocks Available between_blocks: "TL" and "TLM". Defaults to none.
+#' @param oblq_factors Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param gamma \eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).
 #' @param epsilon \eqn{\epsilon} parameter for the geomin criterion. Defaults to 0.01.
 #' @param k \eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.
 #' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
-#' @param alpha \eqn{\alpha} parameter for the Tian and Liu between_blocks. Defaults to 1.
-#' @param a Discrimination parameter for simplix rotation. Defaults to 30.
-#' @param b Difficulty parameter for simplix rotation. Defaults to 0.36.
 #' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
 #' @param cores Number of cores for parallel execution of random starts. Defaults to 1L.
 #' @param init Initial uniquenesses values for exploratory factor analysis estimation. Defaults to NULL.
@@ -362,8 +351,8 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'}
 #'
 #' @export
-efast <- function(R, nfactors, method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, normalization = "none", between_blocks = "none", gamma = 0, epsilon = 1e-02, k = 0, w = 1, alpha = 1, a = 30, b = 0.36, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, normalization, between_blocks, gamma, epsilon, k, w, alpha, a, b, random_starts, cores, init, efa_control, rot_control)
+efast <- function(R, nfactors, method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+  .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
@@ -399,8 +388,8 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
 #' method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
-#' PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL,
-#' oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
+#' PhiWeight = NULL, blocks = NULL, block_weights = NULL,
+#' oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
 #' normalization = "none", w = 1, random_starts = 1L, cores = 1L,
 #' init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL,
 #' second_efa = NULL, verbose = TRUE)
@@ -425,9 +414,8 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
 #' @param random_starts Number of rotations with different random starting values. The rotation with the smallest cost function value is returned. Defaults to 1L.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
-#' @param blocks_list List containing the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
-#' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
+#' @param oblq_factors Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param cores Number of cores for parallel execution of multiple rotations. Defaults to 1L.
 #' @param init Initial uniquenesses values for exploratory factor analysis estimation. Defaults to NULL.
 #' @param efa_control List of control parameters for efa fitting. Defaults to NULL.
@@ -486,13 +474,13 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' # Fit an Generalized exploratory bi-factor model with GSLiD:
 #' GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
-#' method = "minres", projection = "poblq", nobs = NULL, oblq_blocks = 3,
-#' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization)
+#' method = "minres", projection = "poblq", nobs = NULL, oblq_factors = 3,
+#' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization = "none")
 #'}
 #'
 #' @export
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 #' @title
@@ -632,9 +620,9 @@ cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) 
 #'
 #' check_deriv(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq",
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
-#' blocks = NULL, blocks_list = NULL, block_weights = NULL,
-#' oblq_blocks = NULL, between_blocks = "none", gamma = 0,
-#' epsilon = 0.01, k = 0L, w = 1, alpha = 1, a = 30, b = 0.36)
+#' blocks = NULL, block_weights = NULL,
+#' oblq_factors = NULL, gamma = 0,
+#' epsilon = 0.01, k = 0L, w = 1)
 #'
 #' @description
 #'
@@ -651,17 +639,12 @@ cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) 
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
 #' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
-#' @param blocks_list List containing the columns to which applying the rotation criterion.
 #' @param block_weights Vector of weights for each block of factors.
-#' @param oblq_blocks Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
-#' @param between_blocks Available between_blocks: "TL" and "TLM". Defaults to none.
+#' @param oblq_factors Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param gamma \eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).
 #' @param epsilon \eqn{\epsilon} parameter for the geomin criterion. Defaults to 0.01.
 #' @param k \eqn{k} parameter for the Crawford-Ferguson family of rotation criteria. Defaults to 0.
 #' @param w \eqn{w} parameter for the extended target criterion ("xtarget"). Defaults to 1L.
-#' @param alpha \eqn{\alpha} parameter for the Tian and Liu between_blocks. Defaults to 1.
-#' @param a Discrimination parameter for simplix rotation. Defaults to 30.
-#' @param b Difficulty parameter for simplix rotation. Defaults to 0.36.
 #'
 #' @details
 #'
@@ -669,8 +652,8 @@ cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) 
 #'
 #' @return A list with the objective value and the gradients and differentials of L and Phi.
 #' @export
-check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, blocks_list = NULL, block_weights = NULL, oblq_blocks = NULL, between_blocks = "none", gamma = 0, epsilon = 0.01, k = 0L, w = 1, alpha = 1, a = 30, b = 0.36) {
-  .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, blocks_list, block_weights, oblq_blocks, between_blocks, gamma, epsilon, k, w, alpha, a, b)
+check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 0.01, k = 0L, w = 1) {
+  .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w)
 }
 
 #' @title

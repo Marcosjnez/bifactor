@@ -268,8 +268,8 @@ MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
   # upper <- c(rep(Inf, lambda_p), rep(Inf, phi_p), upper_psi)
   # lower[indexes_uniquenesses] <- 0.005
 
-  x <- init
-  # x <- c(stats::runif(lambda_p), rep(0, phi_p), rep(0.05, psi_p))
+  # x <- init
+  x <- c(stats::runif(lambda_p), rep(0, phi_p), rep(0.05, psi_p))
 
   if(method == "minres") {
 
