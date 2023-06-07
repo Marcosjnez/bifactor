@@ -4,7 +4,7 @@
 \alias{efast}
 \title{Fast exploratory factor analysis.}
 \usage{
-efast(R, nfactors, method = "minres",
+efast(R, nfactors, cor = "pearson", method = "minres",
 rotation = "oblimin", projection = "oblq", nobs = NULL,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, block_weights = NULL,
@@ -17,6 +17,8 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 \item{R}{Correlation matrix.}
 
 \item{nfactors}{Number of common factors to extract.}
+
+\item{cor}{Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".}
 
 \item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".}
 
