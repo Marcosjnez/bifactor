@@ -273,7 +273,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' @usage
 #'
-#' efast(R, nfactors, method = "minres",
+#' efast(R, nfactors, cor = "pearson", method = "minres",
 #' rotation = "oblimin", projection = "oblq", nobs = NULL,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, block_weights = NULL,
@@ -284,6 +284,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' @param R Correlation matrix.
 #' @param nfactors Number of common factors to extract.
+#' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
 #' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".
 #' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique), "poblq" (partially oblique). Defaults to "oblq".
@@ -351,8 +352,8 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'}
 #'
 #' @export
-efast <- function(R, nfactors, method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+efast <- function(R, nfactors, cor = "pearson", method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+  .Call(`_bifactor_efast`, R, nfactors, cor, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
@@ -660,7 +661,7 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #' Fast polychoric correlations.
 #' @usage
 #'
-#' poly(X, cores = 1L)
+#' poly(X, cores = 1L, acov = "none")
 #'
 #' @description
 #'
@@ -668,6 +669,7 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @param X Matrix of categorical scores. The lowest score must start at 0.
 #' @param cores Number of parallel cores to compute the polychoric correlations.
+#' @param acov Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Defaults to "none".
 #'
 #' @details
 #'
@@ -675,6 +677,6 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @return A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
 #' @export
-poly <- function(X, cores = 1L) {
-  .Call(`_bifactor_poly`, X, cores)
+poly <- function(X, cores = 1L, acov = "none") {
+  .Call(`_bifactor_poly`, X, cores, acov)
 }

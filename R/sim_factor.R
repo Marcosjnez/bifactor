@@ -33,7 +33,7 @@ opt_error <- function(x, delta, G) {
   return(x)
 
 }
-f_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
+f_minres <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -54,7 +54,7 @@ f_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
   return(f)
 
 }
-g_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
+g_minres <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -81,7 +81,7 @@ g_minres <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
   return(g)
 
 }
-f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
+f_ml <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -101,7 +101,7 @@ f_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
   return(f)
 
 }
-g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
+g_ml <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
 
   p <- nrow(S)
   lambda_p <- length(indexes_lambda)
@@ -133,7 +133,57 @@ g_ml <- function(x, S, ldetS, q, indexes_lambda, indexes_phi, indexes_psi) {
   return(g)
 
 }
-CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)), method = "minres") {
+f_dwls <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
+
+  p <- nrow(S)
+  lambda_p <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
+  res <- S - Rhat
+  f <- 0.5*sum(res*res*Inv_W)
+
+  return(f)
+
+}
+g_dwls <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_psi) {
+
+  p <- nrow(S)
+  lambda_p <- length(indexes_lambda)
+  Lambda <- matrix(0, p, q)
+  Lambda[indexes_lambda] <- x[1:lambda_p]
+  phi_p <- length(indexes_phi)
+  Phi <- matrix(0, q, q)
+  Phi[indexes_phi] <- x[(lambda_p+1):(lambda_p + phi_p)]
+  Phi <- t(Phi) + Phi
+  diag(Phi) <- 1
+  Psi <- matrix(0, p, p)
+  Psi[indexes_psi] <- x[-(1:(lambda_p + phi_p))]
+  Psi[upper.tri(Psi)] <- t(Psi)[upper.tri(Psi)]
+  Rhat <- Lambda %*% Phi %*% t(Lambda) + Psi
+  res <- S - Rhat
+
+  g1 <- ((Inv_W * res) %*% Lambda %*% Phi)[indexes_lambda]
+  g2 <- (t(Lambda) %*% (Inv_W*res) %*% Lambda)[indexes_phi]
+  # g <- -2*c(g1, g2, 0.5*diag(res))
+  res2 <- res
+  res2[lower.tri(res2)] <- 2*res[lower.tri(res)]
+  g <- -2*c(g1, g2, 0.5*res2[indexes_psi] * Inv_W[indexes_psi])
+
+  return(g)
+
+}
+
+CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)),
+                method = "minres") {
 
   p <- nrow(target)
   q <- ncol(target)
@@ -163,14 +213,23 @@ CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)), method = "
   if(method == "minres") {
 
     ldetS <- NULL
+    Inv_W <- NULL
     f <- f_minres
     g <- g_minres
 
   } else if(method == "ml") {
 
     ldetS <- log(det(S))
+    Inv_W <- NULL
     f <- f_ml
     g <- g_ml
+
+  } else if(method == "dwls") {
+
+    ldetS <- NULL
+    Inv_W <- 1/W
+    f <- f_dwls
+    g <- g_dwls
 
   }
 
@@ -178,6 +237,7 @@ CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)), method = "
                        lower = lower, upper = upper,
                        S = S, ldetS = ldetS, q = q, indexes_lambda = indexes_lambda,
                        indexes_phi = indexes_phi, indexes_psi = indexes_psi,
+                       Inv_W = Inv_W,
                        control = list(iter.max = 1e4, eval.max = 1e4))
 
   # Arrange lambda parameter estimates:

@@ -1,4 +1,4 @@
-MGf_minres <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
+MGf_minres <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
                        indexes_lambda, indexes_phi, indexes_psi,
                        indexes_target, indexes_targetphi, indexes_targetpsi) {
 
@@ -24,7 +24,7 @@ MGf_minres <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
   return(f)
 
 }
-MGg_minres <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
+MGg_minres <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
                        indexes_lambda, indexes_phi, indexes_psi,
                        indexes_target, indexes_targetphi, indexes_targetpsi) {
 
@@ -60,7 +60,7 @@ MGg_minres <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
   return(g)
 
 }
-MGf_ml <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
+MGf_ml <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
                    indexes_lambda, indexes_phi, indexes_psi,
                    indexes_target, indexes_targetphi, indexes_targetpsi) {
 
@@ -88,7 +88,7 @@ MGf_ml <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
   return(f)
 
 }
-MGg_ml <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
+MGg_ml <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
                    indexes_lambda, indexes_phi, indexes_psi,
                    indexes_target, indexes_targetphi, indexes_targetpsi) {
 
@@ -127,7 +127,70 @@ MGg_ml <- function(x, S, ldetS, p, q, Lambda, Phi, Psi,
   return(g)
 
 }
-MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
+MGf_dwls <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
+                       indexes_lambda, indexes_phi, indexes_psi,
+                       indexes_target, indexes_targetphi, indexes_targetpsi) {
+
+  # Objective function for minres
+
+  n <- length(S) # Number of groups
+  f <- 0 # Objective value (to be incremented)
+
+  # q is not required to be constant across the groups
+  # p is not required to be constant across the groups
+
+  for(i in 1:n) {
+
+    Lambda[[i]][indexes_target[[i]]] <- x[indexes_lambda[[i]]]
+    Phi[[i]][indexes_targetphi[[i]]] <- x[indexes_phi[[i]]]
+    Psi[[i]][indexes_targetpsi[[i]]] <- x[indexes_psi[[i]]]
+    Rhat <- Lambda[[i]] %*% Phi[[i]] %*% t(Lambda[[i]]) + Psi[[i]]
+    res <- S[[i]] - Rhat
+    f <- f + 0.5*sum(res*res * Inv_W[[i]])
+
+  }
+
+  return(f)
+
+}
+MGg_dwls <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
+                       indexes_lambda, indexes_phi, indexes_psi,
+                       indexes_target, indexes_targetphi, indexes_targetpsi) {
+
+  # Gradient for minres
+
+  n <- length(S) # Number of groups
+  g <- rep(0, times = length(x)) # gradient (to be incremented)
+
+  # q is not required to be constant across the groups
+  # p is not required to be constant across the groups
+
+  for(i in 1:n) {
+
+    Lambda[[i]][indexes_target[[i]]] <- x[indexes_lambda[[i]]]
+    Phi[[i]][indexes_targetphi[[i]]] <- x[indexes_phi[[i]]]
+    Psi[[i]][indexes_targetpsi[[i]]] <- x[indexes_psi[[i]]]
+    Rhat <- Lambda[[i]] %*% Phi[[i]] %*% t(Lambda[[i]]) + Psi[[i]]
+    res <- S[[i]] - Rhat
+
+    g1 <- ((Inv_W[[i]] * res) %*% Lambda[[i]] %*% Phi[[i]])[indexes_target[[i]]]
+    g2 <- (t(Lambda[[i]]) %*% (Inv_W[[i]] * res) %*% Lambda[[i]])[indexes_targetphi[[i]]]
+    res2 <- res
+    res2[lower.tri(res2)] <- 2*res[lower.tri(res)]
+    res2[upper.tri(res2)] <- 2*res[upper.tri(res)]
+    g3 <- 0.5*res2[indexes_targetpsi[[i]]] * Inv_W[[i]][indexes_targetpsi[[i]]]
+
+    g[indexes_lambda[[i]]] <- g[indexes_lambda[[i]]] -2*c(g1)
+    g[indexes_phi[[i]]] <- g[indexes_phi[[i]]] -2*c(g2)
+    g[indexes_psi[[i]]] <- g[indexes_psi[[i]]] -2*c(g3)
+
+  }
+
+  return(g)
+
+}
+MGCFA <- function(S, target, targetphi, targetpsi,
+                  method = "minres", W = NULL) {
 
   # S is a list of correlation matrices (one for each group)
   # target is a list of matrices for the loadings indicating the parameters
@@ -274,15 +337,26 @@ MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
   if(method == "minres") {
 
     ldetS <- NULL
+    Inv_W <- NULL
     f <- MGf_minres
     g <- MGg_minres
 
   } else if(method == "ml") {
 
     ldetS <- list()
+    Inv_W <- NULL
     for(i in 1:n) ldetS[[i]] <- log(det(S[[i]]))
     f <- MGf_ml
     g <- MGg_ml
+
+  } else if(method == "dwls") {
+
+    ldetS <- NULL
+    Inv_W <- list()
+    for(i in 1:n) Inv_W[[i]] <- 1/W[[i]]
+    f <- MGf_dwls
+    g <- MGg_dwls
+
 
   }
 
@@ -295,6 +369,7 @@ MGCFA <- function(S, target, targetphi, targetpsi, method = "minres") {
                        indexes_targetpsi = indexes_targetpsi,
                        indexes_lambda = indexes_lambda,
                        indexes_phi = indexes_phi, indexes_psi = indexes_psi,
+                       Inv_W = Inv_W,
                        control = list(iter.max = 1e4, eval.max = 1e4))
 
   # Arrange the parameter estimates in the lambda, phi, and psi matrices:

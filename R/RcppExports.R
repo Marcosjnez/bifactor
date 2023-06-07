@@ -33,8 +33,8 @@ rotate <- function(loadings, rotation = as.character( c("oblimin")), projection 
     .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, normalization, rot_control, random_starts, cores)
 }
 
-efast <- function(R, nfactors, method = "minres", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-    .Call(`_bifactor_efast`, R, nfactors, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+efast <- function(X, nfactors, cor = "pearson", method = "minres", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+    .Call(`_bifactor_efast`, X, nfactors, cor, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 get_target <- function(loadings, Phi, cutoff = 0) {
@@ -65,7 +65,19 @@ check_deriv <- function(L, Phi, dL, dP, rotation = as.character( c("oblimin")), 
     .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w)
 }
 
-poly <- function(X, cores = 1L) {
-    .Call(`_bifactor_poly`, X, cores)
+poly <- function(X, cores = 1L, acov = "none") {
+    .Call(`_bifactor_poly`, X, cores, acov)
+}
+
+joint_frequency_table <- function(X, n, max_X, Y, max_Y) {
+    .Call(`_bifactor_joint_frequency_table`, X, n, max_X, Y, max_Y)
+}
+
+COV2 <- function(rho, tau1, tau2, mvphi1, mvphi2) {
+    .Call(`_bifactor_COV2`, rho, tau1, tau2, mvphi1, mvphi2)
+}
+
+std_2_matrix <- function(tabs, n) {
+    .Call(`_bifactor_std_2_matrix`, tabs, n)
 }
 
