@@ -77,7 +77,7 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
 
 }
 
-Rcpp::List efast(arma::mat R, int nfactors, std::string method,
+Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
                  Rcpp::CharacterVector char_rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -96,6 +96,27 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   Rcpp::Timer timer;
   Rcpp::List result;
+
+  Rcpp::List correlation_result;
+  arma::mat R;
+
+  if(X.is_square()) {
+
+    R = X;
+
+  } else {
+
+    if(cor == "poly") {
+      correlation_result = poly(X, cores, "none");
+      arma::mat polys = correlation_result["polychorics"];
+      R = polys;
+    } else if(cor == "pearson") {
+      R = arma::cor(X);
+      correlation_result["type"] = "pearson";
+      correlation_result["correlation"] = R;
+    }
+
+  }
 
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
@@ -123,6 +144,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   xefa.upper = arma::diagvec(xefa.R);
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
+  } else if(method == "dwls") {
+    xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
     xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
   }
@@ -139,14 +162,14 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   xefa.heywood = efa_result["heywood"];
 
-  if(xefa.heywood) {
-
-    Rcpp::Rcout << "\n" << std::endl;
-    Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
-
-    efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
-
-  }
+  // if(xefa.heywood) {
+  //
+  //   Rcpp::Rcout << "\n" << std::endl;
+  //   Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
+  //
+  //   efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
+  //
+  // }
 
   double df_null = xefa.p*(xefa.p-1)/2;
   double df = xefa.p*(xefa.p+1)/2 - (xefa.p*xefa.q + xefa.p - xefa.q*(xefa.q-1)/2);
@@ -287,6 +310,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   rotation_result["residuals"] = efa_result["residuals"];
   rotation_result["propVar"] = propVar;
 
+  result["correlation"] = correlation_result;
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
   result["modelInfo"] = modelInfo;
@@ -299,7 +323,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 }
 
 // Do not export this (overloaded to support std::vector<std::string> rotation):
-Rcpp::List efast(arma::mat R, int nfactors, std::string method,
+Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
                  std::vector<std::string> rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -318,6 +342,27 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   Rcpp::Timer timer;
   Rcpp::List result;
+
+  Rcpp::List correlation_result;
+  arma::mat R;
+
+  if(X.is_square()) {
+
+    R = X;
+
+  } else {
+
+    if(cor == "poly") {
+      correlation_result = poly(X, cores, "none");
+      arma::mat polys = correlation_result["polychorics"];
+      R = polys;
+    } else if(cor == "pearson") {
+      R = arma::cor(X);
+      correlation_result["type"] = "pearson";
+      correlation_result["correlation"] = R;
+    }
+
+  }
 
   // Create defaults:
 
@@ -341,6 +386,8 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   xefa.upper = arma::diagvec(xefa.R);
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
+  } else if(method == "dwls") {
+    xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
     xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
   }
@@ -357,14 +404,14 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
 
   xefa.heywood = efa_result["heywood"];
 
-  if(xefa.heywood) {
-
-    Rcpp::Rcout << "\n" << std::endl;
-    Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
-
-    efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
-
-  }
+  // if(xefa.heywood) {
+  //
+  //   Rcpp::Rcout << "\n" << std::endl;
+  //   Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
+  //
+  //   efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
+  //
+  // }
 
   arma::mat loadings = efa_result["loadings"];
 
@@ -506,6 +553,7 @@ Rcpp::List efast(arma::mat R, int nfactors, std::string method,
   rotation_result["residuals"] = efa_result["residuals"];
   rotation_result["propVar"] = propVar;
 
+  result["correlation"] = correlation_result;
   result["efa"] = efa_result;
   result["rotation"] = rotation_result;
   result["modelInfo"] = modelInfo;

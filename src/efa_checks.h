@@ -42,6 +42,14 @@ void check_efa(arguments_efa& x, Rcpp::Nullable<Rcpp::List> nullable_efa_control
   if (nullable_efa_control.isNotNull()) {
     efa_control = Rcpp::as<Rcpp::List>(nullable_efa_control);
   }
+  if(efa_control.containsElementNamed("projection")) {
+    std::string manifold = efa_control["projection"];
+    x.manifold = manifold;
+  }
+  if(efa_control.containsElementNamed("DW")) {
+    arma::mat DW = efa_control["DW"];
+    x.DW = DW;
+  }
   if(efa_control.containsElementNamed("optim")) {
     std::string optim = efa_control["optim"];
     x.optim = optim;

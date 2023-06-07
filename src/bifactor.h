@@ -142,7 +142,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // First efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
                                      x1.projection, nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -163,7 +163,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   if ( n_generals == 1 ) {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.method, rotation_none,
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.method, rotation_none,
                                   "none", nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -203,7 +203,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   } else {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.method, x2.rotation,
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.method, x2.rotation,
                                   x2.projection, nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -514,7 +514,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 
   // First EFA (group factors):
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
                                      x1.projection, nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -544,7 +544,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 
     // Second EFA (general factors):
 
-    second_order_efa = efast(R, n_generals, x2.method, x2.rotation,
+    second_order_efa = efast(R, n_generals, x2.cor, x2.method, x2.rotation,
                              x2.projection, nullable_nobs,
                              x2.nullable_Target, x2.nullable_Weight,
                              x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -866,7 +866,7 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
 
   // First-order efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
                                      x1.projection, x1.nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -903,7 +903,7 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
   // x2.nullable_blocks = vector_to_list2(blocks_vector_); // FIX
 
   int nfactors = n_generals + n_groups;
-  Rcpp::List final_efa = efast(R, nfactors, x2.method, x2.rotation,
+  Rcpp::List final_efa = efast(R, nfactors, x2.cor, x2.method, x2.rotation,
                                x2.projection, x2.nullable_nobs,
                                x2.nullable_Target, x2.nullable_Weight,
                                x2.nullable_PhiTarget, x2.nullable_PhiWeight,

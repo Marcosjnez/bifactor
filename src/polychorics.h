@@ -24,6 +24,7 @@ std::vector<int> count(const std::vector<int>& X, const int n, const int max_X) 
   return frequency;
 }
 
+// [[Rcpp::export]]
 std::vector<std::vector<int>> joint_frequency_table(const std::vector<int>& X, const int n, const int max_X,
                                                     const std::vector<int>& Y, const int max_Y) {
 
@@ -37,6 +38,7 @@ std::vector<std::vector<int>> joint_frequency_table(const std::vector<int>& X, c
 
   // Return joint frequency table
   return joint_frequency;
+  // By row: joint_frequency[0] is row 1 of the frequency table
 }
 
 double erf_inverse (double a) {
@@ -69,9 +71,10 @@ double erf_inverse (double a) {
   return r;
 }
 
+const double SQRT2M_PI = std::sqrt(2 * M_PI);
 double Dnorm(double x) {
 
-  return std::exp(-0.5*x*x) / M_2_SQRTPI;
+  return std::exp(-0.5*x*x) / SQRT2M_PI;
 
 }
 
@@ -508,79 +511,6 @@ std::vector<double> cumsum(const std::vector<int> input) {
   return output;
 }
 
-Rcpp::List poly(const arma::mat& X, const int cores) {
-
-  /*
-   * Function to estimate the full polychoric correlation matrix
-   */
-
-  Rcpp::Timer timer;
-
-  Rcpp::List result;
-  const int n = X.n_rows;
-  const int q = X.n_cols;
-
-  arma::mat cor = arma::cor(X);
-  std::vector<std::vector<int>> cols(q);
-  std::vector<int> maxs(q);
-  std::vector<std::vector<double>> taus(q);
-  std::vector<size_t> s(q);
-  std::vector<std::vector<double>> mvphi(q);
-
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-  for(size_t i = 0; i < q; ++i) {
-    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
-    maxs[i] = *max_element(cols[i].begin(), cols[i].end());
-    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
-    mvphi[i] = cumsum(frequencies);
-    taus[i] = mvphi[i]; // Cumulative frequencies
-    for (size_t j = 0; j < maxs[i]; ++j) {
-      mvphi[i][j] /= n;
-      taus[i][j] = Qnorm(mvphi[i][j]);
-    }
-    mvphi[i].push_back(1.0);
-    mvphi[i].insert(mvphi[i].begin(), 0.0);
-    taus[i].push_back(pos_inf);
-    taus[i].insert(taus[i].begin(), neg_inf);
-    s[i] = taus[i].size() -1L;
-  }
-
-  timer.step("Thresholds");
-// return result;
-  arma::mat polys(q, q, arma::fill::eye);
-  arma::mat iters(q, q, arma::fill::zeros);
-
-  int K = 0.5*q*(q-1);
-  std::vector<std::vector<std::vector<int>>> tabs(K);
-  int k = 0;
-
-  #ifdef _OPENMP
-    omp_set_num_threads(cores);
-  #pragma omp parallel for
-  #endif
-  for(size_t i=0; i < (q-1L); ++i) {
-    for(int j=(i+1L); j < q; ++j) {
-      tabs[k] = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
-      std::vector<double> rho = optimize(taus[i], taus[j], tabs[k], s[i], s[j], mvphi[i], mvphi[j], n, cor(i, j));
-      polys(i, j) = polys(j, i) = rho[0];
-      iters(i, j) = iters(j, i) = rho[1];
-      ++k;
-    }
-  }
-
-  timer.step("polychorics");
-
-  result["polychorics"] = polys;
-  result["thresholds"] = taus;
-  result["contingency_tables"] = tabs;
-  result["iters"] = iters;
-  result["elapsed"] = timer;
-
-  return result;
-
-}
-
 Rcpp::List poly_derivatives(double rho, std::vector<double> tau1, std::vector<double> tau2,
                             std::vector<double> mvphi1, std::vector<double> mvphi2) {
 
@@ -632,7 +562,7 @@ Rcpp::List poly_derivatives(double rho, std::vector<double> tau1, std::vector<do
   return result;
 }
 
-Rcpp::List COV(arma::mat X, double rho, std::vector<double> tau1, std::vector<double> tau2,
+Rcpp::List COV(double rho, std::vector<double> tau1, std::vector<double> tau2,
                std::vector<double> mvphi1, std::vector<double> mvphi2,
                arma::mat ppi, arma::mat dppidp, arma::mat dppidtau1, arma::mat dppidtau2) {
 
@@ -641,10 +571,10 @@ Rcpp::List COV(arma::mat X, double rho, std::vector<double> tau1, std::vector<do
   tau2.erase(tau2.begin());  // remove the first element
   tau2.erase(tau2.end() - 1);  // remove the last element
 
-  mvphi1.erase(mvphi1.begin());  // remove the first element
-  mvphi1.erase(mvphi1.end() - 1);  // remove the last element
-  mvphi2.erase(mvphi2.begin());  // remove the first element
-  mvphi2.erase(mvphi2.end() - 1);  // remove the last element
+  // mvphi1.erase(mvphi1.begin());  // remove the first element
+  // mvphi1.erase(mvphi1.end() - 1);  // remove the last element
+  // mvphi2.erase(mvphi2.begin());  // remove the first element
+  // mvphi2.erase(mvphi2.end() - 1);  // remove the last element
 
   int s = tau1.size() + 1L;
   arma::mat Ag(s, s-1L, arma::fill::zeros);
@@ -671,11 +601,11 @@ Rcpp::List COV(arma::mat X, double rho, std::vector<double> tau1, std::vector<do
 
   arma::vec Betag(s-1L);
   for(int i=0; i < (s-1L); ++i) {
-    Betag[i] = 1/D * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau1.col(i));
+    Betag[i] = (1/D) * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau1.col(i));
   }
   arma::vec Betah(r-1L);
   for(int i=0; i < (r-1L); ++i) {
-    Betah[i] = 1/D * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau2.col(i));
+    Betah[i] = (1/D) * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau2.col(i));
   }
   arma::rowvec ones_r(r, arma::fill::ones);
   arma::vec ones_s(s, arma::fill::ones);
@@ -706,15 +636,15 @@ Rcpp::List COV(arma::mat X, double rho, std::vector<double> tau1, std::vector<do
 
 }
 
-Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
+arma::mat ACOV(const arma::mat X, const arma::mat R, const int cores) {
 
   /*
    * Function to estimate the Asymptotic covariance matrix of the polychoric correlations
    */
 
-  Rcpp::Timer timer;
+  // Rcpp::Timer timer;
+  // Rcpp::List result;
 
-  Rcpp::List result;
   const int n = X.n_rows;
   const int q = X.n_cols;
 
@@ -741,8 +671,8 @@ Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
     taus[i].insert(taus[i].begin(), neg_inf);
   }
 
-  timer.step("Thresholds");
-  result["taus"] = taus;
+  // timer.step("Thresholds");
+  // result["taus"] = taus;
 
   int dq = 0.5*q*(q-1);
   int k = 0;
@@ -775,7 +705,7 @@ Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
     // result["dppidtau1"] = dppidtau1;
     // result["dppidtau2"] = dppidtau2;
     // return result;
-    Rcpp::List x1 = COV(X.cols(indexes1, indexes2), rho1, taus[indexes1], taus[indexes2],
+    Rcpp::List x1 = COV(rho1, taus[indexes1], taus[indexes2],
                         mvphi[indexes1], mvphi[indexes2], ppi, dppidp,
                         dppidtau1, dppidtau2);
     // return x1;
@@ -793,7 +723,7 @@ Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
       arma::mat dppidp = deriv["dppidp"];
       arma::mat dppidtau3 = deriv["dppidtau1"];
       arma::mat dppidtau4 = deriv["dppidtau2"];
-      Rcpp::List x2 = COV(X.cols(indexes3, indexes4), rho2, taus[indexes3], taus[indexes4],
+      Rcpp::List x2 = COV(rho2, taus[indexes3], taus[indexes4],
                           mvphi[indexes3], mvphi[indexes4], ppi, dppidp,
                           dppidtau3, dppidtau4);
       arma::mat Gamma2 = x2["Gamma"];
@@ -818,12 +748,206 @@ Rcpp::List ACOV(const arma::mat X, const arma::mat R, const int cores) {
     }
   }
 
-  timer.step("ACOV");
+  // timer.step("ACOV");
 
-  result["ACOV"] = ACOV;
-  result["elapsed"] = timer;
+  // result["ACOV"] = ACOV;
+  // result["elapsed"] = timer;
+
+  return ACOV;
+
+}
+
+// [[Rcpp::export]]
+Rcpp::List COV2(double rho,
+                std::vector<double> tau1, std::vector<double> tau2,
+                std::vector<double> mvphi1, std::vector<double> mvphi2) {
+
+  Rcpp::List deriv = poly_derivatives(rho, tau1, tau2, mvphi1, mvphi2);
+  arma::mat ppi = deriv["ppi"];
+  arma::mat dppidp = deriv["dppidp"];
+  arma::mat dppidtau1 = deriv["dppidtau1"];
+  arma::mat dppidtau2 = deriv["dppidtau2"];
+
+  tau1.erase(tau1.begin());  // remove the first element
+  tau1.erase(tau1.end() - 1);  // remove the last element
+  tau2.erase(tau2.begin());  // remove the first element
+  tau2.erase(tau2.end() - 1);  // remove the last element
+
+  // mvphi1.erase(mvphi1.begin());  // remove the first element
+  // mvphi1.erase(mvphi1.end() - 1);  // remove the last element
+  // mvphi2.erase(mvphi2.begin());  // remove the first element
+  // mvphi2.erase(mvphi2.end() - 1);  // remove the last element
+
+  int s = tau1.size() + 1L;
+  arma::mat Ag(s, s-1L, arma::fill::zeros);
+  arma::vec dnorm_tau1(s-1L);
+  for(int i=0; i < (s-1L); ++i) dnorm_tau1(i) = Dnorm(tau1[i]);
+  Ag.diag() = dnorm_tau1;
+  Ag.diag(-1) = -dnorm_tau1;
+  arma::mat Dg = arma::diagmat(1/arma::sum(ppi, 1));
+  arma::mat Bg = (arma::inv(Ag.t() * Dg * Ag) * Ag.t() * Dg).t();
+
+  int r = tau2.size() + 1L;
+  arma::mat Ah(r, r-1L, arma::fill::zeros);
+  arma::vec dnorm_tau2(r-1L);
+  for(int i=0; i < (r-1L); ++i) dnorm_tau2(i) = Dnorm(tau2[i]);
+  Ah.diag() = dnorm_tau2;
+  Ah.diag(-1) = -dnorm_tau2;
+  arma::mat Dh = arma::diagmat(1/arma::sum(ppi, 0));
+  arma::mat Bh = (arma::inv(Ah.t() * Dh * Ah) * Ah.t() * Dh).t();
+
+  double D = arma::accu(dppidp % dppidp / ppi);
+  arma::mat alpha = (1/D) * (1/ppi) % dppidp;
+
+  // Set alpha cells to zero?
+
+  arma::vec Betag(s-1L);
+  for(int i=0; i < (s-1L); ++i) {
+    Betag[i] = (1/D) * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau1.col(i));
+  }
+  arma::vec Betah(r-1L);
+  for(int i=0; i < (r-1L); ++i) {
+    Betah[i] = (1/D) * arma::accu(1/arma::vectorise(ppi) % arma::vectorise(dppidp) % dppidtau2.col(i));
+  }
+  arma::rowvec ones_r(r, arma::fill::ones);
+  arma::vec ones_s(s, arma::fill::ones);
+
+  arma::mat Gamma = alpha + Bg * Betag * ones_r + ones_s * Betah.t() * Bh.t();
+  double omega = arma::accu(Gamma % ppi);
+
+  Rcpp::List result;
+  result["Gamma"] = Gamma;
+  result["omega"] = omega;
 
   return result;
 
 }
 
+// [[Rcpp::export]]
+arma::mat std_2_matrix(std::vector<std::vector<int>> tabs, int n) {
+
+  int p = tabs.size();
+  int q = tabs[0].size();
+  arma::mat matrix(p, q);
+
+  for(int i=0; i < p; ++i) { // Fill rows
+    for(int j=0; j < q; ++j) {
+      matrix(i, j) = (tabs[i][j] + 0.0) / (n + 0.0);
+    }
+  }
+
+  return matrix;
+
+}
+
+arma::mat DACOV2(arma::mat X, arma::mat poly,
+                 std::vector<std::vector<std::vector<int>>> tabs,
+                 std::vector<std::vector<double>> taus,
+                 std::vector<std::vector<double>> mvphis) {
+
+  int n = X.n_rows;
+  int p = X.n_cols;
+  arma::mat dacov(p, p);
+  int k = 0;
+  for(int i=0; i < (p-1); ++i) {
+    for(int j=(i+1); j < p; ++j) {
+      Rcpp::List x = COV2(poly(i, j), taus[i], taus[j], mvphis[i], mvphis[j]);
+      arma::mat Gamma = x["Gamma"];
+      double omega = x["omega"];
+      arma::mat table = std_2_matrix(tabs[k], n);
+      dacov(i, j) = arma::accu(Gamma % table % Gamma.t() - omega*omega); // Use Gamma.t() or Gamma???
+      dacov(j, i) = dacov(i, j);
+      ++k;
+    }
+  }
+
+  return dacov;
+
+}
+
+Rcpp::List poly(const arma::mat& X, const int cores, std::string acov) {
+
+  /*
+   * Function to estimate the full polychoric correlation matrix
+   */
+
+  Rcpp::Timer timer;
+
+  Rcpp::List result;
+  const int n = X.n_rows;
+  const int q = X.n_cols;
+
+  arma::mat cor = arma::cor(X);
+  std::vector<std::vector<int>> cols(q);
+  std::vector<int> maxs(q);
+  std::vector<std::vector<double>> taus(q);
+  std::vector<size_t> s(q);
+  std::vector<std::vector<double>> mvphi(q);
+
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+  for(size_t i = 0; i < q; ++i) {
+    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
+    maxs[i] = *max_element(cols[i].begin(), cols[i].end());
+    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
+    mvphi[i] = cumsum(frequencies);
+    taus[i] = mvphi[i]; // Cumulative frequencies
+    for (size_t j = 0; j < maxs[i]; ++j) {
+      mvphi[i][j] /= n;
+      taus[i][j] = Qnorm(mvphi[i][j]);
+    }
+    mvphi[i].push_back(1.0);
+    mvphi[i].insert(mvphi[i].begin(), 0.0);
+    taus[i].push_back(pos_inf);
+    taus[i].insert(taus[i].begin(), neg_inf);
+    s[i] = taus[i].size() -1L;
+  }
+
+  timer.step("thresholds");
+  // return result;
+  arma::mat polys(q, q, arma::fill::eye);
+  arma::mat iters(q, q, arma::fill::zeros);
+
+  int K = 0.5*q*(q-1);
+  std::vector<std::vector<std::vector<int>>> tabs(K);
+  int k = 0;
+
+#ifdef _OPENMP
+  omp_set_num_threads(cores);
+#pragma omp parallel for
+#endif
+  for(size_t i=0; i < (q-1L); ++i) {
+    for(int j=(i+1L); j < q; ++j) {
+      tabs[k] = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
+      std::vector<double> rho = optimize(taus[i], taus[j], tabs[k], s[i], s[j], mvphi[i], mvphi[j], n, cor(i, j));
+      polys(i, j) = polys(j, i) = rho[0];
+      iters(i, j) = iters(j, i) = rho[1];
+      ++k;
+    }
+  }
+
+  timer.step("polychorics");
+
+  arma::mat covariance;
+  if(acov == "var") {
+    covariance = DACOV2(X, polys, tabs, taus, mvphi);
+  } else if(acov == "cov") {
+    covariance = ACOV(X, polys, cores);
+  } else if(acov == "none") {
+  } else {
+    Rcpp::stop("Unknown acov. Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances");
+  }
+
+  timer.step("acov");
+
+  result["type"] = "polychorics";
+  result["correlation"] = polys;
+  result["thresholds"] = taus;
+  result["contingency_tables"] = tabs;
+  result["acov"] = covariance;
+  result["iters"] = iters;
+  result["elapsed"] = timer;
+
+  return result;
+
+}

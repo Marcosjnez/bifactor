@@ -21,11 +21,12 @@
 #include <RcppArmadillo.h>
 #include <Rcpp/Benchmark/Timer.h>
 #include "structures.h"
+#include "polychorics.h"
+#include "auxiliary_manifolds.h"
 #include "efa_manifolds.h"
 #include "efa_criteria.h"
 #include "auxiliary_efa_optim.h"
 #include "efa_optim.h"
-#include "auxiliary_manifolds.h"
 #include "rotation_manifolds.h"
 #include "auxiliary_criteria.h"
 #include "rotation_criteria.h"
@@ -42,7 +43,6 @@
 #include "asymptotic_cov.h"
 #include "method_derivatives.h"
 #include "se.h"
-#include "polychorics.h"
 #include "dimensionality.h"
 #include "check_deriv.h"
 
@@ -88,7 +88,8 @@ Rcpp::List rotate(arma::mat loadings,
                   int random_starts = 1, int cores = 1);
 
 // [[Rcpp::export]]
-Rcpp::List efast(arma::mat R, int nfactors, std::string method = "minres",
+Rcpp::List efast(arma::mat X, int nfactors, std::string cor = "pearson",
+                 std::string method = "minres",
                  Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                  std::string projection = "oblq",
                  Rcpp::Nullable<int> nobs = R_NilValue,
@@ -180,4 +181,4 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        arma::vec k = 0, double w = 1);
 
 // [[Rcpp::export]]
-Rcpp::List poly(const arma::mat& X, const int cores = 1L);
+Rcpp::List poly(const arma::mat& X, const int cores = 1L, const std::string acov = "none");

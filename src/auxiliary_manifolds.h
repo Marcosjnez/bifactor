@@ -161,3 +161,44 @@ std::vector<arma::uvec> increment(arma::uvec oblq_indexes, int p) {
   return indexes_list;
 
 }
+
+std::vector<int> subvector(std::vector<int> v, int lower, int upper) {
+
+  std::vector<int> subv(&v[lower], &v[upper]);
+
+  return subv;
+
+}
+
+std::vector<std::vector<int>> subvectors(std::vector<std::vector<int>> v, int lower, int upper) {
+
+  std::vector<std::vector<int>> subv(&v[lower], &v[upper]);
+
+  return subv;
+
+}
+
+// Gram-Schmidt process:
+
+arma::mat gram(arma::mat X) {
+
+  int n = X.n_rows;
+  int k = X.n_cols;
+  X.col(0) /= sqrt(arma::accu(X.col(0) % X.col(0)));
+
+  for(int i=1; i < k; ++i) {
+
+    for(int j=0; j < i; ++j) {
+
+      X.col(i) -= arma::accu(X.col(j) % X.col(i)) / arma::accu(X.col(j) % X.col(j)) * X.col(j);
+
+    }
+
+    X.col(i) /= sqrt(arma::accu(X.col(i) % X.col(i)));
+
+  }
+
+  return X;
+
+}
+

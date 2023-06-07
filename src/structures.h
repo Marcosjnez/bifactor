@@ -72,7 +72,7 @@ typedef struct arguments_rotate{
 typedef struct arguments_efast{
 
   int p, q;
-  std::string method = "minres", projection = "oblq";
+  std::string cor = "pearson", method = "minres", projection = "oblq";
   std::vector<std::string> rotation = {"oblimin"};
   Rcpp::Nullable<int> nullable_nobs = R_NilValue;
   Rcpp::Nullable<arma::mat> nullable_Target = R_NilValue, nullable_Weight = R_NilValue,
@@ -92,18 +92,18 @@ typedef struct arguments_efast{
 
 typedef struct arguments_efa{
 
-  arma::vec init;
-  arma::mat R, loadings, Rhat;
-  arma::vec psi, sqrt_psi, psi2, uniquenesses;
+  arma::mat init;
+  arma::mat R, loadings, Rhat, residuals, Phi, DW, X, gL, psi, sqrt_psi, psi2,
+  g_psi2, gU, g;
   int q, p;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
-  arma::vec u, eigval, g;
+  arma::vec u, uniquenesses, eigval;
   std::string method = "minres";
   double efa_factr = 1e07;
   std::string optim = "gradient";
   arma::vec lower = {0.005}, upper = {0.995};
-  arma::vec rg, dir, dpsi, dH;
+  arma::mat rg, dir, dpsi, dH;
   int iteration, iterations = 0L, maxit = 1000L;
   bool convergence = false, heywood = false;
   std::string manifold = "identity";

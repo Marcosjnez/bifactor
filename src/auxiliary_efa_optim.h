@@ -38,9 +38,9 @@ void armijo(arguments_efa& x, efa_manifold *manifold, efa_criterion *criterion,
     ++iteration;
     x.psi = psi + x.ss*x.dir;
     // Projection onto the manifold
-    // manifold->retr(x); // update x.T
+    manifold->retr(x); // update x.T
     // Parameterization
-    // manifold->param(x); // update x.L, x.Phi and x.Inv_T
+    manifold->param(x); // update x.L, x.Phi and x.Inv_T
     criterion->F(x);
     double df = x.f - f0;
     if (df < x.c1 * x.ss * x.inprod || // armijo condition
@@ -66,6 +66,8 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
     ++inner_iter;
 
     x2.psi = x.psi + x.ss*x.dir;
+    // Parameterization
+    manifold->param(x);
     criterion->F(x2);
     if((x2.f > (x.f + beta*x.ss*x.inprod)) | (inner_iter > 1 & (x2.f >= y_prev))) {
       alpha_lo = alpha_prev;
@@ -73,7 +75,10 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
       break;
     }
 
-    criterion->G(x2);
+    // update gradient
+    criterion->gLPU(x2);
+    manifold->grad(x2);
+    // criterion->G(x2);
     manifold->proj(x2);
     x2.inprod = arma::accu(x.dir % x2.rg);
 
@@ -98,12 +103,16 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
     criterion->F(xlo);
     x.ss = 0.5*(alpha_lo + alpha_hi);
     x2.psi = x.psi + x.ss*x.dir;
+    // Parameterization
+    manifold->param(x); // update x.L, x.Phi and x.Inv_T
     criterion->F(x);
 
     if((x2.f > (x.f + beta * x.ss * x.inprod)) | (x2.f >= xlo.f)) {
       alpha_hi = x.ss;
     } else {
-      criterion->G(x2);
+      // update gradient
+      criterion->gLPU(x);
+      manifold->grad(x);
       manifold->proj(x2);
       x2.inprod = arma::accu(x.dir % x2.rg);
       if(abs(x2.inprod) <= (-sigma*x.inprod)) {
@@ -356,12 +365,12 @@ efa_NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
   double ss_fac = 2, ss_min = 0.1;
 
   // Parameterization
-  // manifold->param(x); // update x.L, x.Phi and x.Inv_T
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
   criterion->F(x);
   // update gradient
-  // criterion->gLPU(x);
-  // manifold->grad(x);
-  criterion->G(x);
+  criterion->gLPU(x);
+  manifold->grad(x);
+  // criterion->G(x);
   // Riemannian gradient
   manifold->proj(x);
   // x.ss = 1;
@@ -382,10 +391,15 @@ efa_NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
     } else if(x.search == "wolfe") {
       strong_wolfe(x, manifold, criterion);
       x.psi += x.ss * x.dir; // For strong_wolve
+      manifold->param(x); // update x.L, x.Phi and x.Inv_T
       criterion->F(x); // For strong_wolve
     }
 
-    criterion->G(x);
+    // update gradient
+    criterion->gLPU(x);
+    manifold->grad(x);
+    // criterion->G(x);
+    // Riemannian gradient
     manifold->proj(x);
 
   } while (x.iterations < x.maxit);
@@ -413,11 +427,12 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
   double ss_fac = 2, ss_min = 0.1;
 
   // Parameterization
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
   criterion->F(x);
   // update the gradient
-  // criterion->gLPU(x);  // Update the gradient wrt x.L and x.Phi
-  // manifold->grad(x);  // Update the gradient wrt x.T
-  criterion->G(x);
+  criterion->gLPU(x);  // Update the gradient wrt x.L and x.Phi
+  manifold->grad(x);  // Update the gradient wrt x.T
+  // criterion->G(x);
   // Riemannian gradient
   manifold->proj(x);  // Update the Riemannian gradient x.rg
   x.dir = -x.rg;
@@ -450,9 +465,9 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
     armijo(x, manifold, criterion, ss_fac, ss_min);
 
     // update gradient
-    // criterion->gLPU(x);
-    // manifold->grad(x);
-    criterion->G(x);
+    criterion->gLPU(x);
+    manifold->grad(x);
+    // criterion->G(x);
     // Riemannian gradient
     manifold->proj(x);
 

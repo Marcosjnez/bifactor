@@ -216,8 +216,8 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
-      Rcpp::List polychor = poly(X_boots.slice(i), 1L);
-      arma::mat S_boot = polychor["polychorics"];
+      Rcpp::List polychor = poly(X_boots.slice(i), 1L, "none");
+      arma::mat S_boot = polychor["correlation"];
       if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
       if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
 
@@ -374,7 +374,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
 
   for(int i=0; i < unique_size; ++i) {
 
-      Rcpp::List fit = efast(S, unique[i], x.method, x.rotation, x.projection,
+      Rcpp::List fit = efast(S, unique[i], x.cor, x.method, x.rotation, x.projection,
                              x.nullable_nobs,
                              x.nullable_Target, x.nullable_Weight,
                              x.nullable_PhiTarget, x.nullable_PhiWeight,
@@ -474,7 +474,7 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
 
   // efa:
 
-  Rcpp::List fit = efast(S, dim, x.method, x.rotation, x.projection,
+  Rcpp::List fit = efast(S, dim, x.cor, x.method, x.rotation, x.projection,
                          x.nullable_nobs,
                          x.nullable_Target, x.nullable_Weight,
                          x.nullable_PhiTarget, x.nullable_PhiWeight,
