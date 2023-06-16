@@ -108,7 +108,7 @@ public:
     arma::mat A = x.eigvec(arma::span::all, arma::span(x.p-x.q, x.p-1));
     arma::vec eigenvalues = x.eigval(arma::span(x.p-x.q, x.p-1));
     // x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi)/x.psi;
-    x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi2)/x.psi2;
+    x.g_psi2 = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi2)/x.psi2;
 
   }
 

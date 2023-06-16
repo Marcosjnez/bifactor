@@ -1,6 +1,44 @@
 // Conjugate-gradient method to solve the Riemannian Newton equation in the Trust-Region algorithm:
+// Line-search satisfying the armijo condition:
 
-void tcg(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion,
+void cor_armijo(arguments_cor& x, cor_manifold *manifold,
+            cor_criterion *criterion,
+            double ss_fac, double ss_min, double max_iter,
+            double c1, double c2, double eps) {
+
+  x.ss = std::max(ss_min, x.ss * ss_fac);
+  // x.ss = x.ss*2;
+  double f0 = x.f;
+  int iteration = 0;
+  arma::mat X = x.T;
+  x.inprod = arma::accu(x.dir % x.rg);
+
+  do{
+
+    ++iteration;
+    x.T = X + x.ss*x.dir;
+    // Projection onto the manifold
+    manifold->retr(x); // update x.T
+    // Parameterization
+    manifold->param(x); // update x.L, x.Phi and x.Inv_T
+    criterion->F(x);
+    double df = x.f - f0;
+    if (df < c1 * x.ss * x.inprod || x.ss < 1e-09) // armijo condition
+      break;
+    x.ss *= c2;
+
+  } while (iteration <= max_iter);
+
+  bool convergence = true;
+  if(iteration > max_iter) {
+
+    convergence = false;
+
+  }
+
+}
+
+void cor_tcg(arguments_cor x, cor_manifold *manifold, cor_criterion *criterion,
          arma::mat& dir, bool& att_bnd, double ng, arma::vec c, double rad) {
 
   /*
@@ -20,6 +58,12 @@ void tcg(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion,
   int iter = 0;
 
   do{
+
+    // Differential of L and P
+    manifold->dcor(x);
+
+    // Differential of the gradient of L and P
+    criterion->dgcor(x);
 
     // Differential of g
     manifold->dgrad(x);
@@ -75,9 +119,8 @@ void tcg(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion,
 }
 
 // Newton Trust-region algorithm:
-
 typedef std::tuple<arma::mat, arma::mat, double, int, bool> cor_NTR;
-cor_NTR ntr(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion) {
+cor_NTR cor_ntr(arguments_cor x, cor_manifold *manifold, cor_criterion *criterion) {
 
   /*
    * Riemannian trust-region algorithm
@@ -85,19 +128,28 @@ cor_NTR ntr(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion) {
    */
 
   // Parameterization
-  manifold->param(x); // update
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
 
   // Objective
-  criterion->F(x); // update
+  criterion->F(x); // update x.f, x.L2, x.IgCL2N, x.term, x.f1 and x.f2
 
-  // Gradient wrt cor
-  criterion->gcor(x); // update
+  // Rcpp::Rcout << "x.f = " << x.f << std::endl;
+
+  // Gradient wrt L and P
+  criterion->gcor(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
+
+  // Rcpp::Rcout << "x.gL = " << x.gL << std::endl;
 
   // Gradient wtr T
-  manifold->grad(x); // update
+  manifold->grad(x); // update x.g
 
   // Riemannian gradient
-  manifold->proj(x); // update
+  manifold->proj(x); // update x.rg and x.A
+
+  // Differential of the gradient of L and P
+  // criterion->dgLP(x); // update dgL and dgP
+
+  // Rcpp::Rcout << "x.dgL = " << x.dgL << std::endl;
 
   x.ng = sqrt(arma::accu(x.rg % x.rg));
 
@@ -130,7 +182,7 @@ cor_NTR ntr(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion) {
   do{
 
     // subsolver
-    tcg(x, manifold, criterion, dir, att_bnd, x.ng, c, rad);
+    cor_tcg(x, manifold, criterion, dir, att_bnd, x.ng, c, rad);
     x.dT = dir;
     new_x = x;
     new_x.T += dir;
@@ -138,17 +190,17 @@ cor_NTR ntr(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion) {
     // Projection onto the manifold
     manifold->retr(new_x); // update x.T
 
-    // Differential of cor
-    manifold->dcor(x); // update x.dcor
+    // Differential of L and P
+    manifold->dcor(x); // update x.dL, x.dP and Inv_T_dt
 
-    // Differential of the gradient of cor
-    criterion->dgcor(x); // update x.dgcor
+    // Differential of the gradient of L and P
+    criterion->dgcor(x); // update dgL and dgP
 
     // Differential of g
-    manifold->dgrad(x); // update x.dg
+    manifold->dgrad(x); // update dg
 
     // Riemannian hessian
-    manifold->hess(x); // update x.dH
+    manifold->hess(x); // update dH
 
     preddiff = - arma::accu(x.dT % ( x.rg + 0.5 * x.dH) );
 
@@ -192,6 +244,57 @@ cor_NTR ntr(cor_rotate x, cor_manifold *manifold, cor_criterion *criterion) {
       x.ng = sqrt(arma::accu(x.rg % x.rg));
 
     }
+
+    ++x.iteration;
+    if (x.ng < x.eps) {
+      x.convergence = true;
+      break;
+    }
+
+  } while (x.iteration < x.maxit);
+
+  cor_NTR result = std::make_tuple(x.cor, x.T, x.f, x.iteration, x.convergence);
+
+  return result;
+
+}
+
+// Gradient descent algorithm:
+cor_NTR cor_gd(arguments_cor x, cor_manifold *manifold, cor_criterion *criterion) {
+
+  x.iteration = 0;
+  double ss_fac = 2, ss_min = 0.1, c1 = 0.5, c2 = 0.5;
+
+  // Parameterization
+  manifold->param(x); // update x.L, x.Phi and x.Inv_T
+  criterion->F(x);
+  // update gradient
+  criterion->gcor(x);
+  manifold->grad(x);
+  // Riemannian gradient
+  manifold->proj(x);
+  x.dir = -x.rg;
+  x.inprod = arma::accu(-x.dir % x.rg);
+  x.ng = sqrt(x.inprod);
+  // x.ss = 1;
+
+  x.convergence = false;
+
+  do{
+
+    // x.ss *= 2;
+
+    cor_armijo(x, manifold, criterion, ss_fac, ss_min,
+               10, c1, c2, x.eps);
+
+    // update gradient
+    criterion->gcor(x);
+    manifold->grad(x);
+    // Riemannian gradient
+    manifold->proj(x);
+    x.dir = -x.rg;
+    x.inprod = arma::accu(-x.dir % x.rg);
+    x.ng = sqrt(x.inprod);
 
     ++x.iteration;
     if (x.ng < x.eps) {

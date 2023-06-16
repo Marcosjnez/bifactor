@@ -119,18 +119,18 @@ typedef struct arguments_efa{
 typedef struct arguments_cor{
 
   int nobs, q, iteration = 0L, maxit = 1e04;
-  double f, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
+  double f = 0.00, eps = 1e-05, ng = 1, ss = 1, inprod = 1, n_pairs;
   bool convergence = false;
-  size_t s;
-  std::vector<std::vector<std::vector<std::vector<double>>>> n;
-  std::vector<std::vector<double>> taus;
-  arma::mat T, cor, dT;
-  arma::vec g, rg;
-  arma::vec dg, dH;
-  arma::vec dcor, dgcor;
+  std::vector<size_t> s;
+  std::vector<std::vector<double>> taus, mvphi;
+  std::vector<std::vector<std::vector<int>>> n;
+  arma::mat T, cor, dT, dir;
+  arma::mat g, rg;
+  arma::mat dg, dH;
+  arma::mat dcor, gcor, dgcor;
 
 } args_cor;
 
 typedef std::tuple<arma::mat, arma::vec, arma::mat, double, int, bool> efa_NTR;
-
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NTR;
+typedef std::tuple<arma::mat, arma::mat, double, int, bool> cor_NTR;

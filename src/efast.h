@@ -107,7 +107,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = poly(X, cores, "none");
+      correlation_result = polyfast(X, cores, "none", false);
       arma::mat polys = correlation_result["polychorics"];
       R = polys;
     } else if(cor == "pearson") {
@@ -145,6 +145,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
   } else if(method == "dwls") {
+    xefa.manifold = "orth";
     xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
     xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
@@ -249,6 +250,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
     weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
 
+  } else if(xefa.normalization == "cureton") {
+
   } else if(xefa.normalization == "none") {
 
   } else {
@@ -284,6 +287,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if (xefa.normalization == "kaiser") {
 
     L.each_col() %= weigths;
+
+  } else if(xefa.normalization == "cureton") {
 
   }
 
@@ -353,7 +358,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = poly(X, cores, "none");
+      correlation_result = polyfast(X, cores, "none", false);
       arma::mat polys = correlation_result["polychorics"];
       R = polys;
     } else if(cor == "pearson") {
@@ -492,6 +497,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
     weigths = sqrt(arma::sum(x.lambda % x.lambda, 1));
     x.lambda.each_col() /= weigths;
 
+  } else if(xefa.normalization == "cureton") {
+
   } else if(xefa.normalization == "none") {
 
   } else {
@@ -527,6 +534,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if (xefa.normalization == "kaiser") {
 
     L.each_col() %= weigths;
+
+  } else if(xefa.normalization == "cureton") {
 
   }
 

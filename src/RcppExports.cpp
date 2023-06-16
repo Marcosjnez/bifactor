@@ -298,16 +298,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// poly
-Rcpp::List poly(const arma::mat& X, const int cores, const std::string acov);
-RcppExport SEXP _bifactor_poly(SEXP XSEXP, SEXP coresSEXP, SEXP acovSEXP) {
+// polyfast
+Rcpp::List polyfast(const arma::mat& X, const int cores, const std::string acov, bool PD);
+RcppExport SEXP _bifactor_polyfast(SEXP XSEXP, SEXP coresSEXP, SEXP acovSEXP, SEXP PDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const int >::type cores(coresSEXP);
     Rcpp::traits::input_parameter< const std::string >::type acov(acovSEXP);
-    rcpp_result_gen = Rcpp::wrap(poly(X, cores, acov));
+    Rcpp::traits::input_parameter< bool >::type PD(PDSEXP);
+    rcpp_result_gen = Rcpp::wrap(polyfast(X, cores, acov, PD));
+    return rcpp_result_gen;
+END_RCPP
+}
+// poly2
+Rcpp::List poly2(const arma::mat& X, const int cores);
+RcppExport SEXP _bifactor_poly2(SEXP XSEXP, SEXP coresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(poly2(X, cores));
+    return rcpp_result_gen;
+END_RCPP
+}
+// fpoly
+double fpoly(const arma::mat& X, const arma::mat& S);
+RcppExport SEXP _bifactor_fpoly(SEXP XSEXP, SEXP SSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type S(SSEXP);
+    rcpp_result_gen = Rcpp::wrap(fpoly(X, S));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -371,7 +396,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 10},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 17},
-    {"_bifactor_poly", (DL_FUNC) &_bifactor_poly, 3},
+    {"_bifactor_polyfast", (DL_FUNC) &_bifactor_polyfast, 4},
+    {"_bifactor_poly2", (DL_FUNC) &_bifactor_poly2, 2},
+    {"_bifactor_fpoly", (DL_FUNC) &_bifactor_fpoly, 2},
     {"_bifactor_joint_frequency_table", (DL_FUNC) &_bifactor_joint_frequency_table, 5},
     {"_bifactor_COV2", (DL_FUNC) &_bifactor_COV2, 5},
     {"_bifactor_std_2_matrix", (DL_FUNC) &_bifactor_std_2_matrix, 2},

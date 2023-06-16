@@ -13,25 +13,9 @@ public:
 
   virtual void F(arguments_cor& x) = 0;
 
-  virtual void g_cor(arguments_cor& x) = 0;
+  virtual void gcor(arguments_cor& x) = 0;
 
   virtual void dgcor(arguments_cor& x) = 0;
-
-};
-
-/*
- * none
- */
-
-class none: public cor_criterion {
-
-public:
-
-  void F(arguments_cor& x) {}
-
-  void gcor(arguments_cor& x) {}
-
-  void dgcor(arguments_cor& x) {}
 
 };
 
@@ -45,54 +29,62 @@ public:
 
   void F(arguments_cor& x) {
 
+    x.f = 0;
+    int K = 0L;
     for(size_t l=0; l < (x.q-1L); ++l) {
       for(int k=(l+1L); k < x.q; ++k) {
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
             double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
-                                 x.mvphi1[l][i], x.mvphi2[k][j], x.mvphi1[l][i+1], x.mvphi2[k][j+1]);
-            x.f -= x.n[l][k][i][j] * std::log(ppi) / x.nobs; // No need to compute the objective value
+                                 x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
+            x.f -= x.n[K][i][j] * std::log(ppi) / x.nobs; // No need to compute the objective value
           }
         }
+        ++K;
       }
     }
+    x.f /= x.n_pairs;
   }
 
   void gcor(arguments_cor& x) {
 
-    int kl = 0;
+    x.gcor.zeros();
+    int K = 0L;
     for(size_t l=0; l < (x.q-1L); ++l) {
       for(int k=(l+1L); k < x.q; ++k) {
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
             double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
-                  x.mvphi1[l][i], x.mvphi2[k][j], x.mvphi1[l][i+1], x.mvphi2[k][j+1]);
+                  x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
             // PDF of the Bivariate normal:
             double gij = dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
               dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j+1]) -
               dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j]) +
               dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j]);
             if(ppi < 1e-09) ppi = 1e-09; // Avoid division by zero
-            x.gcor(kl) -= x.n[l][k][i][j] / ppi * gij / x.nobs; // Update Gradient
-            ++kl;
+            x.gcor(l, k) -= x.n[K][i][j] / ppi * gij / x.nobs; // Update Gradient
+            x.gcor(k, l) = x.gcor(l, k);
           }
         }
+        ++K;
       }
     }
+    x.gcor /= x.n_pairs;
   }
 
   void dgcor(arguments_cor& x) {
 
-    int kl = 0;
+    x.dgcor.zeros();
+    int K = 0L;
     for(size_t l=0; l < (x.q-1L); ++l) {
       for(int k=(l+1L); k < x.q; ++k) {
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
             double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
-                                 x.mvphi1[l][i], x.mvphi2[k][j], x.mvphi1[l][i+1], x.mvphi2[k][j+1]);
+                                 x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
             // PDF of the Bivariate normal:
             double gij = dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
               dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j+1]) -
@@ -104,25 +96,26 @@ public:
               ddbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j]) +
               ddbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j]);
             if(ppi < 1e-09) ppi = 1e-09; // Avoid division by zero
-            double term = hij - gij*x.cor(l, k);
-            x.dgcor(kl) += x.n[l][k][i][j]*(gij*gij - ppi*term)/(ppi*ppi) / x.nobs * x.dcor(l, k);
-            ++kl;
+            // double term = hij - gij*x.cor(l, k);
+            x.dgcor(l, k) += x.n[K][i][j]*(gij*gij - ppi*hij)/(ppi*ppi) / x.nobs * x.dcor(l, k);
+            x.dgcor(k, l) = x.dgcor(l, k);
           }
         }
+        ++K;
       }
     }
-
+    x.dgcor /= x.n_pairs;
   }
 
 };
 
 // Choose the cor criteria:
 
-cor_criterion* choose_criterion(std::string cor_fam) {
+cor_criterion* choose_cor_criterion(std::string cor_fam) {
 
   cor_criterion *criterion;
 
-  if (cor_fam == "target") {
+  if (cor_fam == "poly") {
 
     criterion = new poly_fam();
 
@@ -130,7 +123,7 @@ cor_criterion* choose_criterion(std::string cor_fam) {
 
   } else {
 
-    Rcpp::stop("Available models: poly");
+    Rcpp::stop("Available correlations: pearson, poly");
 
   }
 

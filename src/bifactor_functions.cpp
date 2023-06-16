@@ -21,7 +21,6 @@
 #include <RcppArmadillo.h>
 #include <Rcpp/Benchmark/Timer.h>
 #include "structures.h"
-#include "polychorics.h"
 #include "auxiliary_manifolds.h"
 #include "efa_manifolds.h"
 #include "efa_criteria.h"
@@ -36,6 +35,11 @@
 #include "rotation_checks.h"
 #include "rotation_optim.h"
 #include "rotate.h"
+#include "polychorics.h"
+#include "cor_manifolds.h"
+#include "cor_criteria.h"
+#include "auxiliary_cor_optim.h"
+#include "cor_optim.h"
 #include "efa_fit.h"
 #include "efa.h"
 #include "efast.h"
@@ -181,4 +185,4 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        arma::vec k = 0, double w = 1);
 
 // [[Rcpp::export]]
-Rcpp::List poly(const arma::mat& X, const int cores = 1L, const std::string acov = "none");
+Rcpp::List polyfast(const arma::mat& X, const int cores = 1L, const std::string acov = "none", bool PD = false);

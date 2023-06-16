@@ -571,11 +571,6 @@ Rcpp::List COV(double rho, std::vector<double> tau1, std::vector<double> tau2,
   tau2.erase(tau2.begin());  // remove the first element
   tau2.erase(tau2.end() - 1);  // remove the last element
 
-  // mvphi1.erase(mvphi1.begin());  // remove the first element
-  // mvphi1.erase(mvphi1.end() - 1);  // remove the last element
-  // mvphi2.erase(mvphi2.begin());  // remove the first element
-  // mvphi2.erase(mvphi2.end() - 1);  // remove the last element
-
   int s = tau1.size() + 1L;
   arma::mat Ag(s, s-1L, arma::fill::zeros);
   arma::vec dnorm_tau1(s-1L);
@@ -711,6 +706,7 @@ arma::mat ACOV(const arma::mat X, const arma::mat R, const int cores) {
     // return x1;
     arma::mat Gamma1 = x1["Gamma"];
     double omega1 = x1["omega"];
+
     for(int j=0; j < dq; ++j) {
       int indexes3 = indexes[j][0];
       int indexes4 = indexes[j][1];
@@ -736,7 +732,7 @@ arma::mat ACOV(const arma::mat X, const arma::mat R, const int cores) {
               for(int l=0; l < n; ++l) {
                 if(X(l, indexes1) == a && X(l, indexes2) == b &&
                    X(l, indexes3) == c && X(l, indexes4) == d) {
-                  f += Gamma1(a, b) * Gamma2(c, d) - omega_prod;
+                  f += Gamma1(a, b) * Gamma2(d, c) - omega_prod;
                 }
               }
             }
@@ -762,6 +758,8 @@ Rcpp::List COV2(double rho,
                 std::vector<double> tau1, std::vector<double> tau2,
                 std::vector<double> mvphi1, std::vector<double> mvphi2) {
 
+  // Compute the asymptotic variance of the polychoric correlations
+
   Rcpp::List deriv = poly_derivatives(rho, tau1, tau2, mvphi1, mvphi2);
   arma::mat ppi = deriv["ppi"];
   arma::mat dppidp = deriv["dppidp"];
@@ -772,11 +770,6 @@ Rcpp::List COV2(double rho,
   tau1.erase(tau1.end() - 1);  // remove the last element
   tau2.erase(tau2.begin());  // remove the first element
   tau2.erase(tau2.end() - 1);  // remove the last element
-
-  // mvphi1.erase(mvphi1.begin());  // remove the first element
-  // mvphi1.erase(mvphi1.end() - 1);  // remove the last element
-  // mvphi2.erase(mvphi2.begin());  // remove the first element
-  // mvphi2.erase(mvphi2.end() - 1);  // remove the last element
 
   int s = tau1.size() + 1L;
   arma::mat Ag(s, s-1L, arma::fill::zeros);
@@ -840,13 +833,14 @@ arma::mat std_2_matrix(std::vector<std::vector<int>> tabs, int n) {
 
 }
 
-arma::mat DACOV2(arma::mat X, arma::mat poly,
+arma::mat DACOV2(int n, arma::mat poly,
                  std::vector<std::vector<std::vector<int>>> tabs,
                  std::vector<std::vector<double>> taus,
                  std::vector<std::vector<double>> mvphis) {
 
-  int n = X.n_rows;
-  int p = X.n_cols;
+  // Compute the asymptotic variance of the polychoric correlations
+
+  int p = taus.size();
   arma::mat dacov(p, p);
   int k = 0;
   for(int i=0; i < (p-1); ++i) {
@@ -862,92 +856,5 @@ arma::mat DACOV2(arma::mat X, arma::mat poly,
   }
 
   return dacov;
-
-}
-
-Rcpp::List poly(const arma::mat& X, const int cores, std::string acov) {
-
-  /*
-   * Function to estimate the full polychoric correlation matrix
-   */
-
-  Rcpp::Timer timer;
-
-  Rcpp::List result;
-  const int n = X.n_rows;
-  const int q = X.n_cols;
-
-  arma::mat cor = arma::cor(X);
-  std::vector<std::vector<int>> cols(q);
-  std::vector<int> maxs(q);
-  std::vector<std::vector<double>> taus(q);
-  std::vector<size_t> s(q);
-  std::vector<std::vector<double>> mvphi(q);
-
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-  for(size_t i = 0; i < q; ++i) {
-    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
-    maxs[i] = *max_element(cols[i].begin(), cols[i].end());
-    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
-    mvphi[i] = cumsum(frequencies);
-    taus[i] = mvphi[i]; // Cumulative frequencies
-    for (size_t j = 0; j < maxs[i]; ++j) {
-      mvphi[i][j] /= n;
-      taus[i][j] = Qnorm(mvphi[i][j]);
-    }
-    mvphi[i].push_back(1.0);
-    mvphi[i].insert(mvphi[i].begin(), 0.0);
-    taus[i].push_back(pos_inf);
-    taus[i].insert(taus[i].begin(), neg_inf);
-    s[i] = taus[i].size() -1L;
-  }
-
-  timer.step("thresholds");
-  // return result;
-  arma::mat polys(q, q, arma::fill::eye);
-  arma::mat iters(q, q, arma::fill::zeros);
-
-  int K = 0.5*q*(q-1);
-  std::vector<std::vector<std::vector<int>>> tabs(K);
-  int k = 0;
-
-#ifdef _OPENMP
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-#endif
-  for(size_t i=0; i < (q-1L); ++i) {
-    for(int j=(i+1L); j < q; ++j) {
-      tabs[k] = joint_frequency_table(cols[i], n, maxs[i], cols[j], maxs[j]);
-      std::vector<double> rho = optimize(taus[i], taus[j], tabs[k], s[i], s[j], mvphi[i], mvphi[j], n, cor(i, j));
-      polys(i, j) = polys(j, i) = rho[0];
-      iters(i, j) = iters(j, i) = rho[1];
-      ++k;
-    }
-  }
-
-  timer.step("polychorics");
-
-  arma::mat covariance;
-  if(acov == "var") {
-    covariance = DACOV2(X, polys, tabs, taus, mvphi);
-  } else if(acov == "cov") {
-    covariance = ACOV(X, polys, cores);
-  } else if(acov == "none") {
-  } else {
-    Rcpp::stop("Unknown acov. Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances");
-  }
-
-  timer.step("acov");
-
-  result["type"] = "polychorics";
-  result["correlation"] = polys;
-  result["thresholds"] = taus;
-  result["contingency_tables"] = tabs;
-  result["acov"] = covariance;
-  result["iters"] = iters;
-  result["elapsed"] = timer;
-
-  return result;
 
 }

@@ -216,7 +216,7 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
-      Rcpp::List polychor = poly(X_boots.slice(i), 1L, "none");
+      Rcpp::List polychor = polyfast(X_boots.slice(i), 1L, "none", false);
       arma::mat S_boot = polychor["correlation"];
       if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
       if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);

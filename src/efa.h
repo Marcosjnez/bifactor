@@ -208,7 +208,7 @@ Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion
 
   Rcpp::List result;
 
-  if(x.method == "minres" | x.method == "ml" | x.method == "dwls") {
+  if(x.method == "ml" || x.method == "minres" || x.method == "dwls") {
 
     extract_efa(x, manifold, criterion);
 
