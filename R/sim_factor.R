@@ -183,7 +183,7 @@ g_dwls <- function(x, S, ldetS, Inv_W, q, indexes_lambda, indexes_phi, indexes_p
 }
 
 CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)),
-                method = "minres") {
+                method = "minres", W = NULL) {
 
   p <- nrow(target)
   q <- ncol(target)
@@ -228,6 +228,7 @@ CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)),
 
     ldetS <- NULL
     Inv_W <- 1/W
+    Inv_W[is.infinite(Inv_W)] <- 0
     f <- f_dwls
     g <- g_dwls
 
@@ -577,7 +578,7 @@ yuan <- function(R, lambda, Phi, Psi,
   target <- ifelse(lambda != 0, 1, 0)
   targetphi <- ifelse(Phi != 0, 1, 0)
   targetpsi <- ifelse(Psi != 0, 1, 0)
-  cfa <- CFA(Rerror, target, targetphi, targetpsi, method = method)
+  cfa <- CFA(Rerror, target, targetphi, targetpsi, method = method, W = NULL)
   Phat <- cfa$model
 
   # Get the error matrix:

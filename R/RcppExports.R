@@ -65,8 +65,16 @@ check_deriv <- function(L, Phi, dL, dP, rotation = as.character( c("oblimin")), 
     .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w)
 }
 
-poly <- function(X, cores = 1L, acov = "none") {
-    .Call(`_bifactor_poly`, X, cores, acov)
+polyfast <- function(X, cores = 1L, acov = "none", PD = FALSE) {
+    .Call(`_bifactor_polyfast`, X, cores, acov, PD)
+}
+
+poly2 <- function(X, cores) {
+    .Call(`_bifactor_poly2`, X, cores)
+}
+
+fpoly <- function(X, S) {
+    .Call(`_bifactor_fpoly`, X, S)
 }
 
 joint_frequency_table <- function(X, n, max_X, Y, max_Y) {
