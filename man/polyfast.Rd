@@ -4,16 +4,16 @@
 \alias{polyfast}
 \title{Fast polychoric correlations.}
 \usage{
-polyfast(X, cores = 1L, acov = "none", PD = FALSE)
+polyfast(X, acov = "none", PD = FALSE, cores = 1L)
 }
 \arguments{
 \item{X}{Matrix of categorical scores. The lowest score must start at 0.}
 
-\item{cores}{Number of parallel cores to compute the polychoric correlations.}
-
 \item{acov}{Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Defaults to "none".}
 
 \item{PD}{Force a positive definite solution? Defaults to FALSE.}
+
+\item{cores}{Number of parallel cores to compute the polychoric correlations.}
 }
 \value{
 A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
