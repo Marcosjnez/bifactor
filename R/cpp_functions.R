@@ -661,16 +661,16 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #' Fast polychoric correlations.
 #' @usage
 #'
-#' polyfast(X, cores = 1L, acov = "none", PD = FALSE)
+#' polyfast(X, acov = "none", PD = FALSE, cores = 1L)
 #'
 #' @description
 #'
 #' Compute huge polychoric correlation matrices very fast.
 #'
 #' @param X Matrix of categorical scores. The lowest score must start at 0.
-#' @param cores Number of parallel cores to compute the polychoric correlations.
 #' @param acov Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Defaults to "none".
 #' @param PD Force a positive definite solution? Defaults to FALSE.
+#' @param cores Number of parallel cores to compute the polychoric correlations.
 #'
 #' @details
 #'
@@ -678,6 +678,6 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @return A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
 #' @export
-polyfast <- function(X, cores = 1L, acov = "none", PD = FALSE) {
-  .Call(`_bifactor_polyfast`, X, cores, acov, PD)
+polyfast <- function(X, acov = "none", PD = FALSE, nboot = 1000L, cores = 1L) {
+  .Call(`_bifactor_polyfast`, X, acov, PD, nboot, cores)
 }
