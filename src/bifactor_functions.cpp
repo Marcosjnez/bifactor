@@ -185,4 +185,5 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        arma::vec k = 0, double w = 1);
 
 // [[Rcpp::export]]
-Rcpp::List polyfast(const arma::mat& X, const int cores = 1L, const std::string acov = "none", bool PD = false);
+Rcpp::List polyfast(const arma::mat& X, const std::string acov = "none",
+                    bool PD = false, const int nboot = 1000L, const int cores = 1L);

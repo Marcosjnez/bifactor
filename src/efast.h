@@ -107,7 +107,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, cores, "none", false);
+      correlation_result = polyfast(X, "none", false, 0L, cores);
       arma::mat polys = correlation_result["polychorics"];
       R = polys;
     } else if(cor == "pearson") {
@@ -358,7 +358,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, cores, "none", false);
+      correlation_result = polyfast(X, "none", false, 0L, cores);
       arma::mat polys = correlation_result["polychorics"];
       R = polys;
     } else if(cor == "pearson") {
