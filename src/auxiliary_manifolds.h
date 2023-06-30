@@ -7,6 +7,22 @@
 
 // #include "structures.h"
 
+// [[Rcpp::export]]
+arma::mat smoothing(arma::mat X, double min_eigval = 0.001) {
+
+  arma::vec eigval;
+  arma::mat eigvec;
+
+  arma::eig_sym(eigval, eigvec, X);
+  arma::vec new_eigval = arma::clamp(eigval, min_eigval, eigval.max());
+
+  arma::mat smoothed = eigvec * arma::diagmat(new_eigval) * eigvec.t();
+  arma::mat diag = arma::diagmat(1/arma::sqrt(arma::diagvec(smoothed)));
+
+  return diag * smoothed * diag;
+
+}
+
 arma::mat dxt(int p, int q) {
 
   /*

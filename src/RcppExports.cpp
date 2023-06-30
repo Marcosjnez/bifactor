@@ -11,6 +11,18 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// smoothing
+arma::mat smoothing(arma::mat X, double min_eigval);
+RcppExport SEXP _bifactor_smoothing(SEXP XSEXP, SEXP min_eigvalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< double >::type min_eigval(min_eigvalSEXP);
+    rcpp_result_gen = Rcpp::wrap(smoothing(X, min_eigval));
+    return rcpp_result_gen;
+END_RCPP
+}
 // random_orth
 arma::mat random_orth(int p, int q);
 RcppExport SEXP _bifactor_random_orth(SEXP pSEXP, SEXP qSEXP) {
@@ -394,6 +406,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_bifactor_smoothing", (DL_FUNC) &_bifactor_smoothing, 2},
     {"_bifactor_random_orth", (DL_FUNC) &_bifactor_random_orth, 2},
     {"_bifactor_random_oblq", (DL_FUNC) &_bifactor_random_oblq, 2},
     {"_bifactor_random_poblq", (DL_FUNC) &_bifactor_random_poblq, 3},

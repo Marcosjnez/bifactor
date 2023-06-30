@@ -148,10 +148,16 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
   } else if(method == "dwls") {
+    Rcpp::stop("dwls estimation not available yet");
     xefa.manifold = "orth";
     xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
-    xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+    if(xefa.R.is_sympd()) {
+      xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+    } else {
+      arma::mat smoothed = smoothing(xefa.R, 0.001);
+      xefa.psi = 1/arma::diagvec(arma::inv_sympd(smoothed));
+    }
   }
 
   check_efa(xefa, nullable_efa_control);
@@ -397,9 +403,15 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
   } else if(method == "dwls") {
+    Rcpp::stop("dwls estimation not available yet");
     xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
-    xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+    if(xefa.R.is_sympd()) {
+      xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
+    } else {
+      arma::mat smoothed = smoothing(xefa.R, 0.001);
+      xefa.psi = 1/arma::diagvec(arma::inv_sympd(smoothed));
+    }
   }
 
   check_efa(xefa, nullable_efa_control);
