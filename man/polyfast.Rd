@@ -4,14 +4,18 @@
 \alias{polyfast}
 \title{Fast polychoric correlations.}
 \usage{
-polyfast(X, acov = "none", PD = FALSE, cores = 1L)
+polyfast(X, acov = "none", PD = FALSE, nboot = 1000L, fit = FALSE, cores = 1L)
 }
 \arguments{
 \item{X}{Matrix of categorical scores. The lowest score must start at 0.}
 
-\item{acov}{Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Defaults to "none".}
+\item{acov}{Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Use "bootstrap" for estimating the asymptotic covariance matrix by resampling. Defaults to "none".}
 
 \item{PD}{Force a positive definite solution? Defaults to FALSE.}
+
+\item{nboot}{Number of bootstrap samples to compute the standard errors. It only works if acov = "bootstrap". Defaults to 1000L.}
+
+\item{fit}{Should the fit value be calculated? Defaults to FALSE.}
 
 \item{cores}{Number of parallel cores to compute the polychoric correlations.}
 }
