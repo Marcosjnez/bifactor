@@ -65,8 +65,8 @@ check_deriv <- function(L, Phi, dL, dP, rotation = as.character( c("oblimin")), 
     .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w)
 }
 
-polyfast <- function(X, acov = "none", PD = FALSE, nboot = 1000L, cores = 1L) {
-    .Call(`_bifactor_polyfast`, X, acov, PD, nboot, cores)
+polyfast <- function(X, acov = "none", PD = FALSE, nboot = 1000L, fit = FALSE, cores = 1L) {
+    .Call(`_bifactor_polyfast`, X, acov, PD, nboot, fit, cores)
 }
 
 poly2 <- function(X, cores) {
