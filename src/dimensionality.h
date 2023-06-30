@@ -150,7 +150,7 @@ Rcpp::List out_pa(arma::umat dimensions, Rcpp::Nullable<arma::vec> nullable_quan
 }
 
 Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
-              bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA) {
+              bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA, int cores) {
 
   /*
    * Perform parallel analysis with either PCA or PAF
@@ -213,11 +213,16 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
 
   } else if(type == "poly") {
 
+#ifdef _OPENMP
+      omp_set_num_threads(cores);
+#pragma omp parallel for
+#endif
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
-      Rcpp::List polychor = polyfast(X_boots.slice(i), "none", false, 0L, 1L);
-      arma::mat S_boot = polychor["correlation"];
+      polyfast_object polychor = poly_no_cores(X_boots.slice(i), false);
+      // Rcpp::List polychor = polyfast(X_boots.slice(i), "none", 0L, false, 1L);
+      arma::mat S_boot = std::get<0>(polychor);;
       if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
       if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
 
@@ -339,7 +344,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
                     int cores) {
 
-  Rcpp::List first_order = pa(X, n_boot, type, nullable_quantile, mean, replace, nullable_PA);
+  Rcpp::List first_order = pa(X, n_boot, type, nullable_quantile, mean, replace, nullable_PA, cores);
 
   if(!hierarchical) return first_order;
 
@@ -393,7 +398,8 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
       arma::mat W = arma::solve(S, L);
       arma::mat fs = X * W;
 
-      Rcpp::List second_order = pa(fs, n_boot, "pearson", nullable_quantile, mean, replace, R_NilValue);
+      Rcpp::List second_order = pa(fs, n_boot, "pearson", nullable_quantile, mean,
+                                   replace, R_NilValue, false);
 
       arma::uvec indexes = arma::find(dims == unique[i]);
       arma::umat temp_dims = second_order["dimensions"];

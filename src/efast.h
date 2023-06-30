@@ -107,13 +107,16 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", false, 0L, cores);
-      arma::mat polys = correlation_result["polychorics"];
+      correlation_result = polyfast(X, "none", false, 0L, false, cores);
+      correlation_result["type"] = "polychorics";
+      arma::mat polys = correlation_result["correlation"];
       R = polys;
     } else if(cor == "pearson") {
       R = arma::cor(X);
       correlation_result["type"] = "pearson";
       correlation_result["correlation"] = R;
+    } else {
+      Rcpp::stop("Unkown correlation method");
     }
 
   }
@@ -358,13 +361,15 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", false, 0L, cores);
-      arma::mat polys = correlation_result["polychorics"];
+      correlation_result = polyfast(X, "none", false, 0L, false, cores);
+      arma::mat polys = correlation_result["correlation"];
       R = polys;
     } else if(cor == "pearson") {
       R = arma::cor(X);
       correlation_result["type"] = "pearson";
       correlation_result["correlation"] = R;
+    } else {
+      Rcpp::stop("Unkown correlation method");
     }
 
   }

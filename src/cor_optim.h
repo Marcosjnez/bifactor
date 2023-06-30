@@ -189,7 +189,8 @@ typedef std::tuple<arma::mat,
                    arma::mat,
                    bool> polyfast_object;
 
-polyfast_object poly(const arma::mat& X, const bool PD, const int cores) {
+polyfast_object poly(const arma::mat& X, const bool PD, const bool fit,
+                     const int cores) {
 
   /*
    * Function to estimate the full polychoric correlation matrix
@@ -279,7 +280,7 @@ polyfast_object poly(const arma::mat& X, const bool PD, const int cores) {
       x.convergence = std::get<4>(x2);
 
     }
-  } else {
+  } else if(fit) {
 
     x.cor = polys;
     // Select one specific criteria:
@@ -381,14 +382,6 @@ polyfast_object poly_no_cores(const arma::mat& X, const bool PD) {
 
     }
 
-  } else {
-
-    x.cor = polys;
-    // Select one specific criteria:
-    cor_criterion* criterion = choose_cor_criterion("poly");
-    criterion->F(x);
-    if(iters.max() < 20) x.convergence = true;
-
   }
 
   polyfast_object result = std::make_tuple(polys, taus, mvphi, tabs, iters,
@@ -397,8 +390,8 @@ polyfast_object poly_no_cores(const arma::mat& X, const bool PD) {
 
 }
 
-Rcpp::List polyfast(const arma::mat& X, std::string acov,
-                    const bool PD, const int nboot, const int cores) {
+Rcpp::List polyfast(const arma::mat& X, std::string acov, const bool PD,
+                    const int nboot, const bool fit, const int cores) {
 
   /*
    * Function to estimate the full polychoric correlation matrix
@@ -406,7 +399,7 @@ Rcpp::List polyfast(const arma::mat& X, std::string acov,
 
   Rcpp::Timer timer;
 
-  polyfast_object x = poly(X, PD, cores);
+  polyfast_object x = poly(X, PD, false, cores);
 
   timer.step("polychorics");
 

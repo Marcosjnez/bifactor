@@ -299,8 +299,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // polyfast
-Rcpp::List polyfast(const arma::mat& X, const std::string acov, bool PD, const int nboot, const int cores);
-RcppExport SEXP _bifactor_polyfast(SEXP XSEXP, SEXP acovSEXP, SEXP PDSEXP, SEXP nbootSEXP, SEXP coresSEXP) {
+Rcpp::List polyfast(const arma::mat& X, const std::string acov, bool PD, const int nboot, const bool fit, const int cores);
+RcppExport SEXP _bifactor_polyfast(SEXP XSEXP, SEXP acovSEXP, SEXP PDSEXP, SEXP nbootSEXP, SEXP fitSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -308,8 +308,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string >::type acov(acovSEXP);
     Rcpp::traits::input_parameter< bool >::type PD(PDSEXP);
     Rcpp::traits::input_parameter< const int >::type nboot(nbootSEXP);
+    Rcpp::traits::input_parameter< const bool >::type fit(fitSEXP);
     Rcpp::traits::input_parameter< const int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(polyfast(X, acov, PD, nboot, cores));
+    rcpp_result_gen = Rcpp::wrap(polyfast(X, acov, PD, nboot, fit, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -409,7 +410,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 10},
     {"_bifactor_cv_eigen", (DL_FUNC) &_bifactor_cv_eigen, 5},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 17},
-    {"_bifactor_polyfast", (DL_FUNC) &_bifactor_polyfast, 5},
+    {"_bifactor_polyfast", (DL_FUNC) &_bifactor_polyfast, 6},
     {"_bifactor_poly2", (DL_FUNC) &_bifactor_poly2, 2},
     {"_bifactor_fpoly", (DL_FUNC) &_bifactor_fpoly, 2},
     {"_bifactor_old_poly", (DL_FUNC) &_bifactor_old_poly, 2},
