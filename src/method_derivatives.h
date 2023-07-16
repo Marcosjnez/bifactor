@@ -9,7 +9,7 @@
 // #include "asymptotic_cov.h"
 
 /*
- * Derivatives for minres:
+ * Derivatives for uls:
  * d2f/(dtheta dtheta') and d2f/(dtheta ds)
  */
 
@@ -154,7 +154,7 @@ arma::mat hessian_Phipsi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
 
 }
 
-arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
+arma::mat hessian_uls(arma::mat S, arma::mat Lambda, arma::mat Phi,
                          std::string projection, arma::uvec indexes) {
 
   /*
@@ -312,10 +312,10 @@ arma::mat hessian_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 }
 
 /*
- * d2f/(dtheta ds) for minres
+ * d2f/(dtheta ds) for uls
  */
 
-arma::mat gLS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
+arma::mat gLS_uls(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 
   int p = Lambda.n_rows;
   arma::uvec indexes = trimatl_ind(arma::size(S), -1);
@@ -331,7 +331,7 @@ arma::mat gLS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi) {
 
 }
 
-arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
+arma::mat gPS_uls(arma::mat S, arma::mat Lambda, arma::mat Phi,
                      arma::uvec indexes1) {
 
   int p = S.n_rows;
@@ -347,7 +347,7 @@ arma::mat gPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
 
 }
 
-arma::mat gLPS_minres(arma::mat S, arma::mat Lambda, arma::mat Phi,
+arma::mat gLPS_uls(arma::mat S, arma::mat Lambda, arma::mat Phi,
                       std::string projection, arma::uvec indexes1) {
 
   /*
@@ -634,7 +634,7 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
 arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
             arma::uvec loblq_indexes,
             Rcpp::Nullable<arma::mat> nullable_X = R_NilValue,
-            std::string method = "minres", std::string projection = "oblq",
+            std::string method = "uls", std::string projection = "oblq",
             std::string type = "continuous", double eta = 1) {
 
   /*
@@ -644,9 +644,9 @@ arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
   arma::uvec indexes = trimatl_ind(arma::size(S), -1);
   arma::mat gLPS;
 
-  if(method == "minres") {
+  if(method == "uls") {
 
-    gLPS = gLPS_minres(S, Lambda, Phi, projection, loblq_indexes);
+    gLPS = gLPS_uls(S, Lambda, Phi, projection, loblq_indexes);
 
   } else if(method == "ml") {
 

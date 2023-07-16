@@ -35,12 +35,12 @@ Rcpp::List se(Rcpp::List fit,
   // Overwrite x according to modelInfo:
 
   Rcpp::List rot = fit["rotation"];
-  arma::mat L_ = rot["loadings"]; x.L = L_;
-  arma::mat Phi_ = rot["Phi"]; x.Phi = Phi_;
+  arma::mat L_ = rot["lambda"]; x.L = L_;
+  arma::mat Phi_ = rot["phi"]; x.Phi = Phi_;
   arma::mat T_ = rot["T"]; x.T = T_;
 
   Rcpp::List efa = fit["efa"];
-  arma::mat lambda_ = efa["loadings"]; x.lambda = lambda_;
+  arma::mat lambda_ = efa["lambda"]; x.lambda = lambda_;
   std::string projection_ = modelInfo["projection"]; x.projection = projection_;
   std::vector<std::string> rotation_ = modelInfo["rotation"]; x.rotations = rotation_;
 
@@ -55,7 +55,7 @@ Rcpp::List se(Rcpp::List fit,
   double w_ = modelInfo["w"]; x.w = w_;
 
   arma::mat S_ = modelInfo["R"]; x.S = S_;
-  std::string method = modelInfo["method"];
+  std::string estimator = modelInfo["estimator"];
   Rcpp::Nullable<arma::mat> Target_ = modelInfo["Target"];
   x.nullable_Target = Target_;
   Rcpp::Nullable<arma::mat> Weight_ = modelInfo["Weight"];
@@ -115,12 +115,12 @@ Rcpp::List se(Rcpp::List fit,
   // Compute the Hessian:
 
   arma::mat H, Hess;
-  if(method == "minres") {
-    Hess = hessian_minres(x.S, x.L, x.Phi, x.projection, loblq_indexes);
-  } else if(method == "ml") {
+  if(estimator == "uls") {
+    Hess = hessian_uls(x.S, x.L, x.Phi, x.projection, loblq_indexes);
+  } else if(estimator == "ml") {
     Hess = hessian_ml(x.S, x.L, x.Phi, x.projection, loblq_indexes);
   } else {
-    Rcpp::stop("Standard errors are not implemented yet for this extraction method");
+    Rcpp::stop("Standard errors are not implemented yet for this estimator");
   }
 
   // Add the constraints to the hessian matrix:
@@ -144,12 +144,12 @@ Rcpp::List se(Rcpp::List fit,
   // xx["oblq_indexes"] = x.oblq_indexes;
   // xx["loblq_indexes"] = x.loblq_indexes;
   // xx["projection"] = x.projection;
-  // xx["method"] = method;
+  // xx["estimator"] = estimator;
   // return xx;
 
   // Find A^{-1}BA^{-1}:
   arma::mat A_inv = H_inv(arma::span(0, m-1), arma::span(0, m-1));
-  arma::mat BB = B(x.S, x.L, x.Phi, loblq_indexes, nullable_X, method, x.projection,
+  arma::mat BB = B(x.S, x.L, x.Phi, loblq_indexes, nullable_X, estimator, x.projection,
                    type, eta); // Asymptotic covariance of the correlation matrix
   arma::mat VAR = A_inv * BB * A_inv;
   arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));

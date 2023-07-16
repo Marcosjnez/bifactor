@@ -34,7 +34,7 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     // Number of blocks:
     x.n_blocks = x.rows_list.size();
     if(x.n_blocks != x.cols_list.size()) {
-      Rcpp::stop("blocks must contain two lists of the same size: one for the items and another for the factors");
+      Rcpp::stop("blocks must be a list containing two lists of the same size: one for the items and another for the factors");
     }
 
     for(int i=0; i < x.n_blocks; ++i) {

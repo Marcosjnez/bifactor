@@ -40,6 +40,7 @@
 #include "cor_criteria.h"
 #include "auxiliary_cor_optim.h"
 #include "cor_optim.h"
+#include "polyfast.h"
 #include "efa_fit.h"
 #include "efa.h"
 #include "efast.h"
@@ -69,10 +70,12 @@ arma::mat retr_oblq(arma::mat X);
 arma::mat retr_poblq(arma::mat X, arma::uvec oblq_factors);
 
 // [[Rcpp::export]]
-Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
+Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
+              std::string cor = "pearson",
               Rcpp::Nullable<int> nobs = R_NilValue,
               Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
-              Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue);
+              Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
+              int cores = 1L);
 
 // [[Rcpp::export]]
 Rcpp::List rotate(arma::mat loadings,
@@ -93,7 +96,7 @@ Rcpp::List rotate(arma::mat loadings,
 
 // [[Rcpp::export]]
 Rcpp::List efast(arma::mat X, int nfactors, std::string cor = "pearson",
-                 std::string method = "minres",
+                 std::string estimator = "uls",
                  Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                  std::string projection = "oblq",
                  Rcpp::Nullable<int> nobs = R_NilValue,
@@ -126,9 +129,10 @@ arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double c
 //                  int random_starts = 1, int cores = 1);
 
 // [[Rcpp::export]]
-Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
-                   std::string bifactor_method = "GSLiD",
-                   std::string method = "minres",
+Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
+                   std::string method = "GSLiD",
+                   std::string cor = "pearson",
+                   std::string estimator = "uls",
                    std::string projection = "oblq",
                    Rcpp::Nullable<int> nobs = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
@@ -186,5 +190,6 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
 
 // [[Rcpp::export]]
 Rcpp::List polyfast(const arma::mat& X, const std::string acov = "none",
-                    bool PD = false, const int nboot = 1000L, const bool fit = false,
+                    const std::string smooth = "none", double min_eigval = 0.001,
+                    const int nboot = 1000L, const bool fit = false,
                     const int cores = 1L);

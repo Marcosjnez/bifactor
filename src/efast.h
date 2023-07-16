@@ -65,8 +65,8 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
   }
 
   Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
+  result["lambda"] = L;
+  result["phi"] = Phi;
   result["T"] = T;
   result["f"] = f;
   result["iterations"] = iterations;
@@ -77,7 +77,7 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
 
 }
 
-Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
+Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimator,
                  Rcpp::CharacterVector char_rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -107,7 +107,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", false, 0L, false, cores);
+      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
       correlation_result["type"] = "polychorics";
       arma::mat polys = correlation_result["correlation"];
       R = polys;
@@ -135,19 +135,19 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   //           nullable_efa_control,
   //           efa_maxit, lmm, efa_factr);
   //
-  // Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
+  // Rcpp::List efa_result = efa(init, R, nfactors, estimator, efa_maxit, efa_factr, lmm);
 
   // Structure of efa arguments:
 
   arguments_efa xefa;
-  xefa.method = method;
+  xefa.estimator = estimator;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
-  } else if(method == "dwls") {
+  } else if(estimator == "dwls") {
     Rcpp::stop("dwls estimation not available yet");
     xefa.manifold = "orth";
     xefa.psi = random_orth(xefa.p, xefa.q+1);
@@ -164,8 +164,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   // Select one manifold:
   efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
-  // Select the factor extraction method:
-  efa_criterion* efa_criterion = choose_efa_criterion(xefa.method);
+  // Select the estimator:
+  efa_criterion* efa_criterion = choose_efa_criterion(xefa.estimator);
 
   Rcpp::List efa_result = efa(xefa, efa_manifold, efa_criterion,
                               xefa.random_starts, xefa.cores);
@@ -185,17 +185,17 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   double df = xefa.p*(xefa.p+1)/2 - (xefa.p*xefa.q + xefa.p - xefa.q*(xefa.q-1)/2);
 
   double f_null;
-  if(method == "minres" || method == "pa") {
+  if(estimator == "uls" || estimator == "pa") {
     f_null = arma::accu(R % R) - xefa.p;
-  } else if(method == "ml") {
+  } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
-  } else if(method == "minrank") {
+  } else if(estimator == "minrank") {
     f_null = 0;
   }
 
   Rcpp::List modelInfo;
   modelInfo["R"] = R;
-  modelInfo["method"] = method;
+  modelInfo["estimator"] = estimator;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
   modelInfo["n_vars"] = R.n_cols;
@@ -221,12 +221,12 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   modelInfo["lower"] = xefa.lower;
   modelInfo["upper"] = xefa.upper;
 
-  arma::mat loadings = efa_result["loadings"];
+  arma::mat lambda = efa_result["lambda"];
 
   // Structure of rotation arguments:
 
   arguments_rotate x;
-  x.lambda = loadings;
+  x.lambda = lambda;
   x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
@@ -272,7 +272,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
 
     arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
-    efa_result["loadings"] = x.lambda;
+    efa_result["lambda"] = x.lambda;
     efa_result["propVar"] = propVar;
 
     result["efa"] = efa_result;
@@ -290,8 +290,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   }
 
-  arma::mat L = rotation_result["loadings"];
-  arma::mat Phi = rotation_result["Phi"];
+  arma::mat L = rotation_result["lambda"];
+  arma::mat Phi = rotation_result["phi"];
 
   if (xefa.normalization == "kaiser") {
 
@@ -301,7 +301,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   }
 
-  // Force average positive loadings in all factors:
+  // Force average positive lambda in all factors:
 
   // arma::vec v = arma::sign(arma::sum(L, 0));
   // L.each_row() /= v;
@@ -316,8 +316,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
 
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
+  rotation_result["lambda"] = L;
+  rotation_result["phi"] = Phi;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];
@@ -337,7 +337,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 }
 
 // Do not export this (overloaded to support std::vector<std::string> rotation):
-Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
+Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimator,
                  std::vector<std::string> rotation,
                  std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
@@ -367,7 +367,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   } else {
 
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", false, 0L, false, cores);
+      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
       arma::mat polys = correlation_result["correlation"];
       R = polys;
     } else if(cor == "pearson") {
@@ -392,17 +392,17 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   //           nullable_efa_control,
   //           efa_maxit, lmm, efa_factr);
   //
-  // Rcpp::List efa_result = efa(init, R, nfactors, method, efa_maxit, efa_factr, lmm);
+  // Rcpp::List efa_result = efa(init, R, nfactors, estimator, efa_maxit, efa_factr, lmm);
 
   arguments_efa xefa;
-  xefa.method = method;
+  xefa.estimator = estimator;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
   if (nullable_init.isNotNull()) {
     xefa.psi = Rcpp::as<arma::vec>(nullable_init);
-  } else if(method == "dwls") {
+  } else if(estimator == "dwls") {
     Rcpp::stop("dwls estimation not available yet");
     xefa.psi = random_orth(xefa.p, xefa.q+1);
   } else {
@@ -418,8 +418,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   // Select one manifold:
   efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
-  // Select the factor extraction method:
-  efa_criterion* efa_criterion = choose_efa_criterion(xefa.method);
+  // Select the estimator:
+  efa_criterion* efa_criterion = choose_efa_criterion(xefa.estimator);
 
   Rcpp::List efa_result = efa(xefa, efa_manifold, efa_criterion,
                               xefa.random_starts, xefa.cores);
@@ -435,12 +435,12 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   //
   // }
 
-  arma::mat loadings = efa_result["loadings"];
+  arma::mat lambda = efa_result["lambda"];
 
   // Structure of rotation arguments:
 
   arguments_rotate x;
-  x.lambda = loadings;
+  x.lambda = lambda;
   x.p = R.n_rows, x.q = nfactors;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
@@ -466,17 +466,17 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   double df = x.p*(x.p+1)/2 - (x.p*x.q + x.p - x.q*(x.q-1)/2);
 
   double f_null;
-  if(method == "minres" || method == "pa") {
+  if(estimator == "uls" || estimator == "pa") {
     f_null = arma::accu(R % R) - x.p;
-  } else if(method == "ml") {
+  } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
-  } else if(method == "minrank") {
+  } else if(estimator == "minrank") {
     f_null = 0;
   }
 
   Rcpp::List modelInfo;
   modelInfo["R"] = R;
-  modelInfo["method"] = method;
+  modelInfo["estimator"] = estimator;
   modelInfo["projection"] = x.projection;
   modelInfo["rotation"] = x.rotations;
   modelInfo["n_vars"] = R.n_cols;
@@ -527,7 +527,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
   if(rotation.size() == 1 && rotation[0] == "none" || random_starts < 1) {
 
     arma::vec propVar = arma::diagvec(x.lambda.t() * x.lambda)/x.p;
-    efa_result["loadings"] = x.lambda;
+    efa_result["lambda"] = x.lambda;
     efa_result["propVar"] = propVar;
 
     result["efa"] = efa_result;
@@ -545,8 +545,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   }
 
-  arma::mat L = rotation_result["loadings"];
-  arma::mat Phi = rotation_result["Phi"];
+  arma::mat L = rotation_result["lambda"];
+  arma::mat Phi = rotation_result["phi"];
 
   if (xefa.normalization == "kaiser") {
 
@@ -556,7 +556,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   }
 
-  // Force average positive loadings in all factors:
+  // Force average positive lambda in all factors:
 
   // arma::vec v = arma::sign(arma::sum(L, 0));
   // L.each_row() /= v;
@@ -571,8 +571,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string method,
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
 
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
+  rotation_result["lambda"] = L;
+  rotation_result["phi"] = Phi;
   rotation_result["Rhat"] = efa_result["Rhat"];
   rotation_result["uniquenesses"] = efa_result["uniquenesses"];
   rotation_result["Rhat"] = efa_result["Rhat"];

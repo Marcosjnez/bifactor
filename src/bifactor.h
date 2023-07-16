@@ -43,8 +43,8 @@ bool is_duplicate(arma::cube Targets, arma::mat Target, int length) {
 
 void pass_to_efast(Rcpp::List efa_args, arguments_efast& x) {
 
-  if (efa_args.containsElementNamed("method")) {
-    std::string method_ = efa_args["method"]; x.method = method_;
+  if (efa_args.containsElementNamed("estimator")) {
+    std::string estimator_ = efa_args["estimator"]; x.estimator = estimator_;
   }
   if(efa_args.containsElementNamed("rotation")) {
     std::vector<std::string> rotation_ = efa_args["rotation"]; x.rotation = rotation_;
@@ -106,10 +106,39 @@ void pass_to_efast(Rcpp::List efa_args, arguments_efast& x) {
 
 }
 
-Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
-              Rcpp::Nullable<int> nullable_nobs,
+Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
+              std::string cor, Rcpp::Nullable<int> nullable_nobs,
               Rcpp::Nullable<Rcpp::List> first_efa,
-              Rcpp::Nullable<Rcpp::List> second_efa) {
+              Rcpp::Nullable<Rcpp::List> second_efa, int cores) {
+
+  Rcpp::Timer timer;
+  Rcpp::List result;
+
+  Rcpp::List correlation_result;
+  arma::mat R;
+
+  if(X.is_square()) {
+
+    R = X;
+
+  } else {
+
+    if(cor == "poly") {
+      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
+      correlation_result["type"] = "polychorics";
+      arma::mat polys = correlation_result["correlation"];
+      R = polys;
+    } else if(cor == "pearson") {
+      R = arma::cor(X);
+      correlation_result["type"] = "pearson";
+      correlation_result["correlation"] = R;
+    } else {
+      Rcpp::stop("Unkown correlation method");
+    }
+
+  }
+
+  result["correlation"] = correlation_result;
 
   Rcpp::List first, second;
 
@@ -142,7 +171,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   // First efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.estimator, x1.rotation,
                                      x1.projection, nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -154,16 +183,15 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
                                      x1.nullable_init,
                                      x1.nullable_efa_control, x1.nullable_rot_control);
 
-  Rcpp::List result;
   Rcpp::List efa_model_rotation = first_order_efa["rotation"];
 
-  arma::mat loadings_1 = efa_model_rotation["loadings"];
-  arma::mat Phi_1 = efa_model_rotation["Phi"];
+  arma::mat loadings_1 = efa_model_rotation["lambda"];
+  arma::mat Phi_1 = efa_model_rotation["phi"];
   std::vector<std::string> rotation_none(1); rotation_none[0] = "none";
 
   if ( n_generals == 1 ) {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.method, rotation_none,
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.estimator, rotation_none,
                                   "none", nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -176,7 +204,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
                                   x2.nullable_efa_control, x2.nullable_rot_control);
 
     Rcpp::List efa_result_efa = efa_result["efa"];
-    arma::mat loadings_2 = efa_result_efa["loadings"];
+    arma::mat loadings_2 = efa_result_efa["lambda"];
     arma::vec uniquenesses_2 = efa_result_efa["uniquenesses"];
 
     arma::mat L = join_rows(loadings_2, diagmat(sqrt(uniquenesses_2)));
@@ -189,13 +217,13 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
     }
 
     arma::mat Hierarchical_Phi(1, 1, arma::fill::eye);
-    efa_result_efa["Phi"] = Hierarchical_Phi;
+    efa_result_efa["phi"] = Hierarchical_Phi;
 
     arma::mat Rhat = SL_loadings * SL_loadings.t();
     arma::vec uniquenesses = 1 - diagvec(Rhat);
     Rhat.diag().ones();
 
-    result["loadings"] = SL_loadings;
+    result["lambda"] = SL_loadings;
     result["first_order_solution"] = first_order_efa;
     result["second_order_solution"] = efa_result_efa;
     result["uniquenesses"] = uniquenesses;
@@ -203,7 +231,7 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
 
   } else {
 
-    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.method, x2.rotation,
+    Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.estimator, x2.rotation,
                                   x2.projection, nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -216,11 +244,11 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
                                   x2.nullable_efa_control, x2.nullable_rot_control);
 
     Rcpp::List efa_result_rotation = efa_result["rotation"];
-    arma::mat loadings_2 = efa_result_rotation["loadings"];
+    arma::mat loadings_2 = efa_result_rotation["lambda"];
 
     arma::vec uniquenesses_2 = efa_result_rotation["uniquenesses"];
 
-    arma::mat Phi2 = efa_result_rotation["Phi"];
+    arma::mat Phi2 = efa_result_rotation["phi"];
     arma::mat SL_Phi(nfactors, nfactors, arma::fill::eye);
     SL_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1)) = Phi2;
     // arma::mat sqrt_Phi2 = arma::sqrtmat_sympd(Phi2);
@@ -235,8 +263,8 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
     arma::vec uniquenesses = 1 - diagvec(Rhat);
     Rhat.diag().ones();
 
-    result["loadings"] = SL_loadings;
-    result["Phi"] = SL_Phi;
+    result["lambda"] = SL_loadings;
+    result["phi"] = SL_Phi;
     result["first_order_solution"] = first_order_efa;
     result["second_order_solution"] = efa_result;
     result["uniquenesses"] = uniquenesses;
@@ -251,6 +279,10 @@ Rcpp::List sl(arma::mat R, int n_generals, int n_groups,
   modelInfo["nullable_nobs"] = nullable_nobs;
   modelInfo["first_efa"] = first_efa;
   modelInfo["second_efa"] = second_efa;
+  result["modelInfo"] = modelInfo;
+
+  timer.step("elapsed");
+  result["elapsed"] = timer;
 
   result.attr("class") = "SL";
   return result;
@@ -514,7 +546,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 
   // First EFA (group factors):
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.estimator, x1.rotation,
                                      x1.projection, nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -529,9 +561,9 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
   Rcpp::List efa_model = first_order_efa["efa"];
   Rcpp::List efa_model_rotation = first_order_efa["rotation"];
 
-  arma::mat unrotated = efa_model["loadings"];
-  arma::mat loadings_1 = efa_model_rotation["loadings"];
-  arma::mat Phi_1 = efa_model_rotation["Phi"];
+  arma::mat unrotated = efa_model["lambda"];
+  arma::mat loadings_1 = efa_model_rotation["lambda"];
+  arma::mat Phi_1 = efa_model_rotation["phi"];
 
   arma::mat add;
   Rcpp::List second_order_efa;
@@ -544,7 +576,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 
     // Second EFA (general factors):
 
-    second_order_efa = efast(R, n_generals, x2.cor, x2.method, x2.rotation,
+    second_order_efa = efast(R, n_generals, x2.cor, x2.estimator, x2.rotation,
                              x2.projection, nullable_nobs,
                              x2.nullable_Target, x2.nullable_Weight,
                              x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -558,8 +590,8 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 
     Rcpp::List rot = second_order_efa["rotation"];
 
-    arma::mat loadings_2 = rot["loadings"];
-    arma::mat Phi_2 = rot["Phi"];
+    arma::mat loadings_2 = rot["lambda"];
+    arma::mat Phi_2 = rot["phi"];
     add = get_target(loadings_2, Phi_2, cutoff);
 
   } else {
@@ -616,7 +648,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
 }
 
 Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
-                 std::string method, std::string projection,
+                 std::string estimator, std::string projection,
                  Rcpp::Nullable<int> nullable_nobs,
                  Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_PhiTarget,
@@ -657,7 +689,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   } else if(x.projection == "oblq") {
     x.rotations = {"xtarget"};
   } else {
-    Rcpp::stop("Unkown projection method");
+    Rcpp::stop("Unkown projection estimator");
   }
 
   // Model Info:
@@ -668,17 +700,17 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   double df = p*(p+1)/2 - (p*q + p - q*(q-1)/2);
 
   double f_null;
-  if(method == "minres" || method == "pa") {
+  if(estimator == "uls" || estimator == "pa") {
     f_null = arma::accu(R % R) - R.n_cols;
-  } else if(method == "ml") {
+  } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
-  } else if(method == "minrank") {
+  } else if(estimator == "minrank") {
     f_null = 0;
   }
 
   Rcpp::List modelInfo;
   modelInfo["R"] = R;
-  modelInfo["method"] = method;
+  modelInfo["estimator"] = estimator;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = x.rotations;
   modelInfo["n_vars"] = R.n_cols;
@@ -727,8 +759,8 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
 
   // Unrotated efa:
 
-  Rcpp::List efa_result = efa(init, R, x.q, method, efa_maxit, efa_factr, lmm);
-  arma::mat unrotated_loadings = efa_result["loadings"];
+  Rcpp::List efa_result = efa(init, R, x.q, estimator, efa_maxit, efa_factr, lmm);
+  arma::mat unrotated_loadings = efa_result["lambda"];
   arma::mat loadings = unrotated_loadings;
 
   Rcpp::List result, rotation_result;
@@ -759,7 +791,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
     rotation_result = rotate_efa(x, manifold, criterion, random_starts,
                                  cores);
 
-    arma::mat new_loadings = rotation_result["loadings"];
+    arma::mat new_loadings = rotation_result["lambda"];
 
     // congruence = tucker_congruence(loadings, new_loadings);
 
@@ -767,7 +799,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
     // max_abs_diffs[i] = arma::abs(loadings - new_loadings).max();
 
     loadings = new_loadings;
-    arma::mat new_Phi = rotation_result["Phi"];
+    arma::mat new_Phi = rotation_result["phi"];
 
     // update target
     update_target(n_generals, x.p, x.q, loadings, new_Phi, cutoff, new_Target);
@@ -807,7 +839,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   }
 
   arma::mat L = loadings;
-  arma::mat Phi = rotation_result["Phi"];
+  arma::mat Phi = rotation_result["phi"];
 
   for (int j=0; j < x.q; ++j) {
     if (sum(L.col(j)) < 0) {
@@ -819,8 +851,8 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
 
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
 
-  rotation_result["loadings"] = L;
-  rotation_result["Phi"] = Phi;
+  rotation_result["lambda"] = L;
+  rotation_result["phi"] = Phi;
   arma::mat R_hat = L * Phi * L.t();
   rotation_result["uniquenesses"] = 1 - diagvec(R_hat);
   R_hat.diag().ones();
@@ -842,7 +874,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
 }
 
 Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
-                  std::string method, std::string projection,
+                  std::string estimator, std::string projection,
                   Rcpp::Nullable<int> nullable_nobs,
                   Rcpp::Nullable<arma::uvec> nullable_oblq_factors,
                   double cutoff, int random_starts, int cores,
@@ -856,7 +888,7 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
   // Arguments to pass to the first efa:
 
   arguments_efast x1;
-  x1.method = method;
+  x1.estimator = estimator;
   x1.projection = "oblq";
   x1.nullable_oblq_factors = R_NilValue;
   x1.nullable_efa_control = nullable_efa_control;
@@ -866,7 +898,7 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
 
   // First-order efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.method, x1.rotation,
+  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.estimator, x1.rotation,
                                      x1.projection, x1.nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -879,31 +911,46 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
                                      x1.nullable_efa_control, x1.nullable_rot_control);
 
   Rcpp::List first_rot = first_order_efa["rotation"];
-  arma::mat L = first_rot["loadings"];
-  arma::mat Phi = first_rot["Phi"];
+  arma::mat L = first_rot["lambda"];
+  arma::mat Phi = first_rot["phi"];
 
   // Final efa:
 
   // Arguments to pass to the final efa:
 
   arguments_efast x2;
-  x2.method = method;
+  x2.estimator = estimator;
   x2.projection = projection;
   x2.nullable_oblq_factors = nullable_oblq_factors;
   x2.nullable_efa_control = nullable_efa_control;
   x2.nullable_rot_control = nullable_rot_control;
   x2.rotation = {"oblimin", "target"};
 
+  // Build the target using the cutoff:
   arma::mat Target = get_target(L, Phi, cutoff);
   SEXP Target_ = Rcpp::wrap(Target);
   x2.nullable_Target = Target_;
-  unsigned g = n_generals; unsigned s = n_groups;
-  arma::uvec blocks_vector = {g, s};
-  SEXP blocks_vector_ = Rcpp::wrap(blocks_vector);
-  // x2.nullable_blocks = vector_to_list2(blocks_vector_); // FIX
+  // Set up the block list:
+  unsigned g = n_generals; unsigned s = n_groups; unsigned p = R.n_rows;
+  arma::uvec blocks_vector1 = {p, p};
+  std::vector<arma::uvec> blocks_list1 = vector_to_list3(blocks_vector1);
+  arma::uvec blocks_vector2 = {g, s};
+  std::vector<arma::uvec> blocks_list2 = vector_to_list4(blocks_vector2);
+  std::vector<std::vector<arma::uvec>> blocks_list(2);
+  blocks_list[0] = blocks_list1;
+  blocks_list[1] = blocks_list2;
+
+  Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks_list_ = Rcpp::wrap(blocks_list);
+  // SEXP blocks_list_ = Rcpp::wrap(blocks_list);
+  x2.nullable_blocks = blocks_list_;
+
+  // conversion from R to C++
+  // Rcpp::as<T>();
+  // conversion from C++ to R
+  // Rcpp::wrap();
 
   int nfactors = n_generals + n_groups;
-  Rcpp::List final_efa = efast(R, nfactors, x2.cor, x2.method, x2.rotation,
+  Rcpp::List final_efa = efast(R, nfactors, x2.cor, x2.estimator, x2.rotation,
                                x2.projection, x2.nullable_nobs,
                                x2.nullable_Target, x2.nullable_Weight,
                                x2.nullable_PhiTarget, x2.nullable_PhiWeight,
@@ -928,9 +975,9 @@ Rcpp::List botmin(arma::mat R, int n_generals, int n_groups,
 
 }
 
-Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
-                    std::string bifactor_method, std::string method,
-                    std::string projection,
+Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
+                    std::string method, std::string cor,
+                    std::string estimator, std::string projection,
                     Rcpp::Nullable<int> nullable_nobs,
                     Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                     Rcpp::Nullable<arma::mat> nullable_PhiWeight,
@@ -948,6 +995,33 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
                     bool verbose) {
 
   Rcpp::Timer timer;
+  Rcpp::List result, SL_result;
+
+  Rcpp::List correlation_result;
+  arma::mat R;
+
+  if(X.is_square()) {
+
+    R = X;
+
+  } else {
+
+    if(cor == "poly") {
+      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
+      correlation_result["type"] = "polychorics";
+      arma::mat polys = correlation_result["correlation"];
+      R = polys;
+    } else if(cor == "pearson") {
+      R = arma::cor(X);
+      correlation_result["type"] = "pearson";
+      correlation_result["correlation"] = R;
+    } else {
+      Rcpp::stop("Unkown correlation method");
+    }
+
+  }
+
+  result["correlation"] = correlation_result;
 
   if(maxit < 1) Rcpp::stop("maxit must be an integer greater than 0");
   if(cutoff < 0) Rcpp::stop("cutoff must be nonnegative");
@@ -955,12 +1029,10 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
   int n = R.n_rows;
   int nfactors = n_generals + n_groups;
 
-  Rcpp::List result, SL_result;
-
-  if(bifactor_method == "botmin") {
+  if(method == "botmin") {
 
     Rcpp::List botmin_result = botmin(R, n_generals, n_groups,
-                                      method, projection,
+                                      estimator, projection,
                                       nullable_nobs,
                                       nullable_oblq_factors,
                                       cutoff, random_starts, cores,
@@ -969,7 +1041,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
     result = botmin_result;
 
-  } else if(bifactor_method == "bifad") {
+  } else if(method == "bifad") {
 
     Rcpp::List bifad_result = bifad(R, n_generals, n_groups,
                                     projection,
@@ -983,20 +1055,20 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
     result = bifad_result;
 
-  } else if(bifactor_method == "SL") {
+  } else if(method == "SL") {
 
-    SL_result = sl(R, n_generals, n_groups, nullable_nobs,
-                   nullable_first_efa, nullable_second_efa);
+    SL_result = sl(R, n_generals, n_groups, cor, nullable_nobs,
+                   nullable_first_efa, nullable_second_efa, cores);
     result["SL"] = SL_result;
 
-  } else if(bifactor_method == "GSLiD") {
+  } else if(method == "GSLiD") {
 
     // Create initial target with Schmid-Leiman (SL) if there is no custom initial target:
 
     if(nullable_Target.isNull()) {
 
-      SL_result = sl(R, n_generals, n_groups, nullable_nobs,
-                     nullable_first_efa, nullable_second_efa);
+      SL_result = sl(R, n_generals, n_groups, cor, nullable_nobs,
+                     nullable_first_efa, nullable_second_efa, cores);
 
       // Create the factor correlation matrix for the SL solution:
 
@@ -1006,14 +1078,14 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
 
         Rcpp::List second_order_solution = SL_result["second_order_solution"];
         Rcpp::List second_order_solution_rotation = second_order_solution["rotation"];
-        arma::mat Phi_generals = second_order_solution_rotation["Phi"];
+        arma::mat Phi_generals = second_order_solution_rotation["phi"];
         new_Phi(arma::span(0, n_generals-1), arma::span(0, n_generals-1)) = Phi_generals;
 
       }
 
       // SL loadings:
 
-      arma::mat SL_loadings = SL_result["loadings"];
+      arma::mat SL_loadings = SL_result["lambda"];
       arma::mat loadings = SL_loadings;
 
       // Create initial target:
@@ -1026,7 +1098,7 @@ Rcpp::List bifactor(arma::mat R, int n_generals, int n_groups,
     }
 
     Rcpp::List GSLiD_result = GSLiD(R, n_generals, n_groups,
-                                    method, projection,
+                                    estimator, projection,
                                     nullable_nobs,
                                     nullable_Target,
                                     nullable_PhiTarget, nullable_PhiWeight,

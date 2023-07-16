@@ -24,10 +24,10 @@ public:
 };
 
 /*
- * ULS/minres
+ * ULS
  */
 
-class minres: public efa_criterion {
+class uls: public efa_criterion {
 
 public:
 
@@ -182,29 +182,29 @@ public:
 
 };
 
-// Choose the factor extraction method:
+// Choose the estimator:
 
-efa_criterion* choose_efa_criterion(std::string method) {
+efa_criterion* choose_efa_criterion(std::string estimator) {
 
   efa_criterion *criterion;
 
-  if (method == "minres") {
+  if (estimator == "uls") {
 
-    criterion = new minres();
+    criterion = new uls();
 
-  } else if(method == "ml") {
+  } else if(estimator == "ml") {
 
     criterion = new ml();
 
-  } else if(method == "dwls") {
+  } else if(estimator == "dwls") {
 
     criterion = new dwls();
 
-  } else if(method == "minrank" | method == "pa") {
+  } else if(estimator == "minrank" | estimator == "pa") {
 
   } else {
 
-    Rcpp::stop("Available factor extraction methods: \n minres, ml, dwls, minrank, pa");
+    Rcpp::stop("Available estimators: \n uls, ml, dwls, minrank, pa");
 
   }
 

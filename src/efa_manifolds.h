@@ -51,7 +51,7 @@ public:
 
   void dgrad(arguments_efa& x) {
 
-    Rcpp::stop("The differential of this factor extraction method is not available yet.");
+    Rcpp::stop("The differential of this estimator is not available yet.");
 
   }
 
@@ -95,7 +95,7 @@ public:
 
   void dgrad(arguments_efa& x) {
 
-    Rcpp::stop("The differential of this factor extraction method is not available yet.");
+    Rcpp::stop("The differential of this estimator is not available yet.");
 
   }
 

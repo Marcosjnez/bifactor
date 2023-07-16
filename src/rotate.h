@@ -14,7 +14,7 @@
 // #include "auxiliary_checks.h"
 // #include "checks.h"
 
-Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
+Rcpp::List rotate(arma::mat lambda, Rcpp::CharacterVector char_rotation,
                   std::string projection,
                   arma::vec gamma, arma::vec epsilon, arma::vec k, double w,
                   Rcpp::Nullable<arma::mat> nullable_Target,
@@ -35,8 +35,8 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   // Structure of rotation arguments:
 
   arguments_rotate x;
-  x.p = loadings.n_rows, x.q = loadings.n_cols;
-  x.lambda = loadings;
+  x.p = lambda.n_rows, x.q = lambda.n_cols;
+  x.lambda = lambda;
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w;
   x.rotations = rotation;
@@ -105,7 +105,7 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   int iterations = std::get<4>(x1);
   bool convergence = std::get<5>(x1);
 
-  // Force average positive loadings in all factors:
+  // Force average positive lambda in all factors:
 
   // arma::vec v = arma::sign(arma::sum(L, 0));
   // L.each_row() /= v;
@@ -134,11 +134,11 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   arma::vec propVar = arma::diagvec(Phi * L.t() * L)/x.p;
 
   Rcpp::List modelInfo;
-  modelInfo["loadings"] = loadings;
+  modelInfo["lambda"] = lambda;
   modelInfo["rotation"] = rotation;
   modelInfo["projection"] = projection;
-  modelInfo["n_vars"] = loadings.n_rows;
-  modelInfo["nfactors"] = loadings.n_cols;
+  modelInfo["n_vars"] = lambda.n_rows;
+  modelInfo["nfactors"] = lambda.n_cols;
   // modelInfo["df"] = df;
   // modelInfo["df_null"] = df_null;
   // modelInfo["f_null"] = f_null;
@@ -156,8 +156,8 @@ Rcpp::List rotate(arma::mat loadings, Rcpp::CharacterVector char_rotation,
   modelInfo["oblq_factors"] = nullable_oblq_factors;
 
   Rcpp::List result;
-  result["loadings"] = L;
-  result["Phi"] = Phi;
+  result["lambda"] = L;
+  result["phi"] = Phi;
   result["propVar"] = propVar;
   result["T"] = T;
   result["f"] = f;

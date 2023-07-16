@@ -154,7 +154,7 @@ arma::vec ml_gradient(arma::vec psi, arma::mat R, int nfactors, int n_items) {
   return gradient;
 }
 
-double minres_objective(arma::vec psi, arma::mat R, int nfactors) {
+double uls_objective(arma::vec psi, arma::mat R, int nfactors) {
 
   int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
@@ -187,7 +187,7 @@ double minres_objective(arma::vec psi, arma::mat R, int nfactors) {
 
 }
 
-arma::vec minres_gradient(arma::vec psi, arma::mat R, int nfactors) {
+arma::vec uls_gradient(arma::vec psi, arma::mat R, int nfactors) {
 
   int n_items = psi.size();
   arma::mat reduced_R = R - diagmat(psi);
@@ -236,10 +236,10 @@ Rcpp::List optim_rcpp(arma::vec psi, arma::mat R, int nfactors, std::string meth
   parscale *= 0.01;
   control["parscale"] = parscale;
 
-  if (method == "minres") {
+  if (method == "uls") {
     results = optim(Rcpp::_["par"] = psi,
-                    Rcpp::_["fn"] = Rcpp::InternalFunction(&minres_objective),
-                    Rcpp::_["gr"] = Rcpp::InternalFunction(&minres_gradient),
+                    Rcpp::_["fn"] = Rcpp::InternalFunction(&uls_objective),
+                    Rcpp::_["gr"] = Rcpp::InternalFunction(&uls_gradient),
                     Rcpp::_["method"] = "L-BFGS-B",
                     Rcpp::_["lower"] = 0.005,
                     Rcpp::_["upper"] = arma::diagvec(R),

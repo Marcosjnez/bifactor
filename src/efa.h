@@ -41,7 +41,7 @@ void extract_efa(arguments_efa& x, efa_manifold *manifold, efa_criterion *criter
 
 }
 
-Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
+Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string estimator,
                int efa_max_iter, double efa_factr, int lmm) {
 
   Rcpp::List result;
@@ -51,9 +51,9 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
   int iteration = 0;
 
-  if (method == "minres") {
+  if (estimator == "uls") {
 
-    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, method, efa_max_iter, efa_factr, lmm);
+    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, estimator, efa_max_iter, efa_factr, lmm);
 
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
@@ -89,9 +89,9 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     result["f"] = optim_result["value"];
     result["convergence"] = convergence;
 
-  } else if (method == "ml") {
+  } else if (estimator == "ml") {
 
-    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, method, efa_max_iter, efa_factr, lmm);
+    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, estimator, efa_max_iter, efa_factr, lmm);
     arma::vec psi_temp = optim_result["par"];
     psi = psi_temp;
 
@@ -132,11 +132,11 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     result["f"] = f;
     result["convergence"] = convergence;
 
-  } else if (method == "pa") {
+  } else if (estimator == "pa") {
 
     Rcpp::List pa_result = principal_axis(psi, R, nfactors, 1e-03, efa_max_iter);
 
-    arma::mat w_temp = pa_result["loadings"];
+    arma::mat w_temp = pa_result["lambda"];
     arma::vec uniquenesses_temp = pa_result["uniquenesses"];
     arma::mat Rhat_temp = pa_result["Rhat"];
 
@@ -148,7 +148,7 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
     result["iterations"] = pa_result["iterations"];
 
-  } else if (method == "minrank") {
+  } else if (estimator == "minrank") {
 
     arma::vec communalities = sdp_cpp(R);
 
@@ -179,13 +179,13 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
 
   } else {
 
-    Rcpp::stop("Unkown method");
+    Rcpp::stop("Unkown estimator");
 
   }
 
   bool heywood = arma::any( uniquenesses < 0 );
 
-  // Force average positive loadings in all factors:
+  // Force average positive lambda in all factors:
 
   for (int j=0; j < nfactors; ++j) {
     if (sum(w.col(j)) < 0) {
@@ -193,12 +193,12 @@ Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string method,
     }
   }
 
-  result["loadings"] = w;
+  result["lambda"] = w;
   result["uniquenesses"] = uniquenesses;
   result["Rhat"] = Rhat;
   result["residuals"] = R - Rhat;
   result["Heywood"] = heywood;
-  result["method"] = method;
+  result["estimator"] = estimator;
 
   return result;
 }
@@ -208,26 +208,26 @@ Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion
 
   Rcpp::List result;
 
-  if(x.method == "ml" || x.method == "minres" || x.method == "dwls") {
+  if(x.estimator == "ml" || x.estimator == "uls" || x.estimator == "dwls") {
 
     extract_efa(x, manifold, criterion);
 
-  } else if(x.method == "pa") {
+  } else if(x.estimator == "pa") {
 
     Rcpp::List pa_result = principal_axis(x.psi, x.R, x.q, x.eps, x.maxit);
 
-    arma::mat w_temp = pa_result["loadings"];
+    arma::mat w_temp = pa_result["lambda"];
     arma::vec uniquenesses_temp = pa_result["uniquenesses"];
     arma::mat Rhat_temp = pa_result["Rhat"];
 
     result["f"] = pa_result["f"];
     result["convergence"] = pa_result["convergence"];
-    x.loadings = w_temp;
+    x.lambda = w_temp;
     x.uniquenesses = uniquenesses_temp;
     x.Rhat = Rhat_temp;
     x.iterations = pa_result["iterations"];
 
-  } else if (x.method == "minrank") {
+  } else if (x.estimator == "minrank") {
 
     arma::vec communalities = sdp_cpp(x.R);
     x.psi = 1 - communalities;
@@ -255,19 +255,19 @@ Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion
 
   } else {
 
-    Rcpp::stop("Unkown factor extraction method");
+    Rcpp::stop("Unkown estimator");
 
   }
 
   x.heywood = arma::any( arma::vectorise(x.uniquenesses) <= 0 );
 
-  result["loadings"] = x.lambda;
+  result["lambda"] = x.lambda;
   result["uniquenesses"] = x.uniquenesses;
   result["Rhat"] = x.Rhat;
   result["residuals"] = x.R - x.Rhat;
   result["heywood"] = x.heywood;
   result["f"] = x.f;
-  result["method"] = x.method;
+  result["estimator"] = x.estimator;
   result["iterations"] = x.iterations;
   result["convergence"] = x.convergence;
 

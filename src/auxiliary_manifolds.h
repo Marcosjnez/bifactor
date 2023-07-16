@@ -132,6 +132,50 @@ std::vector<arma::uvec> vector_to_list2(arma::uvec v){
 
 }
 
+std::vector<arma::uvec> vector_to_list3(arma::uvec v){
+
+  // Pass a vector to a list of sequential vectors
+
+  int n = v.size();
+  int add = 0;
+  std::vector<arma::uvec> lista(n);
+
+  for(int i=0; i < n; ++i) {
+
+    if(i != 0) {
+      add = lista[i-1].back();
+    }
+
+    lista[i] = consecutive(1, v[i]);
+
+  }
+
+  return lista;
+
+}
+
+std::vector<arma::uvec> vector_to_list4(arma::uvec v){
+
+  // Pass a vector to a list of sequential vectors
+
+  int n = v.size();
+  int add = 0;
+  std::vector<arma::uvec> lista(n);
+
+  for(int i=0; i < n; ++i) {
+
+    if(i != 0) {
+      add = lista[i-1].back();
+    }
+
+    lista[i] = add + consecutive(1, v[i]);
+
+  }
+
+  return lista;
+
+}
+
 arma::vec orthogonalize(arma::mat X, arma::vec x, int k) {
 
   // Make x orthogonal to every column of X

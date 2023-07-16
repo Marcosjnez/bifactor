@@ -220,7 +220,7 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
-      polyfast_object polychor = poly_no_cores(X_boots.slice(i), false);
+      polyfast_object polychor = poly_no_cores(X_boots.slice(i), "none", 0.00);
       // Rcpp::List polychor = polyfast(X_boots.slice(i), "none", 0L, false, 1L);
       arma::mat S_boot = std::get<0>(polychor);;
       if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
@@ -379,7 +379,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
 
   for(int i=0; i < unique_size; ++i) {
 
-      Rcpp::List fit = efast(S, unique[i], x.cor, x.method, x.rotation, x.projection,
+      Rcpp::List fit = efast(S, unique[i], x.cor, x.estimator, x.rotation, x.projection,
                              x.nullable_nobs,
                              x.nullable_Target, x.nullable_Weight,
                              x.nullable_PhiTarget, x.nullable_PhiWeight,
@@ -392,7 +392,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
                              x.nullable_rot_control);
 
       Rcpp::List rot = fit["rotation"];
-      arma::mat Phi = rot["Phi"];
+      arma::mat Phi = rot["phi"];
       arma::mat loadings = rot["loadings"];
       arma::mat L = loadings * Phi;
       arma::mat W = arma::solve(S, L);
@@ -480,7 +480,7 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
 
   // efa:
 
-  Rcpp::List fit = efast(S, dim, x.cor, x.method, x.rotation, x.projection,
+  Rcpp::List fit = efast(S, dim, x.cor, x.estimator, x.rotation, x.projection,
                          x.nullable_nobs,
                          x.nullable_Target, x.nullable_Weight,
                          x.nullable_PhiTarget, x.nullable_PhiWeight,
@@ -493,8 +493,8 @@ Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
                          x.nullable_rot_control);
 
   Rcpp::List rot = fit["rotation"];
-  arma::mat Phi = rot["Phi"];
-  arma::mat loadings = rot["loadings"];
+  arma::mat Phi = rot["lambda"];
+  arma::mat loadings = rot["lambda"];
   arma::mat L = loadings * Phi;
   arma::mat W = arma::solve(S, L);
   arma::mat fs = X * W;
