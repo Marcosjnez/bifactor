@@ -15,7 +15,7 @@
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 random_orth <- function(p, q) {
@@ -39,7 +39,7 @@ random_orth <- function(p, q) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 random_oblq <- function(p, q) {
@@ -68,7 +68,7 @@ random_oblq <- function(p, q) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 random_poblq <- function(p, q, oblq_factors) {
@@ -91,7 +91,7 @@ random_poblq <- function(p, q, oblq_factors) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 retr_orth <- function(X) {
@@ -114,7 +114,7 @@ retr_orth <- function(X) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 retr_oblq <- function(X) {
@@ -138,7 +138,7 @@ retr_oblq <- function(X) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @examples
 #'
@@ -154,18 +154,21 @@ retr_poblq <- function(X, oblq_factors) {
 #' Schmid-Leiman Transformation.
 #' @description
 #'
-#' Schmid-Leiman transformation into a bi-factor or generalized bi-factor pattern.
+#' Schmid-Leiman transformation into a bi-factor pattern with one or multiple general factors.
 #'
 #' @usage
 #'
-#' sl(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL)
+#' sl(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL,
+#' second_efa = NULL, cores = 1L)
 #'
-#' @param R Correlation matrix.
+#' @param X Raw data matrix or correlation matrix.
 #' @param n_generals Number of general factors.
 #' @param n_groups Number of group factors.
+#' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param first_efa Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.
 #' @param second_efa Arguments to pass to \code{efast} in the second-order factor extraction. See \code{efast} for the default arguments.
+#' @param cores Number of cores for the polychorics estimation.
 #'
 #' @details First, a hierarchical factor model is fitted using a second-order factor analysis on the factor correlation obtained from a first-order factor analysis. Then, the item loadings on the general factors are assumed to be the direct effects of the general factors according to such hierarchical model.
 #' On the other hand, the item loadings on the group factors become the originally first-order loadings post-multiplied by the diagonal matrix containing the root of the item uniquenesses.
@@ -184,7 +187,7 @@ retr_poblq <- function(X, oblq_factors) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @examples
 #'
@@ -198,12 +201,13 @@ retr_poblq <- function(X, oblq_factors) {
 #' first <- list(rotation = "target", projection = "oblq", Target = Target[, -c(1:2)])
 #' second <- list(rotation = "oblimin", projection = "oblq", gamma = 0)
 #'
-#' SL <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100, first, second)
+#' SL <- <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100,
+#'          first_efa = first, second_efa = second)
 #'}
 #'
 #' @export
-sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL) {
-  .Call(`_bifactor_sl`, R, n_generals, n_groups, nobs, first_efa, second_efa)
+sl <- function(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+  .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, nobs, first_efa, second_efa, cores)
 }
 
 #' @title
@@ -256,7 +260,7 @@ sl <- function(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_ef
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 #'
@@ -273,7 +277,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' @usage
 #'
-#' efast(R, nfactors, cor = "pearson", method = "minres",
+#' efast(X, nfactors, cor = "pearson", estimator = "uls",
 #' rotation = "oblimin", projection = "oblq", nobs = NULL,
 #' Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 #' blocks = NULL, block_weights = NULL,
@@ -282,10 +286,10 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' random_starts = 1L, cores = 1L,
 #' init = NULL, efa_control = NULL, rot_control = NULL)
 #'
-#' @param R Correlation matrix.
+#' @param X Raw data matrix or correlation matrix.
 #' @param nfactors Number of common factors to extract.
 #' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
-#' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".
+#' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".
 #' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique), "poblq" (partially oblique). Defaults to "oblq".
 #' @param nobs Sample size. Defaults to NULL.
@@ -293,7 +297,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' @param Weight Weight matrix for the loadings. Defaults to NULL.
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
-#' @param blocks Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.
+#' @param blocks List of vectors with the indexes of the factors for which separately applying the rotation criterion. Defaults to NULL.
 #' @param block_weights Vector of weights for each block of factors.
 #' @param oblq_factors Vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one block with 2 factors and another block with 4 factors. Everything else is orthogonal. Defaults to NULL.
 #' @param gamma \eqn{\gamma} parameter for the oblimin criterion. Defaults to 0 (quartimin).
@@ -314,7 +318,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' If \code{init = NULL}, then the squared multiple correlations of each item with the remaining ones are used as initial values (These are known to be upper bounds).
 #'
-#' If a Heywood case is encountered, then \code{method =} "minrank" is automatically applied to ensure positive uniquenesses.
+#' If a Heywood case is encountered, then \code{estimator =} "minrank" is automatically applied to ensure positive uniquenesses.
 #'
 #' @return List of class \code{efast} with the following components:
 #' \item{efa}{List containing the following objects:}
@@ -328,7 +332,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' \item Heywood - TRUE if any Heywood case is encountered and FALSE otherwise.
 #' \item iterations - Number of iterations for the L-BFGS-B algorithm to converge.
 #' \item convergence - TRUE if the L-BFGS-B algorithm converged and FALSE otherwise.
-#' \item method - Method used to fit the exploratory factor analysis.
+#' \item estimator - Method used to fit the exploratory factor analysis.
 #' }
 #'
 #' \item{rotation}{List of class \code{rotation}. Only if the argument \code{rotation} is not "none". See \code{rotate} for the components.}
@@ -336,7 +340,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @examples
 #'
@@ -347,13 +351,13 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' s <- cor(scores)
 #'
 #' # Fit efa:
-#' efa <- efast(s, nfactors = 5, method = "minres", rotation = "oblimin",
+#' fit <- efast(s, nfactors = 5, estimator = "uls", rotation = "oblimin",
 #' projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 #'}
 #'
 #' @export
-efast <- function(R, nfactors, cor = "pearson", method = "minres", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactor_efast`, R, nfactors, cor, method, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+  .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
@@ -376,7 +380,7 @@ efast <- function(R, nfactors, cor = "pearson", method = "minres", rotation = "o
 #'
 #' Garcia-Garzon, E., Abad, F. J., & Garrido, L. E. (2019). Improving bi-factor exploratory modeling: Empirical target rotation based on loading differences. Methodology: European Journal of Research Methods for the Behavioral and Social Sciences, 15(2), 45–55. https://doi.org/10.1027/1614-2241/a000163
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @export
 get_target <- function(loadings, Phi = NULL, cutoff = 0) {
@@ -384,11 +388,11 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 }
 
 #' @title
-#' Fit an exploratory bi-factor or generalized bi-factor model.
+#' Fit an exploratory bi-factor model with one or multiple general factors.
 #' @usage
 #'
-#' bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-#' method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
+#' bifactor(X, n_generals, n_groups, method = "GSLiD", cor = "pearson",
+#' estimator = "uls", projection = "oblq", nobs = NULL, PhiTarget = NULL,
 #' PhiWeight = NULL, blocks = NULL, block_weights = NULL,
 #' oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
 #' normalization = "none", w = 1, random_starts = 1L, cores = 1L,
@@ -397,13 +401,14 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' @description
 #'
-#' Fit an exploratory bi-factor or generalized bi-factor model with correlated factors.
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
-#' @param R Correlation matrix.
+#' @param X Raw data matrix or correlation matrix.
 #' @param n_generals Number of general factors to extract.
 #' @param n_groups Number of group factors to extract.
-#' @param bifactor_method "GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".
-#' @param method EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".
+#' @param method "GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".
+#' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
+#' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variable), "uls" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "uls".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
@@ -463,7 +468,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'
 #' @references
 #'
-#' Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 #'
 #' @examples
 #'
@@ -473,15 +478,15 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' scores <- MASS::mvrnorm(1e4, rep(0, nrow(sim$R)), Sigma = sim$R)
 #' s <- cor(scores)
 #'
-#' # Fit an Generalized exploratory bi-factor model with GSLiD:
-#' GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
-#' method = "minres", projection = "poblq", nobs = NULL, oblq_factors = 3,
+#' # Fit an exploratory bi-factor model with GSLiD:
+#' fit <- bifactor(s, n_generals = 3, n_groups = 15, method = "GSLiD",
+#' estimator = "uls", projection = "poblq", nobs = NULL, oblq_factors = 3,
 #' random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization = "none")
 #'}
 #'
 #' @export
-bifactor <- function(R, n_generals, n_groups, bifactor_method = "GSLiD", method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, R, n_generals, n_groups, bifactor_method, method, projection, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 #' @title
@@ -534,7 +539,7 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
 #'
 #' @details
 #'
-#' Currently, only available for \code{method = minres}.
+#' Currently, only available for \code{estimator = uls}.
 #'
 #' @return A list with the standard errors of the rotated factor loadings, factor correlations and uniquenesses.
 #'
@@ -543,8 +548,8 @@ asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
 #' Zhang G, Preacher KJ, Hattori M, Jiang G, Trichtinger LA (2019). A sandwich standard error estimator for exploratory factor analysis with nonnormal data and imperfect models. Applied Psychological Measurement, 43, 360–373. https://doi.org/10.1177/0146621618798669
 #'
 #' @export
-se <- function(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1) {
-  .Call(`_bifactor_se`, fit, n, X, type, eta)
+se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
+  .Call(`_bifactor_se`, fit, nobs, X, type, eta)
 }
 
 #' @title
@@ -661,7 +666,7 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #' Fast polychoric correlations.
 #' @usage
 #'
-#' polyfast(X, acov = "none", PD = FALSE, nboot = 1000L, fit = FALSE, cores = 1L)
+#' polyfast(X, acov = "none", smooth = "pd", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L)
 #'
 #' @description
 #'
@@ -669,7 +674,8 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @param X Matrix of categorical scores. The lowest score must start at 0.
 #' @param acov Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Use "bootstrap" for estimating the asymptotic covariance matrix by resampling. Defaults to "none".
-#' @param PD Force a positive definite solution? Defaults to FALSE.
+#' @param smooth Smooth the matrix to be positive definite ("pd"), positive semi-definite ("psd"), or estimate the maximum likely polychoric correlation matrix under the positive semi-definite constraint ("analytical"). Defaults to "none".
+#' @param min_eigval Minimum eigenvalue when smooth = "pd". Defaults to 0.001.
 #' @param nboot Number of bootstrap samples to compute the standard errors. It only works if acov = "bootstrap". Defaults to 1000L.
 #' @param fit Should the fit value be calculated? Defaults to FALSE.
 #' @param cores Number of parallel cores to compute the polychoric correlations.
@@ -680,6 +686,6 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @return A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
 #' @export
-polyfast <- function(X, acov = "none", PD = FALSE, nboot = 1000L, fit = FALSE, cores = 1L) {
-  .Call(`_bifactor_polyfast`, X, acov, PD, nboot, fit, cores)
+polyfast <- function(X, acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
+  .Call(`_bifactor_polyfast`, X, acov, smooth, min_eigval, nboot, fit, cores)
 }

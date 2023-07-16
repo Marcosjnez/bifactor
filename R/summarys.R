@@ -63,7 +63,7 @@ summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ..
   colnames(RELIABILITY) <- colnames(lambda)
 
   ### Fit statistics
-  fit  <- suppressWarnings(fitMeasures(efa, nobs))
+  fit  <- suppressWarnings(fit(efa, nobs))
 
   ### Print
   # Basic info
@@ -166,7 +166,7 @@ summary.bifactor <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=
   colnames(RELIABILITY) <- colnames(lambda)
 
   ### Fit statistics
-  fit  <- suppressWarnings(fitMeasures(efa, nobs))
+  fit  <- suppressWarnings(fit(efa, nobs))
 
   ### Print
   # Basic info

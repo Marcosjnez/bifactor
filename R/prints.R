@@ -14,7 +14,7 @@ print.efa <- function(x, nobs=NULL, ...) {
 
   ObjFn <- efa$efa$f
   ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
-  fit <- suppressWarnings(fitMeasures(efa, nobs))
+  fit <- suppressWarnings(fit(efa, nobs))
   Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
                                                       ordering),sep="")
@@ -63,7 +63,7 @@ print.bifactor <- function(x, nobs=NULL, ...) {
 
   ObjFn <- efa$efa$f
   ordering <- order(diag(Phi %*% t(lambda) %*% lambda), decreasing=T)
-  fit <- suppressWarnings(fitMeasures(efa, nobs))
+  fit <- suppressWarnings(fit(efa, nobs))
   Phi <- Phi[ordering, ordering]
   rownames(Phi) <- colnames(Phi) <- paste("F",sprintf(paste("%0",nchar(efa$modelInfo$nfactors),"d",sep=""),
                                                       ordering),sep="")
