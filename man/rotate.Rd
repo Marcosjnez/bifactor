@@ -66,7 +66,7 @@ If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is pas
 If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Target} by default, which means a partially specified target rotation is performed. The same applies for \code{PhiTarget} and \code{PhiWeight}.
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 
 Zhang, G., Hattori, M., Trichtinger, L. A., & Wang, X. (2019). Target rotation with both factor loadings and factor correlations. Psychological Methods, 24(3), 390–402. https://doi.org/10.1037/met0000198
 }

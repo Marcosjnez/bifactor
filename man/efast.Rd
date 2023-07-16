@@ -4,7 +4,7 @@
 \alias{efast}
 \title{Fast exploratory factor analysis.}
 \usage{
-efast(R, nfactors, cor = "pearson", method = "minres",
+efast(X, nfactors, cor = "pearson", estimator = "uls",
 rotation = "oblimin", projection = "oblq", nobs = NULL,
 Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL,
 blocks = NULL, block_weights = NULL,
@@ -14,13 +14,13 @@ random_starts = 1L, cores = 1L,
 init = NULL, efa_control = NULL, rot_control = NULL)
 }
 \arguments{
-\item{R}{Correlation matrix.}
+\item{X}{Raw data matrix or correlation matrix.}
 
 \item{nfactors}{Number of common factors to extract.}
 
 \item{cor}{Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".}
 
-\item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variables), "minres" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "minres".}
+\item{estimator}{EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".}
 
 \item{rotation}{Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".}
 
@@ -36,7 +36,7 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 
 \item{PhiWeight}{Weight matrix for the factor correlations. Defaults to NULL.}
 
-\item{blocks}{Vector with the number of factors for which separately applying the rotation criterion. Defaults to NULL.}
+\item{blocks}{List of vectors with the indexes of the factors for which separately applying the rotation criterion. Defaults to NULL.}
 
 \item{block_weights}{Vector of weights for each block of factors.}
 
@@ -73,7 +73,7 @@ List of class \code{efast} with the following components:
 \item Heywood - TRUE if any Heywood case is encountered and FALSE otherwise.
 \item iterations - Number of iterations for the L-BFGS-B algorithm to converge.
 \item convergence - TRUE if the L-BFGS-B algorithm converged and FALSE otherwise.
-\item method - Method used to fit the exploratory factor analysis.
+\item estimator - Method used to fit the exploratory factor analysis.
 }
 
 \item{rotation}{List of class \code{rotation}. Only if the argument \code{rotation} is not "none". See \code{rotate} for the components.}
@@ -89,7 +89,7 @@ If \code{Target} is provided but not \code{Weight}, then \code{Weight = 1 - Targ
 
 If \code{init = NULL}, then the squared multiple correlations of each item with the remaining ones are used as initial values (These are known to be upper bounds).
 
-If a Heywood case is encountered, then \code{method =} "minrank" is automatically applied to ensure positive uniquenesses.
+If a Heywood case is encountered, then \code{estimator =} "minrank" is automatically applied to ensure positive uniquenesses.
 }
 \examples{
 
@@ -100,11 +100,11 @@ scores <- MASS::mvrnorm(1e3, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
 # Fit efa:
-efa <- efast(s, nfactors = 5, method = "minres", rotation = "oblimin",
+fit <- efast(s, nfactors = 5, estimator = "uls", rotation = "oblimin",
 projection = "oblq", gamma = 0, random_starts = 10L, cores = 1L)
 }
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 }

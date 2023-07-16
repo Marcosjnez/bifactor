@@ -4,20 +4,25 @@
 \alias{sl}
 \title{Schmid-Leiman Transformation.}
 \usage{
-sl(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL)
+sl(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL,
+second_efa = NULL, cores = 1L)
 }
 \arguments{
-\item{R}{Correlation matrix.}
+\item{X}{Raw data matrix or correlation matrix.}
 
 \item{n_generals}{Number of general factors.}
 
 \item{n_groups}{Number of group factors.}
+
+\item{cor}{Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".}
 
 \item{nobs}{Sample size. Defaults to NULL.}
 
 \item{first_efa}{Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.}
 
 \item{second_efa}{Arguments to pass to \code{efast} in the second-order factor extraction. See \code{efast} for the default arguments.}
+
+\item{cores}{Number of cores for the polychorics estimation.}
 }
 \value{
 \item{loadings}{Loading matrix of the Schmid-Leiman solution.}
@@ -27,7 +32,7 @@ sl(R, n_generals, n_groups, nobs = NULL, first_efa = NULL, second_efa = NULL)
 \item{Rhat}{Correlation matrix predicted by the (hierarchical) model.}
 }
 \description{
-Schmid-Leiman transformation into a bi-factor or generalized bi-factor pattern.
+Schmid-Leiman transformation into a bi-factor pattern with one or multiple general factors.
 }
 \details{
 First, a hierarchical factor model is fitted using a second-order factor analysis on the factor correlation obtained from a first-order factor analysis. Then, the item loadings on the general factors are assumed to be the direct effects of the general factors according to such hierarchical model.
@@ -49,10 +54,11 @@ Target <- ifelse(lambda > 0, 1, 0)
 first <- list(rotation = "target", projection = "oblq", Target = Target[, -c(1:2)])
 second <- list(rotation = "oblimin", projection = "oblq", gamma = 0)
 
-SL <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100, first, second)
+SL <- <- sl(sim$R, n_generals = 2, n_groups = 6, nobs = 100,
+         first_efa = first, second_efa = second)
 }
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 }

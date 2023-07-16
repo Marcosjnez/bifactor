@@ -2,10 +2,10 @@
 % Please edit documentation in R/cpp_functions.R
 \name{bifactor}
 \alias{bifactor}
-\title{Fit an exploratory bi-factor or generalized bi-factor model.}
+\title{Fit an exploratory bi-factor model with one or multiple general factors.}
 \usage{
-bifactor(R, n_generals, n_groups, bifactor_method = "GSLiD",
-method = "minres", projection = "oblq", nobs = NULL, PhiTarget = NULL,
+bifactor(X, n_generals, n_groups, method = "GSLiD", cor = "pearson",
+estimator = "uls", projection = "oblq", nobs = NULL, PhiTarget = NULL,
 PhiWeight = NULL, blocks = NULL, block_weights = NULL,
 oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0,
 normalization = "none", w = 1, random_starts = 1L, cores = 1L,
@@ -13,15 +13,17 @@ init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL,
 second_efa = NULL, verbose = TRUE)
 }
 \arguments{
-\item{R}{Correlation matrix.}
+\item{X}{Raw data matrix or correlation matrix.}
 
 \item{n_generals}{Number of general factors to extract.}
 
 \item{n_groups}{Number of group factors to extract.}
 
-\item{bifactor_method}{"GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".}
+\item{method}{"GSLiD", "SL" (Schmid-Leiman), and "botmin" (bifactor-oblimin-target minimization). Defaults to "GSLiD".}
 
-\item{method}{EFA fitting method: "ml" (maximum likelihood for multivariate normal variable), "minres" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "minres".}
+\item{cor}{Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".}
+
+\item{estimator}{EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variable), "uls" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "uls".}
 
 \item{projection}{Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".}
 
@@ -89,7 +91,7 @@ current loading matrix and the previous loading matrix.
 \item{elapsed}{Total amount of time spent for execution (in nanoseconds).}
 }
 \description{
-Fit an exploratory bi-factor or generalized bi-factor model with correlated factors.
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 }
 \details{
 If \code{efa.control = NULL}, then \code{list(maxit = 1e4)} is passed to \code{efa.control}. If \code{rot_control = NULL}, then \code{list(maxit = 1000, eps = 1e-05)} is passed to \code{rot_control}, where \code{eps} is the absolute tolerance. When the objective function does not make a larger improvement than \code{eps}, the algorithm is assumed to converge.
@@ -110,13 +112,13 @@ generals_rho = 0.3)
 scores <- MASS::mvrnorm(1e4, rep(0, nrow(sim$R)), Sigma = sim$R)
 s <- cor(scores)
 
-# Fit an Generalized exploratory bi-factor model with GSLiD:
-GSLiD <- bifactor(s, n_generals = 3, n_groups = 15, bifactor_method = "GSLiD",
-method = "minres", projection = "poblq", nobs = NULL, oblq_factors = 3,
+# Fit an exploratory bi-factor model with GSLiD:
+fit <- bifactor(s, n_generals = 3, n_groups = 15, method = "GSLiD",
+estimator = "uls", projection = "poblq", nobs = NULL, oblq_factors = 3,
 random_starts = 10, cores = 8, w = 1, maxit = 20, verbose = TRUE, normalization = "none")
 }
 
 }
 \references{
-Jiménez, M., Abad, F.J., Garcia-Garzon, E., Garrido, L.E. (2021, June 24). Generalized exploratory bi-factor Modeling. Under review. Retrieved from https://osf.io/7aszj/?view_only=8f7bd98025104347a96f60a6736f5a64
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., & Garrido, L. E. (2023). Exploratory Bi-factor Analysis with Multiple General Factors. Multivariate behavioral research, 1–18. Advance online publication. https://doi.org/10.1080/00273171.2023.2189571
 }

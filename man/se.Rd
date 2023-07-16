@@ -9,13 +9,13 @@ se(fit = NULL, n = NULL, X = NULL, type = "normal", eta = 1)
 \arguments{
 \item{fit}{Optional \code{efast} model.}
 
-\item{n}{Sample size.}
-
 \item{X}{Raw data matrix.}
 
 \item{type}{Type of random deviates: "normal", "elliptical" or "general".}
 
 \item{eta}{Skewness parameter for elliptical data distributions.}
+
+\item{n}{Sample size.}
 }
 \value{
 A list with the standard errors of the rotated factor loadings, factor correlations and uniquenesses.
@@ -24,7 +24,7 @@ A list with the standard errors of the rotated factor loadings, factor correlati
 Compute the sandwich standard errors of factor loadings, factor correlations and uniquenesses.
 }
 \details{
-Currently, only available for \code{method = minres}.
+Currently, only available for \code{estimator = uls}.
 }
 \references{
 Zhang G, Preacher KJ, Hattori M, Jiang G, Trichtinger LA (2019). A sandwich standard error estimator for exploratory factor analysis with nonnormal data and imperfect models. Applied Psychological Measurement, 43, 360–373. https://doi.org/10.1177/0146621618798669
