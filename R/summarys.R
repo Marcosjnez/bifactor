@@ -10,21 +10,21 @@ summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ..
   }
 
   ### Pattern matrix with communalities, uniqueness, and complexity
-  lambda <- efa$rotation$loadings
-  Phi <- efa$rotation$Phi
+  lambda <- efa$rotation$lambda
+  phi <- efa$rotation$phi
   Rhat <- efa$efa$Rhat
-  R <- efa$modelInfo$R
+  R <- efa$modelInfo$correlation
 
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
-  SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
+  SSloads <- diag(phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
   ordering <- order(SSloads, decreasing=T)
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
   lambda <- lambda[,ordering]
-  if(is.null(colnames(efa$modelInfo$R))) {
+  if(is.null(colnames(efa$modelInfo$correlation))) {
     rownames(lambda) <- paste("item_",sprintf(paste("%0",nchar(nrow(lambda)),"d",sep=""),1:nrow(lambda)),sep="")
   } else {
-    rownames(lambda) <- colnames(efa$modelInfo$R)
+    rownames(lambda) <- colnames(efa$modelInfo$correlation)
   }
   lambda <- lambda * {abs(lambda) > abs(suppress)}
   if(order) {
@@ -51,11 +51,11 @@ summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ..
   colnames(VAF) <- colnames(lambda)
 
   ### Factor correlations
-  Phi <- Phi[ordering, ordering]
-  rownames(Phi) <- colnames(Phi) <- colnames(lambda)
+  phi <- phi[ordering, ordering]
+  rownames(phi) <- colnames(phi) <- colnames(lambda)
 
   ### Factor score indeterminacy
-  Reliability <- diag(Phi %*% t(lambda) %*% solve(Rhat) %*% lambda %*% Phi)
+  Reliability <- diag(phi %*% t(lambda) %*% solve(Rhat) %*% lambda %*% phi)
   Indeterminacy <- sqrt(Reliability)
   min_cor <- 2*Reliability-1
   RELIABILITY <- round(t(data.frame(Reliability, Indeterminacy, min_cor)), digits)
@@ -67,37 +67,37 @@ summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ..
 
   ### Print
   # Basic info
-  cat("Factor Analysis using method = ", efa$modelInfo$method, "\n", sep="")
+  cat("Factor Analysis using estimator = ", efa$modelInfo$estimator, "\n", sep="")
   cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
   # Loadings
   cat("Standardized loadings (pattern matrix) based upon correlation matrix\n", sep=""); print(loadsM)
   # Variance accounted for
   cat("\n","Variance accounted for after rotation\n",sep=""); print(VAF)
   # Latent correlations
-  cat("\n","Factor correlations after rotation\n",sep=""); print(round(Phi, digits))
+  cat("\n","Factor correlations after rotation\n",sep=""); print(round(phi, digits))
   # Factor Indeterminacy
   cat("\n","Factor score indeterminacy\n",sep=""); print(round(RELIABILITY, digits))
   # Fit
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")
-  cat("\n","The standardized root mean square residual (SRMR) is ", round(fit["srmr"],3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit["lavsrc"],3), sep="")
+  cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 2], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 2], 3), sep="")
   cat("\n","The degrees of freedom for the null model are ", efa$modelInfo$df_null,
       " and the objective function was ", round(efa$modelInfo$f_null,2), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
-      " and the objective function was ", round(ObjFn,2), "\n", sep="")
+      " and the objective function was ", round(ObjFn, 2), "\n", sep="")
   if(!is.null(nobs)) {
-    cat("The total number of observations was ", nobs, " with Unbiased Chi-squared = ",
-        round(fit["chisq.unbiased"],1), " with prob < ", fit["pvalue.unbiased"] , sep="")
-    cat("\n","Unbiased Tucker Lewis Index of factoring reliability = ", round(fit["tli.unbiased"],3), sep="")
-    cat("\n","Unbiased RMSEA index = ", round(fit["rmsea.unbiased"],3), sep="")
-    cat("\n","Unbiased AIC = ", round(fit["aic.unbiased"],1), sep="")
-    cat("\n","Unbiased BIC = ", round(fit["bic.unbiased"],1), sep="")
-    cat("\n","Unbiased HQ = ", round(fit["hq.unbiased"],1), "\n", sep="")
+    cat("The total number of observations was ", nobs, " with Corrected Chi-squared = ",
+        round(fit$indices["Chi-square", 2], 1), " with prob < ", fit$indices["p-value", 2] , sep="")
+    cat("\n","Corrected Tucker Lewis Index of factoring reliability = ", round(fit$indices["TLI", 2], 3), sep="")
+    cat("\n","Corrected RMSEA index = ", round(fit$indices["RMSEA", 2], 3), sep="")
+    cat("\n","Corrected AIC = ", round(fit$information["AIC", 2], 1), sep="")
+    cat("\n","Corrected BIC = ", round(fit$information["BIC", 2], 1), sep="")
+    cat("\n","Corrected HQ = ", round(fit$information["HQ", 2], 1), "\n", sep="")
   }
 
   Results <- list("loadings"=lambda, "communalities"=h2, "uniqueness"=u2, "complexity"=com,
-                  "VAF"=VAF, "Phi"=Phi, "fit"=fit)
+                  "VAF"=VAF, "phi"=phi, "fit"=fit)
   invisible(Results)
 }
 
@@ -113,21 +113,21 @@ summary.bifactor <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=
   }
 
   ### Pattern matrix with communalities, uniqueness, and complexity
-  lambda <- efa$bifactor$loadings
-  Phi <- efa$bifactor$Phi
+  lambda <- efa$bifactor$lambda
+  phi <- efa$bifactor$phi
   Rhat <- efa$efa$Rhat
-  R <- efa$modelInfo$R
+  R <- efa$modelInfo$correlation
 
   uniquenesses <- c(efa$efa$uniquenesses)
   ObjFn <- efa$efa$f
-  SSloads <- diag(Phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
+  SSloads <- diag(phi %*% t(lambda) %*% lambda) # Generalizing to oblique rotation
   ordering <- order(SSloads, decreasing=T)
   colnames(lambda) <- paste("F",sprintf(paste("%0",nchar(ncol(lambda)),"d",sep=""),1:ncol(lambda)),sep="")
   lambda <- lambda[,ordering]
-  if(is.null(colnames(efa$modelInfo$R))) {
+  if(is.null(colnames(efa$modelInfo$correlation))) {
     rownames(lambda) <- paste("item_",sprintf(paste("%0",nchar(nrow(lambda)),"d",sep=""),1:nrow(lambda)),sep="")
   } else {
-    rownames(lambda) <- colnames(efa$modelInfo$R)
+    rownames(lambda) <- colnames(efa$modelInfo$correlation)
   }
   lambda <- lambda * {abs(lambda) > abs(suppress)}
   if(order) {
@@ -154,11 +154,11 @@ summary.bifactor <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=
   colnames(VAF) <- colnames(lambda)
 
   ### Factor correlations
-  Phi <- Phi[ordering, ordering]
-  rownames(Phi) <- colnames(Phi) <- colnames(lambda)
+  phi <- phi[ordering, ordering]
+  rownames(phi) <- colnames(phi) <- colnames(lambda)
 
   ### Factor score indeterminacy
-  Reliability <- diag(Phi %*% t(lambda) %*% solve(Rhat) %*% lambda %*% Phi)
+  Reliability <- diag(phi %*% t(lambda) %*% solve(Rhat) %*% lambda %*% phi)
   Indeterminacy <- sqrt(Reliability)
   min_cor <- 2*Reliability-1
   RELIABILITY <- round(t(data.frame(Reliability, Indeterminacy, min_cor)), digits)
@@ -170,36 +170,36 @@ summary.bifactor <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=
 
   ### Print
   # Basic info
-  cat("Factor Analysis using method = ", efa$modelInfo$method, "\n", sep="")
+  cat("Factor Analysis using estimator = ", efa$modelInfo$estimator, "\n", sep="")
   cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
   # Loadings
   cat("Standardized loadings (pattern matrix) based upon correlation matrix\n", sep=""); print(loadsM)
   # Variance accounted for
   cat("\n","Variance accounted for after bifactor rotation\n",sep=""); print(VAF)
   # Latent correlations
-  cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(Phi, digits))
+  cat("\n","Factor correlations after bifactor rotation\n",sep=""); print(round(phi, digits))
   # Factor Indeterminacy
   cat("\n","Factor score indeterminacy\n",sep=""); print(round(RELIABILITY, digits))
   # Fit
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")
-  cat("\n","The standardized root mean square residual (SRMR) is ", round(fit["srmr"],3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit["lavsrc"],3), sep="")
+  cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 2], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 2], 3), sep="")
   cat("\n","The degrees of freedom for the null model are ", efa$modelInfo$df_null,
       " and the objective function was ", round(efa$modelInfo$f_null,2), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
-      " and the objective function was ", round(ObjFn,2), "\n", sep="")
+      " and the objective function was ", round(ObjFn, 2), "\n", sep="")
   if(!is.null(nobs)) {
-    cat("The total number of observations was ", nobs, " with Unbiased Chi-squared = ",
-        round(fit["chisq.unbiased"],1), " with prob < ", fit["pvalue.unbiased"] , sep="")
-    cat("\n","Unbiased Tucker Lewis Index of factoring reliability = ", round(fit["tli.unbiased"],3), sep="")
-    cat("\n","Unbiased RMSEA index = ", round(fit["rmsea.unbiased"],3), sep="")
-    cat("\n","Unbiased AIC = ", round(fit["aic.unbiased"],1), sep="")
-    cat("\n","Unbiased BIC = ", round(fit["bic.unbiased"],1), sep="")
-    cat("\n","Unbiased HQ = ", round(fit["hq.unbiased"],1), "\n", sep="")
+    cat("The total number of observations was ", nobs, " with Corrected Chi-squared = ",
+        round(fit$indices["Chi-square", 2], 1), " with prob < ", fit$indices["p-value", 2] , sep="")
+    cat("\n","Corrected Tucker Lewis Index of factoring reliability = ", round(fit$indices["TLI", 2], 3), sep="")
+    cat("\n","Corrected RMSEA index = ", round(fit$indices["RMSEA", 2], 3), sep="")
+    cat("\n","Corrected AIC = ", round(fit$information["AIC", 2], 1), sep="")
+    cat("\n","Corrected BIC = ", round(fit$information["BIC", 2], 1), sep="")
+    cat("\n","Corrected HQ = ", round(fit$information["HQ", 2], 1), "\n", sep="")
   }
 
   Results <- list("loadings"=lambda, "communalities"=h2, "uniqueness"=u2, "complexity"=com,
-                  "VAF"=VAF, "Phi"=Phi, "fit"=fit)
+                  "VAF"=VAF, "phi"=phi, "fit"=fit)
   invisible(Results)
 }

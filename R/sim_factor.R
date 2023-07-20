@@ -269,7 +269,7 @@ CFA <- function(S, target, targetphi, targetpsi = diag(nrow(target)),
                   iterations = cfa$iterations, df = df,
                   lambda = lambda_hat, phi = phi_hat,
                   psi = psi_hat, uniquenesses = uniquenesses_hat,
-                  model = S_hat, residuals = residuals)
+                  model = S_hat, residuals = residuals, pars = cfa$par)
 
   return(results)
 

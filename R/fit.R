@@ -34,7 +34,7 @@ fit <- function(efa, nobs = NULL, digits = 3) {
   ObjFn <- efa$efa$f
   ObjFn_null <- efa$modelInfo$f_null
   residuals <- efa$efa$residuals
-  p <- efa$modelInfo$n_vars
+  p <- efa$modelInfo$nvars
   q <- efa$modelInfo$nfactors
   correction <- if(is.null(nobs)) NULL else nobs-1-1/6*(2*p+5)-2/3*q
   df_null <- efa$modelInfo$df_null
@@ -74,7 +74,7 @@ fit <- function(efa, nobs = NULL, digits = 3) {
     sqrt(max(chisq.corrected - df, 0) / {df * {nobs-1}})
   }
   srmr <- sqrt(sum(residuals[lower.tri(residuals,diag=T)]^2)/
-                 {{efa$modelInfo$n_vars*{efa$modelInfo$n_vars+1}}/2})
+                 {{efa$modelInfo$nvars*{efa$modelInfo$nvars+1}}/2})
   lavsrc <- max(abs(residuals))
 
   # Comparative fit indices

@@ -25,31 +25,31 @@ fscores <- function(fit, scores = NULL, method = "regression") {
 
   if(is.null(scores)) stop("Please, provide the matrix of observed scores")
 
-  R <- fit$modelInfo$R
+  R <- fit$modelInfo$correlation
   invR <- solve(R)
   n <- nrow(scores)
-  p <- fit$modelInfo$n_vars
+  p <- fit$modelInfo$nvars
   q <- fit$modelInfo$nfactors
   z <- scale(scores)
 
   if(fit$modelInfo$rotation == "none"){
 
-    Lambda <- fit$efa$loadings
-    Phi <- diag(q)
+    Lambda <- fit$efa$lambda
+    phi <- diag(q)
 
   } else {
 
     if(inherits(fit, "efa")) {
-      Lambda <- fit$rotation$loadings
-      Phi <- fit$rotation$Phi
+      Lambda <- fit$rotation$lambda
+      phi <- fit$rotation$phi
     } else if(inherits(fit, "bifactor")){
-      Lambda <- fit$bifactor$loadings
-      Phi <- fit$bifactor$Phi
+      Lambda <- fit$bifactor$lambda
+      phi <- fit$bifactor$phi
     }
 
   }
 
-  S <- Lambda %*% Phi # Correlations between factors and items
+  S <- Lambda %*% phi # Correlations between factors and items
 
   if(method == "regression") {
 
@@ -57,15 +57,15 @@ fscores <- function(fit, scores = NULL, method = "regression") {
 
   } else if(method == "tenBerge") {
 
-    SVD <- svd(Phi)
-    Phi12 <- SVD$u %*% diag(sqrt(SVD$d)) %*% t(SVD$v)
+    SVD <- svd(phi)
+    phi12 <- SVD$u %*% diag(sqrt(SVD$d)) %*% t(SVD$v)
     SVD <- svd(R)
     R12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
-    L <- Lambda %*% Phi12
+    L <- Lambda %*% phi12
     SVD <- svd(t(L) %*% invR %*% L)
     LRL12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
     C <- R12 %*% L %*% LRL12
-    weights <- R12 %*% C %*% Phi12
+    weights <- R12 %*% C %*% phi12
 
   } else if(method == "Bartlett") {
 
