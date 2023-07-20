@@ -33,23 +33,42 @@ void check_efa(arma::mat R, int nfactors, Rcpp::Nullable<arma::vec> nullable_ini
 
 }
 
-void check_efa(arguments_efa& x, Rcpp::Nullable<Rcpp::List> nullable_efa_control) {
-
-  if(x.R.n_rows < x.q) Rcpp::stop("Too many factors");
+void check_efa(arguments_efa& x) {
 
   Rcpp::List efa_control;
-
-  if (nullable_efa_control.isNotNull()) {
-    efa_control = Rcpp::as<Rcpp::List>(nullable_efa_control);
+  // Check control parameters:
+  if (x.nullable_efa_control.isNotNull()) {
+    efa_control = Rcpp::as<Rcpp::List>(x.nullable_efa_control);
   }
+
+  if(x.p < x.q) Rcpp::stop("Too many factors");
+
+  // Choose custom weight matrix for the dwls estimator:
+  if(efa_control.containsElementNamed("Inv_W")) {
+    arma::mat Inv_W = efa_control["Inv_W"];
+    x.Inv_W = Inv_W;
+  } else if(x.Inv_W.is_empty() & x.estimator == "dwls") {
+    Rcpp::stop("For the dwls estimator, please introduce the raw data or provide the reciprocal of the variance of the correlations in efa_control = list(Inv_W = ...)");
+  }
+
+  // Check initial values:
+  if (x.nullable_init.isNotNull()) {
+    Rcpp::warning("Initial values not available for the dwls estimator");
+    x.psi = Rcpp::as<arma::vec>(x.nullable_init);
+  } else { // Check for positive definiteness only if custom init values are not specified
+    if(x.R.is_sympd()) {
+      x.psi = 1/arma::diagvec(arma::inv_sympd(x.R));
+    } else {
+      x.smoothed = smoothing(x.R, 0.001);
+      x.psi = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
+    }
+  }
+
   if(efa_control.containsElementNamed("projection")) {
     std::string manifold = efa_control["projection"];
     x.manifold = manifold;
   }
-  if(efa_control.containsElementNamed("DW")) {
-    arma::mat DW = efa_control["DW"];
-    x.DW = DW;
-  }
+
   if(efa_control.containsElementNamed("optim")) {
     std::string optim = efa_control["optim"];
     x.optim = optim;
@@ -114,6 +133,17 @@ void check_efa(arguments_efa& x, Rcpp::Nullable<Rcpp::List> nullable_efa_control
   }
   if(x.cores < 1) {
     Rcpp::stop("The number of cores should be a positive integer");
+  }
+
+  if(x.estimator == "dwls") {
+    x.optim = "L-BFGS";
+    x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
+    x.manifold = "dwls";
+    x.maxit = 10000;
+    x.psi = arma::randu(x.lambda_parameters);
+    // x.psi = arma::randu(x.lambda_parameters + x.p);
+    x.lambda.set_size(x.p, x.q); x.lambda.zeros();
+    x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
   }
 
 }

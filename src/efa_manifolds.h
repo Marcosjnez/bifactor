@@ -115,19 +115,17 @@ public:
 
 };
 
-// Orthogonal manifold:
+// DWLS manifold:
 
-class orth_efa:public efa_manifold {
+class dwls_efa:public efa_manifold {
 
 public:
 
   void param(arguments_efa& x) {
 
-    x.lambda = x.psi.cols(0, x.q-1);
-    x.lambda(0, 1) = 0;
-    x.lambda(0, 2) = 0;
-    x.lambda(1, 2) = 0;
-    x.uniquenesses = x.psi.col(x.q);
+    x.lambda.elem(x.lower_tri_ind) = x.psi;
+    // x.lambda.elem(x.lower_tri_ind) = x.psi.head(x.lambda_parameters);
+    // x.uniquenesses = x.psi.tail(x.p);
 
   }
 
@@ -137,7 +135,8 @@ public:
 
   void grad(arguments_efa& x) {
 
-    x.g = arma::join_rows(x.gL, x.gU);
+    x.g = arma::vectorise(x.gL.elem(x.lower_tri_ind));
+    // x.g = arma::join_cols(arma::vectorise(x.gL.elem(x.lower_tri_ind)), arma::vectorise(x.gU));
 
   }
 
@@ -148,7 +147,6 @@ public:
   void proj(arguments_efa& x) {
 
     // arma::mat rgL = x.lambda * skew(x.lambda.t() * x.gL);
-    // x.rg = arma::join_rows(rgL, x.gU);
     x.rg = x.g;
 
   }
@@ -177,13 +175,13 @@ efa_manifold* choose_efa_manifold(std::string mani) {
   efa_manifold* manifold;
   if(mani == "identity") {
     manifold = new identity();
-  } else if(mani == "orth") {
-    manifold = new orth_efa();
+  } else if(mani == "dwls") {
+    manifold = new dwls_efa();
   } else if(mani == "box") {
     manifold = new box();
   } else {
 
-    Rcpp::stop("Available manifolds for factor extraction: \n identity, orth, box");
+    Rcpp::stop("Available manifolds for factor extraction: \n identity, dwls, box");
 
   }
 

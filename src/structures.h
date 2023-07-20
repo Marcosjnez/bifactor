@@ -93,12 +93,11 @@ typedef struct arguments_efast{
 typedef struct arguments_efa{
 
   arma::mat init;
-  arma::mat R, loadings, Rhat, residuals, Phi, DW, X, gL, psi, sqrt_psi, psi2,
-  g_psi2, gU, g;
+  arma::mat R, loadings, Rhat, residuals, Phi, Inv_W, X, gL, gU, g, smoothed;
   int q, p;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
-  arma::vec u, uniquenesses, eigval;
+  arma::vec u, uniquenesses, eigval, psi, sqrt_psi, psi2, g_psi2;
   std::string estimator = "uls";
   double efa_factr = 1e07;
   std::string optim = "gradient";
@@ -113,6 +112,9 @@ typedef struct arguments_efa{
   int M = 5L, armijo_maxit = 10L;
   std::string search = "back";
   std::string normalization = "none";
+  int lambda_parameters;
+  arma::uvec lower_tri_ind;
+  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_init;
 
 } args_efa;
 

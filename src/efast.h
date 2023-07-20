@@ -99,6 +99,12 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   Rcpp::List correlation_result;
   arma::mat R;
+  arguments_efa xefa;
+
+  int nobs;
+  if(nullable_nobs.isNotNull()) {
+    nobs = Rcpp::as<int>(nullable_nobs);
+  }
 
   if(X.is_square()) {
 
@@ -106,9 +112,16 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   } else {
 
+    nobs = X.n_rows;
+
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
-      correlation_result["type"] = "polychorics";
+      if(estimator == "dwls") {
+        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
+        arma::mat W = correlation_result["acov"];
+        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
+      } else {
+        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
+      }
       arma::mat polys = correlation_result["correlation"];
       R = polys;
     } else if(cor == "pearson") {
@@ -139,28 +152,15 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   // Structure of efa arguments:
 
-  arguments_efa xefa;
   xefa.estimator = estimator;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
-  if (nullable_init.isNotNull()) {
-    xefa.psi = Rcpp::as<arma::vec>(nullable_init);
-  } else if(estimator == "dwls") {
-    Rcpp::stop("dwls estimation not available yet");
-    xefa.manifold = "orth";
-    xefa.psi = random_orth(xefa.p, xefa.q+1);
-  } else {
-    if(xefa.R.is_sympd()) {
-      xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
-    } else {
-      arma::mat smoothed = smoothing(xefa.R, 0.001);
-      xefa.psi = 1/arma::diagvec(arma::inv_sympd(smoothed));
-    }
-  }
+  xefa.nullable_efa_control = nullable_efa_control;
+  xefa.nullable_init = nullable_init;
 
-  check_efa(xefa, nullable_efa_control);
+  check_efa(xefa);
 
   // Select one manifold:
   efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
@@ -186,7 +186,9 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   double f_null;
   if(estimator == "uls" || estimator == "pa") {
-    f_null = arma::accu(R % R) - xefa.p;
+    f_null = 0.5*(arma::accu(R % R) - xefa.p);
+  } else if(estimator == "dwls") {
+    f_null = 0.5*arma::accu(R % R % xefa.Inv_W);
   } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
   } else if(estimator == "minrank") {
@@ -194,13 +196,14 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   }
 
   Rcpp::List modelInfo;
-  modelInfo["R"] = R;
-  modelInfo["estimator"] = estimator;
+  modelInfo["correlation"] = xefa.R;
+  modelInfo["smoothed"] = xefa.smoothed;
+  modelInfo["estimator"] = xefa.estimator;
   modelInfo["projection"] = projection;
   modelInfo["rotation"] = rotation;
-  modelInfo["n_vars"] = R.n_cols;
-  modelInfo["nfactors"] = nfactors;
-  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["nvars"] = xefa.p;
+  modelInfo["nfactors"] = xefa.q;
+  modelInfo["nobs"] = nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
   modelInfo["f_null"] = f_null;
@@ -359,6 +362,12 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   Rcpp::List correlation_result;
   arma::mat R;
+  arguments_efa xefa;
+
+  int nobs;
+  if(nullable_nobs.isNotNull()) {
+    nobs = Rcpp::as<int>(nullable_nobs);
+  }
 
   if(X.is_square()) {
 
@@ -366,8 +375,16 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   } else {
 
+    nobs = X.n_rows;
+
     if(cor == "poly") {
-      correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
+      if(estimator == "dwls") {
+        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
+        arma::mat W = correlation_result["acov"];
+        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
+      } else {
+        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
+      }
       arma::mat polys = correlation_result["correlation"];
       R = polys;
     } else if(cor == "pearson") {
@@ -394,27 +411,15 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   //
   // Rcpp::List efa_result = efa(init, R, nfactors, estimator, efa_maxit, efa_factr, lmm);
 
-  arguments_efa xefa;
   xefa.estimator = estimator;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
-  if (nullable_init.isNotNull()) {
-    xefa.psi = Rcpp::as<arma::vec>(nullable_init);
-  } else if(estimator == "dwls") {
-    Rcpp::stop("dwls estimation not available yet");
-    xefa.psi = random_orth(xefa.p, xefa.q+1);
-  } else {
-    if(xefa.R.is_sympd()) {
-      xefa.psi = 1/arma::diagvec(arma::inv_sympd(xefa.R));
-    } else {
-      arma::mat smoothed = smoothing(xefa.R, 0.001);
-      xefa.psi = 1/arma::diagvec(arma::inv_sympd(smoothed));
-    }
-  }
+  xefa.nullable_efa_control = nullable_efa_control;
+  xefa.nullable_init = nullable_init;
 
-  check_efa(xefa, nullable_efa_control);
+  check_efa(xefa);
 
   // Select one manifold:
   efa_manifold* efa_manifold = choose_efa_manifold(xefa.manifold);
@@ -467,7 +472,9 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   double f_null;
   if(estimator == "uls" || estimator == "pa") {
-    f_null = arma::accu(R % R) - x.p;
+    f_null = 0.5*(arma::accu(R % R) - x.p);
+  } else if(estimator == "dwls") {
+    f_null = 0.5*arma::accu(R % R % xefa.Inv_W);
   } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
   } else if(estimator == "minrank") {
@@ -475,13 +482,14 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   }
 
   Rcpp::List modelInfo;
-  modelInfo["R"] = R;
-  modelInfo["estimator"] = estimator;
+  modelInfo["correlation"] = xefa.R;
+  modelInfo["smoothed"] = xefa.smoothed;
+  modelInfo["estimator"] = xefa.estimator;
   modelInfo["projection"] = x.projection;
   modelInfo["rotation"] = x.rotations;
-  modelInfo["n_vars"] = R.n_cols;
-  modelInfo["nfactors"] = nfactors;
-  modelInfo["nobs"] = nullable_nobs;
+  modelInfo["nvars"] = xefa.p;
+  modelInfo["nfactors"] = xefa.q;
+  modelInfo["nobs"] = nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
   modelInfo["f_null"] = f_null;
@@ -500,6 +508,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   modelInfo["oblq_factors"] = x.nullable_oblq_factors;
   modelInfo["lower"] = xefa.lower;
   modelInfo["upper"] = xefa.upper;
+
 
   // Select one manifold:
   rotation_manifold* manifold = choose_manifold(x.projection);

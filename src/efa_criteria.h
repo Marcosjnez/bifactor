@@ -73,7 +73,7 @@ public:
 
     x.lambda = A * D;
     x.Rhat = x.lambda * x.lambda.t();
-    x.uniquenesses = 1 - arma::diagvec(x.Rhat);
+    x.uniquenesses = 1 - arma::diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
     x.Rhat.diag() = x.R.diag();
 
   };
@@ -135,7 +135,7 @@ public:
 
     x.lambda = diagmat(x.sqrt_psi) * w;
     x.Rhat = x.lambda * x.lambda.t();
-    x.uniquenesses = 1 - diagvec(x.Rhat);
+    x.uniquenesses = 1 - diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
     x.Rhat.diag() = x.R.diag();
 
   };
@@ -154,17 +154,18 @@ public:
 
     // W is a matrix with the variance of the polychoric correlations
     // Only the variance, not the covariances, are considered
-    x.Rhat = x.lambda * x.lambda.t() + arma::diagmat(x.uniquenesses);
+    x.Rhat = x.lambda * x.lambda.t();// + arma::diagmat(x.uniquenesses);
+    // x.Rhat.diag().ones();
     x.residuals = x.R - x.Rhat;
-    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.DW);
+    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.Inv_W);
 
   }
 
   void gLPU(arguments_efa& x) {
 
-    x.gL = -2*(x.residuals % x.DW) * x.lambda; // * x.Phi;
-    arma::mat DW_res = x.residuals % x.DW;
-    x.gU = -arma::diagvec(DW_res);
+    x.gL = -2*(x.residuals % x.Inv_W) * x.lambda; // * x.Phi;
+    // arma::mat DW_res = x.residuals % x.DW;
+    // x.gU = -arma::diagvec(DW_res);
 
   }
 
@@ -175,7 +176,7 @@ public:
   void outcomes(arguments_efa& x) {
 
     x.Rhat = x.lambda * x.lambda.t();
-    // x.uniquenesses = 1 - arma::diagvec(x.Rhat);
+    x.uniquenesses = 1 - arma::diagvec(x.Rhat); // x.R.diag() - arma::diagvec(x.Rhat) FIX
     x.Rhat.diag() = x.R.diag();
 
   };
