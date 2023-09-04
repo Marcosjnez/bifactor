@@ -4,8 +4,8 @@
 \alias{sl}
 \title{Schmid-Leiman Transformation.}
 \usage{
-sl(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL,
-second_efa = NULL, cores = 1L)
+sl(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL,
+first_efa = NULL, second_efa = NULL, cores = 1L)
 }
 \arguments{
 \item{X}{Raw data matrix or correlation matrix.}
@@ -15,6 +15,8 @@ second_efa = NULL, cores = 1L)
 \item{n_groups}{Number of group factors.}
 
 \item{cor}{Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".}
+
+\item{estimator}{EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".}
 
 \item{nobs}{Sample size. Defaults to NULL.}
 
