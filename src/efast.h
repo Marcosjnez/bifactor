@@ -101,10 +101,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   arma::mat R;
   arguments_efa xefa;
 
-  int nobs;
-  if(nullable_nobs.isNotNull()) {
-    nobs = Rcpp::as<int>(nullable_nobs);
-  }
+  // ALLOW DWLS for continuous data
 
   if(X.is_square()) {
 
@@ -112,7 +109,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   } else {
 
-    nobs = X.n_rows;
+    xefa.nobs = X.n_rows;
 
     if(cor == "poly") {
       if(estimator == "dwls") {
@@ -134,25 +131,14 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   }
 
+  if(nullable_nobs.isNotNull()) {
+    xefa.nobs = Rcpp::as<int>(nullable_nobs);
+  }
+
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
-  // Create defaults:
-
-  int efa_maxit, lmm;
-  double efa_eps, efa_factr;
-  arma::vec init;
-
-  // Check EFA inputs:
-
-  // check_efa(R, nfactors, nullable_init, init,
-  //           nullable_efa_control,
-  //           efa_maxit, lmm, efa_factr);
-  //
-  // Rcpp::List efa_result = efa(init, R, nfactors, estimator, efa_maxit, efa_factr, lmm);
-
-  // Structure of efa arguments:
-
   xefa.estimator = estimator;
+  xefa.cor = cor;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
@@ -171,15 +157,6 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
                               xefa.random_starts, xefa.cores);
 
   xefa.heywood = efa_result["heywood"];
-
-  // if(xefa.heywood) {
-  //
-  //   Rcpp::Rcout << "\n" << std::endl;
-  //   Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
-  //
-  //   efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
-  //
-  // }
 
   double df_null = xefa.p*(xefa.p-1)/2;
   double df = xefa.p*(xefa.p+1)/2 - (xefa.p*xefa.q + xefa.p - xefa.q*(xefa.q-1)/2);
@@ -203,7 +180,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   modelInfo["rotation"] = rotation;
   modelInfo["nvars"] = xefa.p;
   modelInfo["nfactors"] = xefa.q;
-  modelInfo["nobs"] = nobs;
+  modelInfo["nobs"] = xefa.nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
   modelInfo["f_null"] = f_null;
@@ -364,18 +341,13 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   arma::mat R;
   arguments_efa xefa;
 
-  int nobs;
-  if(nullable_nobs.isNotNull()) {
-    nobs = Rcpp::as<int>(nullable_nobs);
-  }
-
   if(X.is_square()) {
 
     R = X;
 
   } else {
 
-    nobs = X.n_rows;
+    xefa.nobs = X.n_rows;
 
     if(cor == "poly") {
       if(estimator == "dwls") {
@@ -397,21 +369,12 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   }
 
-  // Create defaults:
-
-  int efa_maxit, lmm;
-  double efa_eps, efa_factr;
-  arma::vec init;
-
-  // Check EFA inputs:
-
-  // check_efa(R, nfactors, nullable_init, init,
-  //           nullable_efa_control,
-  //           efa_maxit, lmm, efa_factr);
-  //
-  // Rcpp::List efa_result = efa(init, R, nfactors, estimator, efa_maxit, efa_factr, lmm);
+  if(nullable_nobs.isNotNull()) {
+    xefa.nobs = Rcpp::as<int>(nullable_nobs);
+  }
 
   xefa.estimator = estimator;
+  xefa.cor = cor;
   xefa.R = R;
   xefa.p = R.n_cols;
   xefa.q = nfactors;
@@ -430,15 +393,6 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
                               xefa.random_starts, xefa.cores);
 
   xefa.heywood = efa_result["heywood"];
-
-  // if(xefa.heywood) {
-  //
-  //   Rcpp::Rcout << "\n" << std::endl;
-  //   Rcpp::warning("Heywood case detected /n Using minimum rank factor analysis");
-  //
-  //   efa_result = efa(xefa.psi, xefa.R, xefa.q, "minrank", efa_maxit, efa_factr, lmm);
-  //
-  // }
 
   arma::mat lambda = efa_result["lambda"];
 
@@ -489,7 +443,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   modelInfo["rotation"] = x.rotations;
   modelInfo["nvars"] = xefa.p;
   modelInfo["nfactors"] = xefa.q;
-  modelInfo["nobs"] = nobs;
+  modelInfo["nobs"] = xefa.nobs;
   modelInfo["df"] = df;
   modelInfo["df_null"] = df_null;
   modelInfo["f_null"] = f_null;

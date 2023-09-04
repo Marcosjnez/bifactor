@@ -21,12 +21,12 @@ Rcpp::List se(Rcpp::List fit,
   Rcpp::Nullable<int> modelInfo_nobs = modelInfo["nobs"];
   int nobs;
 
-  if(modelInfo_nobs.isNotNull()) {
+  if(modelInfo_nobs.isNotNull() & nullable_nobs.isNull()) {
     nobs = Rcpp::as<int>(modelInfo_nobs);
   } else if(nullable_nobs.isNotNull()) {
     nobs = Rcpp::as<int>(nullable_nobs);
   } else {
-    Rcpp::stop("Please, specify the sample size");
+    Rcpp::stop("Please, specify the sample size in the nobs argument");
   }
 
   arguments_rotate x;
@@ -54,7 +54,7 @@ Rcpp::List se(Rcpp::List fit,
   arma::vec clf_epsilon_ = modelInfo["clf_epsilon"]; x.clf_epsilon = clf_epsilon_;
   double w_ = modelInfo["w"]; x.w = w_;
 
-  arma::mat S_ = modelInfo["R"]; x.S = S_;
+  arma::mat S_ = modelInfo["correlation"]; x.S = S_;
   std::string estimator = modelInfo["estimator"];
   Rcpp::Nullable<arma::mat> Target_ = modelInfo["Target"];
   x.nullable_Target = Target_;
@@ -153,6 +153,22 @@ Rcpp::List se(Rcpp::List fit,
                    type, eta); // Asymptotic covariance of the correlation matrix
   arma::mat VAR = A_inv * BB * A_inv;
   arma::vec se = sqrt(arma::diagvec(VAR)/(nobs-1));
+
+  // arma::uvec caca = arma::trimatl_ind(arma::size(x.Phi), -1);
+  // arma::uvec indexes_1(x.q);
+  // for(int i=0; i < x.q; ++i) indexes_1[i] = ((i+1)*x.q) - (x.q-i);
+  // Rcpp::List xx;
+  // xx["Hess"] = Hess;
+  // xx["H"] = H;
+  // xx["H_inv"] = H_inv;
+  // xx["constr"] = x.d_constr;
+  // xx["orth_indexes"] = x.orth_indexes;
+  // xx["oblq_indexes"] = x.oblq_indexes;
+  // xx["loblq_indexes"] = x.loblq_indexes;
+  // xx["projection"] = x.projection;
+  // xx["estimator"] = estimator;
+  // xx["BB"] = BB;
+  // return xx;
 
   arma::mat Lambda_se(x.p, x.q);
   arma::mat Phi_se(x.q, x.q);

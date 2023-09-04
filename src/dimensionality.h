@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 18/03/2022
+ * Modification date: 04/09/202
  *
  */
 
@@ -63,7 +63,7 @@ arma::vec eig_PAF(arma::mat S) {
    * Compute the eigenvalues of the reduced covariance matrix S
    */
 
-  arma::mat inv_S = arma::inv_sympd(S);
+  arma::mat inv_S = arma::inv(S); // Sometimes S is not positive-definite, so use inv()
   S.diag() -= 1/arma::diagvec(inv_S);
   arma::vec eigval_PAF = eig_sym(S);
 
@@ -213,10 +213,10 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
 
   } else if(type == "poly") {
 
-#ifdef _OPENMP
-      omp_set_num_threads(cores);
-#pragma omp parallel for
-#endif
+// #ifdef _OPENMP
+//       omp_set_num_threads(cores);
+// #pragma omp parallel for
+// #endif
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
@@ -253,6 +253,7 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
     }
 
   }
+  // Rcpp::stop("Well until here");
 
   if(PAF) {
 
@@ -339,12 +340,12 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
 
 }
 
-Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
+Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
                     bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA,
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
                     int cores) {
 
-  Rcpp::List first_order = pa(X, n_boot, type, nullable_quantile, mean, replace, nullable_PA, cores);
+  Rcpp::List first_order = pa(X, nboot, type, nullable_quantile, mean, replace, nullable_PA, cores);
 
   if(!hierarchical) return first_order;
 
@@ -376,6 +377,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
   arma::uvec groups(unique_size);
 
   arma::mat S = arma::cor(X);
+  // Rcpp::stop("Well until here");
 
   for(int i=0; i < unique_size; ++i) {
 
@@ -398,7 +400,7 @@ Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<ar
       arma::mat W = arma::solve(S, L);
       arma::mat fs = X * W;
 
-      Rcpp::List second_order = pa(fs, n_boot, "pearson", nullable_quantile, mean,
+      Rcpp::List second_order = pa(fs, nboot, "pearson", nullable_quantile, mean,
                                    replace, R_NilValue, false);
 
       arma::uvec indexes = arma::find(dims == unique[i]);

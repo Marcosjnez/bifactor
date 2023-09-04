@@ -13,16 +13,6 @@
 
 // Line-search algorithm satisfying the armijo condition:
 
-double root_quad(double a, double b, double c) {
-
-  // Solution to quadratic interpolation:
-
-  double res = 0.5 * (- b + sqrt(b * b - 4 * a * c) ) / a;
-
-  return res;
-
-}
-
 void armijo(arguments_efa& x, efa_manifold *manifold, efa_criterion *criterion,
             double ss_fac, double ss_min) {
 

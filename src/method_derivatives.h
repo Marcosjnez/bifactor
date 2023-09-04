@@ -8,41 +8,41 @@
 // #include "auxiliary_manifolds.h"
 // #include "asymptotic_cov.h"
 
-/*
- * Derivatives for uls:
- * d2f/(dtheta dtheta') and d2f/(dtheta ds)
- */
 
 /*
  * Hessian matrix: d2f/(dtheta dtheta')
  */
 
-arma::mat gLRhat(arma::mat Lambda, arma::mat Phi) {
+/*
+ * Derivatives for Rhat wrt Lambda, Phi, and Psi
+ */
 
-  int p = Lambda.n_rows;
-  int q = Lambda.n_cols;
-  arma::mat I(p, p, arma::fill::eye);
-  arma::mat LP = Lambda * Phi;
-  arma::mat g1 = arma::kron(LP, I);
-  arma::mat g21 = arma::kron(I, LP);
-  arma::mat g2 = g21 * dxt(p, q);
-  arma::mat g = g1 + g2;
-
-  return g;
-
-}
-
-arma::mat gPRhat(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
-
-  int q = Phi.n_cols;
-  // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
-  arma::mat g1 = arma::kron(Lambda, Lambda);
-  arma::mat g2 = g1 * dxt(q, q);
-  arma::mat g_temp = g1 + g2;
-  arma::mat g = g_temp.cols(indexes);
-
-  return g;
-}
+// arma::mat gLRhat(arma::mat Lambda, arma::mat Phi) {
+//
+//   int p = Lambda.n_rows;
+//   int q = Lambda.n_cols;
+//   arma::mat I(p, p, arma::fill::eye);
+//   arma::mat LP = Lambda * Phi;
+//   arma::mat g1 = arma::kron(LP, I);
+//   arma::mat g21 = arma::kron(I, LP);
+//   arma::mat g2 = g21 * dxt(p, q);
+//   arma::mat g = g1 + g2;
+//
+//   return g;
+//
+// }
+//
+// arma::mat gPRhat(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
+//
+//   int q = Phi.n_cols;
+//   // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
+//   arma::mat g1 = arma::kron(Lambda, Lambda);
+//   arma::mat g2 = g1 * dxt(q, q);
+//   arma::mat g_temp = g1 + g2;
+//   arma::mat g = g_temp.cols(indexes);
+//
+//   return g;
+// }
 
 arma::mat guRhat(int p) {
 
@@ -59,17 +59,25 @@ arma::mat guRhat(int p) {
 
 }
 
+/*
+ * Derivatives for dwls:
+ * d2f/(dtheta dtheta') and d2f/(dtheta ds)
+ */
+
 arma::mat hessian_Lambda(arma::mat S, arma::mat Lambda,
-                         arma::mat Phi, arma::vec psi) {
+                         arma::mat Phi, arma::vec psi, arma::mat W) {
 
   int p = Lambda.n_rows;
   int q = Phi.n_rows;
   int pq = p*q;
 
+  arma::vec w = arma::vectorise(W);
   arma::mat Rhat = Lambda * Phi * Lambda.t() + arma::diagmat(psi);
-  arma::mat residuals = S - Rhat;
+  arma::mat residuals = (S - Rhat) % W;
   arma::mat I(p, p, arma::fill::eye);
-  arma::mat h1 = 2*arma::kron((Lambda * Phi).t(), I) * gLRhat(Lambda, Phi);
+  arma::mat g0 = gLRhat(Lambda, Phi);
+  g0.each_col() %= w;
+  arma::mat h1 = 2*arma::kron((Lambda * Phi).t(), I) * g0;
   arma::mat h2 = -2*arma::kron(Phi, residuals);
 
   arma::mat hessian_Lambda = h1 + h2; // second derivatives for Lambda
@@ -78,21 +86,27 @@ arma::mat hessian_Lambda(arma::mat S, arma::mat Lambda,
 
 }
 
-arma::mat hessian_Phi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
+arma::mat hessian_Phi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes,
+                      arma::mat W) {
 
   // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
+  arma::vec w = arma::vectorise(W);
   arma::mat LxL = 2*arma::kron(Lambda, Lambda);
   arma::mat LxLt = LxL.t();
-  arma::mat hessian_Phi = LxLt.rows(indexes) * gPRhat(Lambda, Phi, indexes);
+  arma::mat g0 = gPRhat(Lambda, Phi, indexes);
+  g0.each_col() %= w;
+
+  arma::mat hessian_Phi = LxLt.rows(indexes) * g0;
 
   return hessian_Phi;
 
 }
 
-arma::mat hessian_psi(arma::vec psi) {
+arma::mat hessian_psi(arma::vec psi, arma::mat W) {
 
   int p = psi.size();
-  arma::mat I(p, p, arma::fill::eye);
+  arma::mat I(p, p, arma::fill::zeros);
+  I.diag() = W.diag();
 
   return I;
 
@@ -100,19 +114,22 @@ arma::mat hessian_psi(arma::vec psi) {
 
 arma::mat hessian_LambdaPhi(arma::mat S, arma::mat Lambda,
                             arma::mat Phi, arma::vec psi,
-                            arma::uvec indexes) {
+                            arma::uvec indexes, arma::mat W) {
 
   int p = Lambda.n_rows;
   int q = Phi.n_rows;
+  arma::vec w = arma::vectorise(W);
 
   arma::mat LambdaPhi = Lambda * Phi;
   arma::mat Rhat = LambdaPhi * Lambda.t() + arma::diagmat(psi);
-  arma::mat residuals = S - Rhat;
+  arma::mat residuals = W % (S - Rhat);
   arma::mat I1(p, p, arma::fill::eye);
   arma::mat I2(q, q, arma::fill::eye);
 
   // arma::uvec indexes = trimatl_ind(arma::size(Phi), -1);
-  arma::mat h1 = 2*arma::kron(LambdaPhi.t(), I1) * gPRhat(Lambda, Phi, indexes);
+  arma::mat g0 = gPRhat(Lambda, Phi, indexes);
+  g0.each_col() %= w;
+  arma::mat h1 = 2*arma::kron(LambdaPhi.t(), I1) * g0;
   arma::mat h21 = -2*arma::kron(I2, residuals * Lambda);
   arma::mat h22 = h21 + h21 * dxt(q, q);
   arma::mat h2 = h22.cols(indexes);
@@ -122,10 +139,11 @@ arma::mat hessian_LambdaPhi(arma::mat S, arma::mat Lambda,
 
 }
 
-arma::mat hessian_Lambdapsi(arma::mat Lambda, arma::mat Phi) {
+arma::mat hessian_Lambdapsi(arma::mat Lambda, arma::mat Phi, arma::mat W) {
 
   int p = Lambda.n_rows;
   int q = Phi.n_rows;
+  arma::rowvec w = arma::diagvec(W);
 
   arma::mat LP = 2*Lambda * Phi;
   arma::mat h_Lambdapsi = arma::diagmat(LP.col(0));
@@ -137,6 +155,8 @@ arma::mat hessian_Lambdapsi(arma::mat Lambda, arma::mat Phi) {
 
   }
 
+  h_Lambdapsi.each_row() %= w;
+
   return h_Lambdapsi;
 
 }
@@ -144,8 +164,10 @@ arma::mat hessian_Lambdapsi(arma::mat Lambda, arma::mat Phi) {
 arma::mat hessian_Phipsi(arma::mat Lambda, arma::mat Phi, arma::uvec indexes) {
 
   int p = Lambda.n_rows;
+  // arma::vec w = arma::vectorise(W);
 
   arma::mat gPR = gPRhat(Lambda, Phi, indexes);
+  // gPR.each_col() %= w;
   arma::uvec indexes_psi(p);
   for(int i=0; i < p; ++i) indexes_psi[i] = i*p + i;
   arma::mat h_Phipsi = gPR.rows(indexes_psi);
@@ -630,6 +652,9 @@ arma::mat gLPS_ml(arma::mat S, arma::mat Lambda, arma::mat Phi,
   return gdh;
 
 }
+
+
+// B matrix for sandwich estimator
 
 arma::mat B(arma::mat S, arma::mat Lambda, arma::mat Phi,
             arma::uvec loblq_indexes,

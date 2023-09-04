@@ -1,4 +1,4 @@
-#define ARMA_NO_DEBUG
+// #define ARMA_NO_DEBUG
 // #define ARMA_DONT_USE_OPENMP
 // #define ARMA_DONT_OPTIMISE_BAND
 // #define ARMA_OPENMP_THREADS 10
@@ -21,16 +21,14 @@
 #include <RcppArmadillo.h>
 #include <Rcpp/Benchmark/Timer.h>
 #include "structures.h"
-#include "auxiliary_manifolds.h"
+#include "auxiliary.h"
 #include "efa_manifolds.h"
 #include "efa_criteria.h"
 #include "auxiliary_efa_optim.h"
 #include "efa_optim.h"
 #include "rotation_manifolds.h"
-#include "auxiliary_criteria.h"
 #include "rotation_criteria.h"
 #include "auxiliary_rotation_optim.h"
-#include "auxiliary_checks.h"
 #include "efa_checks.h"
 #include "rotation_checks.h"
 #include "rotation_optim.h"
@@ -40,16 +38,25 @@
 #include "cor_criteria.h"
 #include "auxiliary_cor_optim.h"
 #include "cor_optim.h"
+#include "asymptotic_cov.h"
 #include "polyfast.h"
 #include "efa_fit.h"
 #include "efa.h"
 #include "efast.h"
+#include "sl.h"
+#include "bifad.h"
+#include "GSLiD.h"
+#include "botmin.h"
 #include "bifactor.h"
-#include "asymptotic_cov.h"
 #include "method_derivatives.h"
 #include "se.h"
 #include "dimensionality.h"
 #include "check_deriv.h"
+// #include "cfa_checks.h"
+// #include "cfa_criteria.h"
+// #include "cfa_manifolds.h"
+// #include "auxiliary_cfa_optim.h"
+// #include "cfa_optim.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -72,6 +79,7 @@ arma::mat retr_poblq(arma::mat X, arma::uvec oblq_factors);
 // [[Rcpp::export]]
 Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
               std::string cor = "pearson",
+              std::string estimator = "uls",
               Rcpp::Nullable<int> nobs = R_NilValue,
               Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
               Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
@@ -162,7 +170,7 @@ Rcpp::List se(Rcpp::List fit = R_NilValue,
               std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
-Rcpp::List parallel(arma::mat X, int n_boot = 100, std::string type = "pearson",
+Rcpp::List parallel(arma::mat X, int nboot = 100, std::string type = "pearson",
                     Rcpp::Nullable<arma::vec> quant = R_NilValue,
                     bool mean = false, bool replace = false,
                     Rcpp::Nullable<std::vector<std::string>> PA = R_NilValue,

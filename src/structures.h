@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 18/03/2022
+ * Modification date: 31/08/2023
  *
  */
 
@@ -94,13 +94,13 @@ typedef struct arguments_efa{
 
   arma::mat init;
   arma::mat R, loadings, Rhat, residuals, Phi, Inv_W, X, gL, gU, g, smoothed;
-  int q, p;
+  int q, p, nobs = 0;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
   arma::vec u, uniquenesses, eigval, psi, sqrt_psi, psi2, g_psi2;
   std::string estimator = "uls";
   double efa_factr = 1e07;
-  std::string optim = "gradient";
+  std::string optim = "gradient", cor = "pearson";
   arma::vec lower = {0.005}, upper = {0.995};
   arma::mat rg, dir, dpsi, dH;
   int iteration, iterations = 0L, maxit = 1000L;
@@ -114,7 +114,8 @@ typedef struct arguments_efa{
   std::string normalization = "none";
   int lambda_parameters;
   arma::uvec lower_tri_ind;
-  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_init;
+  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_first_efa,
+  nullable_second_efa, nullable_init;
 
 } args_efa;
 
@@ -133,6 +134,46 @@ typedef struct arguments_cor{
 
 } args_cor;
 
+typedef struct arguments_cfa{
+
+  arma::mat borrar;
+  double f = 0.00;
+  std::string estimator = "gls", projection = "id";
+  int p, q, n_lambda, n_phi, n_psi;
+  arma::mat Ip, Iq; // Precompute
+
+  arma::mat W_residuals, W_residuals_lambda, lambda_phit_kron_Ip,
+  dlambda_dRhat_W, dphi_dRhat_W, dpsi_dRhat_W; // Repeated
+
+  arma::mat W, R, Rhat, residuals, lambda_phi,
+  lambda, phi, psi, dlambda, dphi, dpsi,
+  glambda, gphi, gpsi, dglambda, dgphi, dgpsi,
+  hlambda, hphi, hpsi, dlambda_dphi, dlambda_dpsi, dpsi_dphi, hessian,
+  dlambda_dS, dphi_dS, dpsi_dS, df2_dLPUdS;
+
+  arma::vec parameters, dparameters, gradient, dgradient, uniquenesses, w;
+  arma::uvec lambda_indexes, phi_indexes, psi_indexes, S_indexes;
+  arma::uvec indexes_diag_q, indexes_diag_p, indexes_diag_q2, indexes_p, indexes_q;
+
+  // Manifold stuff:
+  arma::vec g, dg, rg, dH;
+  arma::mat T, dT, gP, dgP, dP;
+
+  // Optim stuff:
+  arma::vec dir;
+  double c1 = 10e-04, c2 = 0.5, rho = 0.5, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
+  int M = 5L, armijo_maxit = 10L, iteration = 0L, maxit = 1000L,
+    random_starts= 1L, cores = 1L;
+  std::string search = "back";
+  bool convergence = false;
+
+  // Checks:
+  Rcpp::Nullable<Rcpp::List> nullable_cfa_control = R_NilValue;
+  std::string cor = "pearson", optim = "gradient", manifold = "raw";
+
+} args_cfa;
+
 typedef std::tuple<arma::mat, arma::vec, arma::mat, double, int, bool> efa_NTR;
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NTR;
 typedef std::tuple<arma::mat, arma::mat, double, int, bool> cor_NTR;
+typedef std::tuple<arma::vec, double, int, bool> cfa_NTR;

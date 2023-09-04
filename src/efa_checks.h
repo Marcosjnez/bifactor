@@ -51,6 +51,15 @@ void check_efa(arguments_efa& x) {
     Rcpp::stop("For the dwls estimator, please introduce the raw data or provide the reciprocal of the variance of the correlations in efa_control = list(Inv_W = ...)");
   }
 
+  if(x.estimator == "dwls") {
+    if(x.cor == "poly") {
+      Rcpp::stop("The dwls estimator is only available for cor = 'poly'");
+    }
+    if(x.optim == "gradient") {
+      Rcpp::warning("To achive convergence with the dwls estimator and gradient optim algorithm, you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
+    }
+  }
+
   // Check initial values:
   if (x.nullable_init.isNotNull()) {
     Rcpp::warning("Initial values not available for the dwls estimator");

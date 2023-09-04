@@ -12,12 +12,16 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
   arma::mat cor = arma::cor(X);
   std::vector<std::vector<int>> cols(q);
   std::vector<int> maxs(q);
+  std::vector<int> mins(q);
   std::vector<std::vector<double>> taus(q);
   std::vector<size_t> s(q);
   std::vector<std::vector<double>> mvphi(q);
+  arma::mat X2 = X;
 
   for(size_t i = 0; i < q; ++i) {
-    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
+    mins[i] = X2.col(i).min();
+    X2.col(i) -= mins[i];
+    cols[i] = arma::conv_to<std::vector<int>>::from(X2.col(i));
     maxs[i] = *max_element(cols[i].begin(), cols[i].end());
     std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
     mvphi[i] = cumsum(frequencies);
@@ -54,6 +58,7 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
       iters(i, j) = iters(j, i) = rho[1];
     }
   }
+  // Rcpp::stop("Well until here");
 
   arguments_cor x;
   x.nobs = n;
@@ -63,6 +68,8 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
   x.s = s;
   x.n = tabs;
   x.n_pairs = d;
+
+  // polys.eye();
 
   if(!polys.is_sympd()) {
 
@@ -133,12 +140,16 @@ polyfast_object poly_no_cores(const arma::mat& X, const std::string smooth,
   arma::mat cor = arma::cor(X);
   std::vector<std::vector<int>> cols(q);
   std::vector<int> maxs(q);
+  std::vector<int> mins(q);
   std::vector<std::vector<double>> taus(q);
   std::vector<size_t> s(q);
   std::vector<std::vector<double>> mvphi(q);
+  arma::mat X2 = X;
 
   for(size_t i = 0; i < q; ++i) {
-    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
+    mins[i] = X2.col(i).min();
+    X2.col(i) -= mins[i];
+    cols[i] = arma::conv_to<std::vector<int>>::from(X2.col(i));
     maxs[i] = *max_element(cols[i].begin(), cols[i].end());
     std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
     mvphi[i] = cumsum(frequencies);
@@ -254,7 +265,7 @@ Rcpp::List polyfast(const arma::mat& X, std::string acov, const std::string smoo
   if(acov == "var") {
     covariance = DACOV2(n, polys, tabs, taus, mvphis);
   } else if(acov == "cov") {
-    covariance = ACOV(X, polys, cores);
+    covariance = asymptotic_poly(X, polys, cores);
   } else if(acov == "bootstrap") {
     int d = 0.5*p*(p-1);
     arma::uvec lower_indices = arma::trimatl_ind(arma::size(polys), -1);

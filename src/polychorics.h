@@ -8,6 +8,7 @@
 #include <limits>
 #include <unordered_map>
 
+// [[Rcpp::export]]
 std::vector<int> count(const std::vector<int>& X, const int n, const int max_X) {
 
   // Allocate memory space for table
@@ -255,6 +256,7 @@ double drezner(double h1, double hk, const double mvphi_h, const double mvphi_k,
 const double neg_inf = -std::numeric_limits<double>::infinity();
 const double pos_inf = std::numeric_limits<double>::infinity();
 
+// [[Rcpp::export]]
 double dbinorm(double p, double x, double y) {
 
   /*
@@ -628,128 +630,6 @@ Rcpp::List COV(double rho, std::vector<double> tau1, std::vector<double> tau2,
   result["omega"] = omega;
 
   return result;
-
-}
-
-arma::mat ACOV(const arma::mat X, const arma::mat R, const int cores) {
-
-  /*
-   * Function to estimate the Asymptotic covariance matrix of the polychoric correlations
-   */
-
-  // Rcpp::Timer timer;
-  // Rcpp::List result;
-
-  const int n = X.n_rows;
-  const int q = X.n_cols;
-
-  std::vector<std::vector<int>> cols(q);
-  std::vector<int> maxs(q);
-  std::vector<std::vector<double>> taus(q);
-  std::vector<std::vector<double>> mvphi(q);
-
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-  for(size_t i = 0; i < q; ++i) {
-    cols[i] = arma::conv_to<std::vector<int>>::from(X.col(i));
-    maxs[i] = *max_element(cols[i].begin(), cols[i].end());
-    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
-    mvphi[i] = cumsum(frequencies);
-    taus[i] = mvphi[i]; // Cumulative frequencies
-    for (size_t j = 0; j < maxs[i]; ++j) {
-      mvphi[i][j] /= n;
-      taus[i][j] = Qnorm(mvphi[i][j]);
-    }
-    mvphi[i].push_back(1.0);
-    mvphi[i].insert(mvphi[i].begin(), 0.0);
-    taus[i].push_back(pos_inf);
-    taus[i].insert(taus[i].begin(), neg_inf);
-  }
-
-  // timer.step("Thresholds");
-  // result["taus"] = taus;
-
-  int dq = 0.5*q*(q-1);
-  int k = 0;
-  std::vector<std::vector<int>> indexes(dq, std::vector<int>(2));
-  for(int i=0; i < (q-1); ++i) {
-    for(int j=i+1L; j < q; ++j) {
-      indexes[k][0] = i;
-      indexes[k][1] = j;
-      ++k;
-    }
-  }
-
-  arma::mat ACOV(dq, dq);
-  double f = 0.00;
-
-  for(int i=0; i < dq; ++i) {
-    int indexes1 = indexes[i][0];
-    int indexes2 = indexes[i][1];
-    int s = taus[indexes1].size()+1L;
-    int r = taus[indexes2].size()+1L;
-    double rho1 = R(indexes1, indexes2);
-    Rcpp::List deriv = poly_derivatives(rho1, taus[indexes1], taus[indexes2],
-                                        mvphi[indexes1], mvphi[indexes2]);
-    arma::mat ppi = deriv["ppi"];
-    arma::mat dppidp = deriv["dppidp"];
-    arma::mat dppidtau1 = deriv["dppidtau1"];
-    arma::mat dppidtau2 = deriv["dppidtau2"];
-    // result["ppi"] = ppi;
-    // result["dppidp"] = dppidp;
-    // result["dppidtau1"] = dppidtau1;
-    // result["dppidtau2"] = dppidtau2;
-    // return result;
-    Rcpp::List x1 = COV(rho1, taus[indexes1], taus[indexes2],
-                        mvphi[indexes1], mvphi[indexes2], ppi, dppidp,
-                        dppidtau1, dppidtau2);
-    // return x1;
-    arma::mat Gamma1 = x1["Gamma"];
-    double omega1 = x1["omega"];
-
-    for(int j=0; j < dq; ++j) {
-      int indexes3 = indexes[j][0];
-      int indexes4 = indexes[j][1];
-      int y = taus[indexes3].size()+1L;
-      int w = taus[indexes4].size()+1L;
-      double rho2 = R(indexes3, indexes4);
-      Rcpp::List deriv = poly_derivatives(rho2, taus[indexes3], taus[indexes4],
-                                          mvphi[indexes3], mvphi[indexes4]);
-      arma::mat ppi = deriv["ppi"];
-      arma::mat dppidp = deriv["dppidp"];
-      arma::mat dppidtau3 = deriv["dppidtau1"];
-      arma::mat dppidtau4 = deriv["dppidtau2"];
-      Rcpp::List x2 = COV(rho2, taus[indexes3], taus[indexes4],
-                          mvphi[indexes3], mvphi[indexes4], ppi, dppidp,
-                          dppidtau3, dppidtau4);
-      arma::mat Gamma2 = x2["Gamma"];
-      double omega2 = x2["omega"];
-      double omega_prod = omega1*omega2;
-      for(int a=0; a < s; ++a) {
-        for(int b=0; b < r; ++b) {
-          for(int c=0; c < y; ++c) {
-            for(int d=0; d < w; ++d) {
-              for(int l=0; l < n; ++l) {
-                if(X(l, indexes1) == a && X(l, indexes2) == b &&
-                   X(l, indexes3) == c && X(l, indexes4) == d) {
-                  f += Gamma1(a, b) * Gamma2(d, c) - omega_prod;
-                }
-              }
-            }
-          }
-        }
-      }
-      ACOV(i, j) = ACOV(j, i) = f/n;
-      f = 0.00;
-    }
-  }
-
-  // timer.step("ACOV");
-
-  // result["ACOV"] = ACOV;
-  // result["elapsed"] = timer;
-
-  return ACOV;
 
 }
 

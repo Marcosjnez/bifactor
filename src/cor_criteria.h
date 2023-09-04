@@ -38,7 +38,7 @@ public:
             // CDF of the bivariate normal:
             double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
                                  x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
-            x.f -= x.n[K][i][j] * std::log(ppi) / x.nobs; // No need to compute the objective value
+            x.f -= x.n[K][i][j] * std::log(ppi) / x.nobs;
           }
         }
         ++K;

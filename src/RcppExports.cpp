@@ -95,8 +95,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sl
-Rcpp::List sl(arma::mat X, int n_generals, int n_groups, std::string cor, Rcpp::Nullable<int> nobs, Rcpp::Nullable<Rcpp::List> first_efa, Rcpp::Nullable<Rcpp::List> second_efa, int cores);
-RcppExport SEXP _bifactor_sl(SEXP XSEXP, SEXP n_generalsSEXP, SEXP n_groupsSEXP, SEXP corSEXP, SEXP nobsSEXP, SEXP first_efaSEXP, SEXP second_efaSEXP, SEXP coresSEXP) {
+Rcpp::List sl(arma::mat X, int n_generals, int n_groups, std::string cor, std::string estimator, Rcpp::Nullable<int> nobs, Rcpp::Nullable<Rcpp::List> first_efa, Rcpp::Nullable<Rcpp::List> second_efa, int cores);
+RcppExport SEXP _bifactor_sl(SEXP XSEXP, SEXP n_generalsSEXP, SEXP n_groupsSEXP, SEXP corSEXP, SEXP estimatorSEXP, SEXP nobsSEXP, SEXP first_efaSEXP, SEXP second_efaSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -104,11 +104,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_generals(n_generalsSEXP);
     Rcpp::traits::input_parameter< int >::type n_groups(n_groupsSEXP);
     Rcpp::traits::input_parameter< std::string >::type cor(corSEXP);
+    Rcpp::traits::input_parameter< std::string >::type estimator(estimatorSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type nobs(nobsSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type first_efa(first_efaSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type second_efa(second_efaSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(sl(X, n_generals, n_groups, cor, nobs, first_efa, second_efa, cores));
+    rcpp_result_gen = Rcpp::wrap(sl(X, n_generals, n_groups, cor, estimator, nobs, first_efa, second_efa, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -252,13 +253,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // parallel
-Rcpp::List parallel(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> quant, bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> PA, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
-RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP n_bootSEXP, SEXP typeSEXP, SEXP quantSEXP, SEXP meanSEXP, SEXP replaceSEXP, SEXP PASEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
+Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arma::vec> quant, bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> PA, bool hierarchical, Rcpp::Nullable<Rcpp::List> efa, int cores);
+RcppExport SEXP _bifactor_parallel(SEXP XSEXP, SEXP nbootSEXP, SEXP typeSEXP, SEXP quantSEXP, SEXP meanSEXP, SEXP replaceSEXP, SEXP PASEXP, SEXP hierarchicalSEXP, SEXP efaSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    Rcpp::traits::input_parameter< int >::type n_boot(n_bootSEXP);
+    Rcpp::traits::input_parameter< int >::type nboot(nbootSEXP);
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type quant(quantSEXP);
     Rcpp::traits::input_parameter< bool >::type mean(meanSEXP);
@@ -267,7 +268,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type hierarchical(hierarchicalSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type efa(efaSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(parallel(X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores));
+    rcpp_result_gen = Rcpp::wrap(parallel(X, nboot, type, quant, mean, replace, PA, hierarchical, efa, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -366,6 +367,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// count
+std::vector<int> count(const std::vector<int>& X, const int n, const int max_X);
+RcppExport SEXP _bifactor_count(SEXP XSEXP, SEXP nSEXP, SEXP max_XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_X(max_XSEXP);
+    rcpp_result_gen = Rcpp::wrap(count(X, n, max_X));
+    return rcpp_result_gen;
+END_RCPP
+}
 // joint_frequency_table
 std::vector<std::vector<int>> joint_frequency_table(const std::vector<int>& X, const int n, const int max_X, const std::vector<int>& Y, const int max_Y);
 RcppExport SEXP _bifactor_joint_frequency_table(SEXP XSEXP, SEXP nSEXP, SEXP max_XSEXP, SEXP YSEXP, SEXP max_YSEXP) {
@@ -378,6 +392,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<int>& >::type Y(YSEXP);
     Rcpp::traits::input_parameter< const int >::type max_Y(max_YSEXP);
     rcpp_result_gen = Rcpp::wrap(joint_frequency_table(X, n, max_X, Y, max_Y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dbinorm
+double dbinorm(double p, double x, double y);
+RcppExport SEXP _bifactor_dbinorm(SEXP pSEXP, SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(dbinorm(p, x, y));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -417,7 +444,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_retr_orth", (DL_FUNC) &_bifactor_retr_orth, 1},
     {"_bifactor_retr_oblq", (DL_FUNC) &_bifactor_retr_oblq, 1},
     {"_bifactor_retr_poblq", (DL_FUNC) &_bifactor_retr_poblq, 2},
-    {"_bifactor_sl", (DL_FUNC) &_bifactor_sl, 8},
+    {"_bifactor_sl", (DL_FUNC) &_bifactor_sl, 9},
     {"_bifactor_rotate", (DL_FUNC) &_bifactor_rotate, 18},
     {"_bifactor_efast", (DL_FUNC) &_bifactor_efast, 23},
     {"_bifactor_get_target", (DL_FUNC) &_bifactor_get_target, 3},
@@ -431,7 +458,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_poly2", (DL_FUNC) &_bifactor_poly2, 2},
     {"_bifactor_fpoly", (DL_FUNC) &_bifactor_fpoly, 2},
     {"_bifactor_old_poly", (DL_FUNC) &_bifactor_old_poly, 2},
+    {"_bifactor_count", (DL_FUNC) &_bifactor_count, 3},
     {"_bifactor_joint_frequency_table", (DL_FUNC) &_bifactor_joint_frequency_table, 5},
+    {"_bifactor_dbinorm", (DL_FUNC) &_bifactor_dbinorm, 3},
     {"_bifactor_COV2", (DL_FUNC) &_bifactor_COV2, 5},
     {"_bifactor_std_2_matrix", (DL_FUNC) &_bifactor_std_2_matrix, 2},
     {NULL, NULL, 0}
