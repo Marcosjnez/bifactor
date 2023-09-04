@@ -1,6 +1,6 @@
 Package: bifactor
 Type: Package
-Title: Exploratory factor and bi-factor modeling with multiple general fators
+Title: Exploratory factor and bi-factor modeling with multiple general factors
 Version: 0.1.0
 Date: 2022-08-03
 Authors@R: c(person(given = "Marcos", family = "Jimenez", role = c("aut", "cre", "cph"), email = "marcosjnezhquez@gmail.com"), person(given="Francisco J.", family = "Abad", role = c("aut", "cph")), person(given="Eduardo", family = "Garcia-Garzon", role = c("aut", "cph")), person(given="Luis E.", family = "Garrido", role = c("aut", "cph")), person(given = "Vithor R.", family = "Franco", role = c("aut", "cph"), email = "vithorfranco@gmail.com"))
@@ -8,7 +8,7 @@ Description: Fit exploratory factor models and bi-factor models with multiple ge
 License: GPL-3
 LazyData: TRUE
 Depends: R (>= 4.0)
-Imports: Rcpp, Rcsdp
+Imports: Rcpp
 URL: https://github.com/Marcosjnez/bifactor
 BugReports: https://github.com/Marcosjnez/bifactor/issues
 Encoding: UTF-8
@@ -21,4 +21,4 @@ Author: Marcos Jimenez [aut, cre, cph],
   Eduardo Garcia-Garzon [aut, cph],
   Luis E. Garrido [aut, cph]
   Vithor R. Franco [aut, cph]
-Maintainer: Marcos Jimenez <marcosjnezhquez@gmail.com>
+Maintainer: Marcos Jiménez <marcosjnezhquez@gmail.com>
