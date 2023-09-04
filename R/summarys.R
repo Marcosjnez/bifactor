@@ -1,9 +1,10 @@
-summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ...) {
+summary.efa <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits = 2, ...) {
   efa <- object
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$nobs)) {
-      warning("Sample size was not provided. Chi-squared-based statistics will not be computed.")
+    if(is.null(efa$modelInfo$nobs) | isTRUE(efa$modelInfo$nobs == 0L)) {
+      warning("Sample size was not provided. Some Chi-squared-based statistics will not be computed.")
+      nobs <- NA
     } else {
       nobs <- efa$modelInfo$nobs
     }
@@ -101,12 +102,13 @@ summary.efa <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ..
   invisible(Results)
 }
 
-summary.bifactor <- function(object, nobs=NULL, suppress=0, order=FALSE, digits=2, ...) {
+summary.bifactor <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits = 2, ...) {
   efa <- object
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$nobs)) {
-      warning("Sample size was not provided. Chi-squared-based statistics will not be computed.")
+    if(is.null(efa$modelInfo$nobs) | isTRUE(efa$modelInfo$nobs == 0L)) {
+      warning("Sample size was not provided. Some Chi-squared-based statistics will not be computed.")
+      nobs <- NA
     } else {
       nobs <- efa$modelInfo$nobs
     }

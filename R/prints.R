@@ -1,9 +1,10 @@
-print.efa <- function(x, nobs=NULL, ...) {
+print.efa <- function(x, nobs = NULL, ...) {
   efa <- x
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$nobs)) {
-      warning("Sample size was not provided. Chi-squared-based statistics will not be computed.")
+    if(is.null(efa$modelInfo$nobs) | isTRUE(efa$modelInfo$nobs == 0L)) {
+      warning("Sample size was not provided. Some Chi-squared-based statistics will not be computed.")
+      nobs <- NA
     } else {
       nobs <- efa$modelInfo$nobs
     }
@@ -47,16 +48,18 @@ print.efa <- function(x, nobs=NULL, ...) {
   invisible(NULL)
 }
 
-print.bifactor <- function(x, nobs=NULL, ...) {
+print.bifactor <- function(x, nobs = NULL, ...) {
   efa <- x
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$nobs)) {
-      warning("Sample size was not provided. Chi-squared-based statistics will not be computed.")
+    if(is.null(efa$modelInfo$nobs) | isTRUE(efa$modelInfo$nobs == 0L)) {
+      warning("Sample size was not provided. Some Chi-squared-based statistics will not be computed.")
+      nobs <- NA
     } else {
       nobs <- efa$modelInfo$nobs
     }
   }
+
   ### Pattern matrix with communalities, uniqueness, and complexity
   lambda <- efa$bifactor$lambda
   phi <- efa$bifactor$phi

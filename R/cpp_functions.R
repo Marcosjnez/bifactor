@@ -158,13 +158,14 @@ retr_poblq <- function(X, oblq_factors) {
 #'
 #' @usage
 #'
-#' sl(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL,
-#' second_efa = NULL, cores = 1L)
+#' sl(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL,
+#' first_efa = NULL, second_efa = NULL, cores = 1L)
 #'
 #' @param X Raw data matrix or correlation matrix.
 #' @param n_generals Number of general factors.
 #' @param n_groups Number of group factors.
 #' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
+#' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param first_efa Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.
 #' @param second_efa Arguments to pass to \code{efast} in the second-order factor extraction. See \code{efast} for the default arguments.
@@ -206,8 +207,8 @@ retr_poblq <- function(X, oblq_factors) {
 #'}
 #'
 #' @export
-sl <- function(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
-  .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, nobs, first_efa, second_efa, cores)
+sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+  .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, nobs, first_efa, second_efa, cores)
 }
 
 #' @title
@@ -556,7 +557,7 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).
 #' @usage
 #'
-#' parallel(X, n_boot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
+#' parallel(X, nboot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
 #' PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
@@ -564,7 +565,7 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' Perform hierarchical parallel analysis to detect dimensionality using either principal components or principal axis factoring.
 #'
 #' @param X Raw data matrix.
-#' @param n_boot Number of bootstrap samples.
+#' @param nboot Number of bootstrap samples.
 #' @param type Type of correlations: "pearson" or "poly".
 #' @param quant Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
 #' @param mean Logical. Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to TRUE.
@@ -585,8 +586,8 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85. https://doi.org/10.1007/BF02289447
 #'
 #' @export
-parallel <- function(X, n_boot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_parallel`, X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores)
+parallel <- function(X, nboot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_parallel`, X, nboot, type, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 #' @title

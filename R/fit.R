@@ -23,8 +23,9 @@
 fit <- function(efa, nobs = NULL, digits = 3) {
   # Check if nobs was provided
   if(is.null(nobs)) {
-    if(is.null(efa$modelInfo$nobs)) {
-      warning("Sample size was not provided. Most fit indices will not be computed.")
+    if(is.null(efa$modelInfo$nobs) | isTRUE(efa$modelInfo$nobs == 0L)) {
+      warning("Sample size was not provided. Some Chi-squared-based statistics will not be computed.")
+      nobs <- NA
     } else {
       nobs <- efa$modelInfo$nobs
     }

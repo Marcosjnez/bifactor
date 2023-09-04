@@ -29,8 +29,8 @@ retr_poblq <- function(X, oblq_factors) {
     .Call(`_bifactor_retr_poblq`, X, oblq_factors)
 }
 
-sl <- function(X, n_generals, n_groups, cor = "pearson", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
-    .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, nobs, first_efa, second_efa, cores)
+sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+    .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, nobs, first_efa, second_efa, cores)
 }
 
 rotate <- function(loadings, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
@@ -57,8 +57,8 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
     .Call(`_bifactor_se`, fit, nobs, X, type, eta)
 }
 
-parallel <- function(X, n_boot = 100L, type = "pearson", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-    .Call(`_bifactor_parallel`, X, n_boot, type, quant, mean, replace, PA, hierarchical, efa, cores)
+parallel <- function(X, nboot = 100L, type = "pearson", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_parallel`, X, nboot, type, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
@@ -85,8 +85,16 @@ old_poly <- function(X, cores) {
     .Call(`_bifactor_old_poly`, X, cores)
 }
 
+count <- function(X, n, max_X) {
+    .Call(`_bifactor_count`, X, n, max_X)
+}
+
 joint_frequency_table <- function(X, n, max_X, Y, max_Y) {
     .Call(`_bifactor_joint_frequency_table`, X, n, max_X, Y, max_Y)
+}
+
+dbinorm <- function(p, x, y) {
+    .Call(`_bifactor_dbinorm`, p, x, y)
 }
 
 COV2 <- function(rho, tau1, tau2, mvphi1, mvphi2) {
