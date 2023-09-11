@@ -16,6 +16,7 @@
 Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
                     std::string method, std::string cor,
                     std::string estimator, std::string projection,
+                    std::string missing,
                     Rcpp::Nullable<int> nullable_nobs,
                     Rcpp::Nullable<arma::mat> nullable_PhiTarget,
                     Rcpp::Nullable<arma::mat> nullable_PhiWeight,
@@ -35,37 +36,16 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
   Rcpp::Timer timer;
   Rcpp::List result, SL_result;
 
-  Rcpp::List correlation_result;
-  arma::mat R;
   arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = cor;
+  xefa.estimator = estimator;
+  xefa.p = X.n_cols;
+  xefa.q = n_generals + n_groups;
+  xefa.missing = missing;
 
-  if(X.is_square()) {
-
-    R = X;
-
-  } else {
-
-    xefa.nobs = X.n_rows;
-
-    if(cor == "poly") {
-      if(estimator == "dwls") {
-        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
-        arma::mat W = correlation_result["acov"];
-        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
-      } else {
-        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
-      }
-      arma::mat polys = correlation_result["correlation"];
-      R = polys;
-    } else if(cor == "pearson") {
-      R = arma::cor(X);
-      correlation_result["type"] = "pearson";
-      correlation_result["correlation"] = R;
-    } else {
-      Rcpp::stop("Unkown correlation method");
-    }
-
-  }
+  check_cor(xefa);
+  Rcpp::List correlation_result = xefa.correlation_result;
 
   result["correlation"] = correlation_result;
 
@@ -73,10 +53,6 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
     xefa.nobs = Rcpp::as<int>(nullable_nobs);
   }
 
-  xefa.estimator = estimator;
-  xefa.R = R;
-  xefa.p = R.n_cols;
-  xefa.q = n_generals + n_groups;
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;
   xefa.nullable_first_efa = nullable_first_efa;
@@ -88,12 +64,12 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
   if(maxit < 1) Rcpp::stop("maxit must be an integer greater than 0");
   if(cutoff < 0) Rcpp::stop("cutoff must be nonnegative");
 
-  int n = R.n_rows;
+  int n = xefa.R.n_rows;
   int nfactors = n_generals + n_groups;
 
   if(method == "botmin") {
 
-    Rcpp::List botmin_result = botmin(R, n_generals, n_groups,
+    Rcpp::List botmin_result = botmin(xefa.R, n_generals, n_groups,
                                       xefa.estimator, projection,
                                       nullable_nobs,
                                       nullable_oblq_factors,
@@ -105,7 +81,7 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
 
   } else if(method == "bifad") {
 
-    Rcpp::List bifad_result = bifad(R, n_generals, n_groups,
+    Rcpp::List bifad_result = bifad(xefa.R, n_generals, n_groups,
                                     projection,
                                     nullable_oblq_factors,
                                     cutoff, normalization,
@@ -120,7 +96,7 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
   } else if(method == "SL") {
 
     xefa.q = n_groups;
-    SL_result = sl(R, n_generals, n_groups, cor, estimator, nullable_nobs,
+    SL_result = sl(xefa.R, n_generals, n_groups, cor, estimator, "none", nullable_nobs,
                    xefa.nullable_first_efa, xefa.nullable_second_efa, cores);
     result["SL"] = SL_result;
 
@@ -131,7 +107,7 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
     if(nullable_Target.isNull()) {
 
       xefa.q = n_groups;
-      SL_result = sl(R, n_generals, n_groups, cor, estimator, nullable_nobs,
+      SL_result = sl(xefa.R, n_generals, n_groups, cor, estimator, "none", nullable_nobs,
                      xefa.nullable_first_efa, xefa.nullable_second_efa, cores);
 
       // Create the factor correlation matrix for the SL solution:
@@ -161,7 +137,7 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
 
     }
 
-    Rcpp::List GSLiD_result = GSLiD(R, n_generals, n_groups,
+    Rcpp::List GSLiD_result = GSLiD(xefa.R, n_generals, n_groups,
                                     estimator, projection,
                                     nullable_nobs,
                                     nullable_Target,

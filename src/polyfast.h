@@ -9,7 +9,13 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
   const int n = X.n_rows;
   const int q = X.n_cols;
 
-  arma::mat cor = arma::cor(X);
+  arma::mat cor;
+  if(X.has_nan()) {
+    cor = pairwise_cor(X);
+  } else {
+    cor = arma::cor(X);
+  }
+
   std::vector<std::vector<int>> cols(q);
   std::vector<int> maxs(q);
   std::vector<int> mins(q);
@@ -34,7 +40,7 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
     mvphi[i].insert(mvphi[i].begin(), 0.0);
     taus[i].push_back(pos_inf);
     taus[i].insert(taus[i].begin(), neg_inf);
-    s[i] = taus[i].size() -1L;
+    s[i] = taus[i].size() - 1L;
   }
 
   arma::mat polys(q, q, arma::fill::eye);
@@ -137,7 +143,13 @@ polyfast_object poly_no_cores(const arma::mat& X, const std::string smooth,
   const int n = X.n_rows;
   const int q = X.n_cols;
 
-  arma::mat cor = arma::cor(X);
+  arma::mat cor;
+  if(X.has_nan()) {
+    cor = pairwise_cor(X);
+  } else {
+    cor = arma::cor(X);
+  }
+
   std::vector<std::vector<int>> cols(q);
   std::vector<int> maxs(q);
   std::vector<int> mins(q);
@@ -237,7 +249,7 @@ polyfast_object poly_no_cores(const arma::mat& X, const std::string smooth,
 
 }
 
-Rcpp::List polyfast(const arma::mat& X, std::string acov, const std::string smooth,
+Rcpp::List polyfast(arma::mat X, std::string missing, std::string acov, const std::string smooth,
                     double min_eigval, const int nboot, const bool fit, const int cores) {
 
   /*
@@ -246,7 +258,16 @@ Rcpp::List polyfast(const arma::mat& X, std::string acov, const std::string smoo
 
   Rcpp::Timer timer;
 
-  polyfast_object x = poly(X, smooth, min_eigval, false, cores);
+  arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = "poly";
+  xefa.p = X.n_cols;
+  xefa.nobs = X.n_rows;
+  xefa.missing = missing;
+  missingness(xefa);
+
+  polyfast_object x = poly(xefa.X, smooth, min_eigval, false, cores);
+  // polyfast_object x = poly(X, smooth, min_eigval, false, cores);
 
   timer.step("polychorics");
 

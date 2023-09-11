@@ -1,5 +1,6 @@
 Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
               std::string cor, std::string estimator,
+              std::string missing,
               Rcpp::Nullable<int> nullable_nobs,
               Rcpp::Nullable<Rcpp::List> first_efa,
               Rcpp::Nullable<Rcpp::List> second_efa, int cores) {
@@ -7,37 +8,16 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  Rcpp::List correlation_result;
-  arma::mat R;
   arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = cor;
+  xefa.estimator = estimator;
+  xefa.p = X.n_cols;
+  xefa.q = n_generals + n_groups;
+  xefa.missing = missing;
 
-  if(X.is_square()) {
-
-    R = X;
-
-  } else {
-
-    xefa.nobs = X.n_rows;
-
-    if(cor == "poly") {
-      if(estimator == "dwls") {
-        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
-        arma::mat W = correlation_result["acov"];
-        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
-      } else {
-        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
-      }
-      arma::mat polys = correlation_result["correlation"];
-      R = polys;
-    } else if(cor == "pearson") {
-      R = arma::cor(X);
-      correlation_result["type"] = "pearson";
-      correlation_result["correlation"] = R;
-    } else {
-      Rcpp::stop("Unkown correlation method");
-    }
-
-  }
+  check_cor(xefa);
+  Rcpp::List correlation_result = xefa.correlation_result;
 
   result["correlation"] = correlation_result;
 
@@ -56,7 +36,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   }
 
   int nfactors = n_generals + n_groups;
-  int n_items = R.n_rows;
+  int n_items = xefa.R.n_rows;
 
   // Arguments to pass to first efa in SL:
 
@@ -76,8 +56,8 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
 
   // First efa:
 
-  Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.estimator, x1.rotation,
-                                     x1.projection, nullable_nobs,
+  Rcpp::List first_order_efa = efast(xefa.R, n_groups, x1.cor, x1.estimator, x1.rotation,
+                                     x1.projection, "none", nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
                                      x1.nullable_blocks,
@@ -97,7 +77,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   if ( n_generals == 1 ) {
 
     Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.estimator, rotation_none,
-                                  "none", nullable_nobs,
+                                  "none", "none", nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
                                   x2.nullable_blocks,
@@ -137,7 +117,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   } else {
 
     Rcpp::List efa_result = efast(Phi_1, n_generals, x2.cor, x2.estimator, x2.rotation,
-                                  x2.projection, nullable_nobs,
+                                  x2.projection, "none", nullable_nobs,
                                   x2.nullable_Target, x2.nullable_Weight,
                                   x2.nullable_PhiTarget, x2.nullable_PhiWeight,
                                   x2.nullable_blocks,
@@ -178,7 +158,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   }
 
   Rcpp::List modelInfo;
-  modelInfo["R"] = R;
+  modelInfo["R"] = xefa.R;
   modelInfo["n_generals"] = n_generals;
   modelInfo["n_groups"] = n_groups;
   modelInfo["nullable_nobs"] = nullable_nobs;

@@ -40,6 +40,7 @@
 #include "cor_optim.h"
 #include "asymptotic_cov.h"
 #include "polyfast.h"
+#include "checks_cor.h"
 #include "efa_fit.h"
 #include "efa.h"
 #include "efast.h"
@@ -80,6 +81,7 @@ arma::mat retr_poblq(arma::mat X, arma::uvec oblq_factors);
 Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
               std::string cor = "pearson",
               std::string estimator = "uls",
+              std::string missing = "pairwise.complete.cases",
               Rcpp::Nullable<int> nobs = R_NilValue,
               Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
               Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
@@ -107,6 +109,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor = "pearson",
                  std::string estimator = "uls",
                  Rcpp::CharacterVector rotation = Rcpp::CharacterVector::create("oblimin"),
                  std::string projection = "oblq",
+                 std::string missing = "pairwise.complete.cases",
                  Rcpp::Nullable<int> nobs = R_NilValue,
                  Rcpp::Nullable<arma::mat> Target = R_NilValue,
                  Rcpp::Nullable<arma::mat> Weight = R_NilValue,
@@ -142,6 +145,7 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
                    std::string cor = "pearson",
                    std::string estimator = "uls",
                    std::string projection = "oblq",
+                   std::string missing = "pairwise.complete.cases",
                    Rcpp::Nullable<int> nobs = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
                    Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
@@ -170,16 +174,16 @@ Rcpp::List se(Rcpp::List fit = R_NilValue,
               std::string type = "normal", double eta = 1);
 
 // [[Rcpp::export]]
-Rcpp::List parallel(arma::mat X, int nboot = 100, std::string type = "pearson",
+Rcpp::List parallel(arma::mat X, int nboot = 100, std::string cor = "pearson",
+                    std::string missing = "pairwise.complete.cases",
                     Rcpp::Nullable<arma::vec> quant = R_NilValue,
                     bool mean = false, bool replace = false,
                     Rcpp::Nullable<std::vector<std::string>> PA = R_NilValue,
                     bool hierarchical = false, Rcpp::Nullable<Rcpp::List> efa = R_NilValue,
                     int cores = 1);
 
-// [[Rcpp::export]]
-Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
-                    Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
+// Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
+                    // Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
 
 // [[Rcpp::export]]
 Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
@@ -197,7 +201,8 @@ Rcpp::List check_deriv(arma::mat L, arma::mat Phi,
                        arma::vec k = 0, double w = 1);
 
 // [[Rcpp::export]]
-Rcpp::List polyfast(const arma::mat& X, const std::string acov = "none",
+Rcpp::List polyfast(arma::mat X, std::string missing = "pairwise.complete.cases",
+                    const std::string acov = "none",
                     const std::string smooth = "none", double min_eigval = 0.001,
                     const int nboot = 1000L, const bool fit = false,
                     const int cores = 1L);

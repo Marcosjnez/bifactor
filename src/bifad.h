@@ -28,7 +28,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
   // First EFA (group factors):
 
   Rcpp::List first_order_efa = efast(R, n_groups, x1.cor, x1.estimator, x1.rotation,
-                                     x1.projection, nullable_nobs,
+                                     x1.projection, "none", nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
                                      x1.nullable_blocks,
@@ -58,7 +58,7 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
     // Second EFA (general factors):
 
     second_order_efa = efast(R, n_generals, x2.cor, x2.estimator, x2.rotation,
-                             x2.projection, nullable_nobs,
+                             x2.projection, "none", nullable_nobs,
                              x2.nullable_Target, x2.nullable_Weight,
                              x2.nullable_PhiTarget, x2.nullable_PhiWeight,
                              x2.nullable_blocks,

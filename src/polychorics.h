@@ -18,6 +18,7 @@ std::vector<int> count(const std::vector<int>& X, const int n, const int max_X) 
 
   // Populate table
   for (int i = 0; i < n; i++) {
+    // if(!std::isnan(X[i])) frequency[X[i]]++;
     frequency[X[i]]++;
   }
 
@@ -34,6 +35,7 @@ std::vector<std::vector<int>> joint_frequency_table(const std::vector<int>& X, c
 
   // Populate table
   for (int i = 0; i < n; i++) {
+    // if(!std::isnan(X[i]) & !std::isnan(Y[i]) ) joint_frequency[X[i]][Y[i]]++;
     joint_frequency[X[i]][Y[i]]++;
   }
 
@@ -633,7 +635,6 @@ Rcpp::List COV(double rho, std::vector<double> tau1, std::vector<double> tau2,
 
 }
 
-// [[Rcpp::export]]
 Rcpp::List COV2(double rho,
                 std::vector<double> tau1, std::vector<double> tau2,
                 std::vector<double> mvphi1, std::vector<double> mvphi2) {
@@ -696,7 +697,6 @@ Rcpp::List COV2(double rho,
 
 }
 
-// [[Rcpp::export]]
 arma::mat std_2_matrix(std::vector<std::vector<int>> tabs, int n) {
 
   int p = tabs.size();

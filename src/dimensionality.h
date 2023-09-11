@@ -149,7 +149,7 @@ Rcpp::List out_pa(arma::umat dimensions, Rcpp::Nullable<arma::vec> nullable_quan
 
 }
 
-Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
+Rcpp::List pa(arma::mat X, arma::mat S, int n_boot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
               bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA, int cores) {
 
   /*
@@ -183,7 +183,6 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
   int s = quantile.size();
   if(mean) s += 1;
 
-  arma::mat S = arma::cor(X);
   arma::cube X_boots(n, p, n_boot);
   arma::mat PCA_boot(p, n_boot);
   arma::mat PAF_boot(p, n_boot);
@@ -205,7 +204,14 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
     for(int i=0; i < n_boot; ++i) {
 
       X_boots.slice(i) = boot_sample(X, replace);
-      arma::mat S_boot = arma::cor(X_boots.slice(i));
+      arma::mat S_boot;
+
+      if(X_boots.slice(i).has_nan()) {
+        S_boot = pairwise_cor(X_boots.slice(i));
+      } else {
+        S_boot = arma::cor(X_boots.slice(i));
+      }
+
       if(PCA) PCA_boot.col(i) = eig_sym(S_boot);
       if(PAF) PAF_boot.col(i) = eig_PAF(S_boot);
 
@@ -340,13 +346,34 @@ Rcpp::List pa(arma::mat X, int n_boot, std::string type, Rcpp::Nullable<arma::ve
 
 }
 
-Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arma::vec> nullable_quantile,
+Rcpp::List parallel(arma::mat X, int nboot, std::string cor, std::string missing,
+                    Rcpp::Nullable<arma::vec> nullable_quantile,
                     bool mean, bool replace, Rcpp::Nullable<std::vector<std::string>> nullable_PA,
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
                     int cores) {
 
-  Rcpp::List first_order = pa(X, nboot, type, nullable_quantile, mean, replace, nullable_PA, cores);
+  arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = cor;
+  xefa.p = X.n_cols;
+  xefa.missing = missing;
+  xefa.cores = cores;
 
+  Rcpp::List efa;
+  if(nullable_efa.isNotNull()) {
+    efa = nullable_efa;
+  }
+  if (efa.containsElementNamed("estimator")) {
+    std::string estimator_ = efa["estimator"];
+    xefa.estimator = estimator_;
+  }
+
+  check_cor(xefa);
+  Rcpp::List correlation_result = xefa.correlation_result;
+
+  Rcpp::List first_order = pa(xefa.X, xefa.R, nboot, cor, nullable_quantile, mean, replace, nullable_PA, cores);
+
+  first_order["correlation"] = correlation_result;
   if(!hierarchical) return first_order;
 
   Rcpp::List result;
@@ -360,12 +387,6 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arm
   int n = X.n_rows;
   int p = X.n_cols;
 
-  Rcpp::List efa;
-
-  if(nullable_efa.isNotNull()) {
-    efa = nullable_efa;
-  }
-
   // Arguments to pass to efa:
 
   arguments_efast x;
@@ -373,16 +394,16 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arm
   pass_to_efast(efa, x);
 
   arma::uvec unique = arma::unique(dims(arma::find(dims > 1))); // unique elements greater than 1
+  if(arma::max(unique) < 2) return first_order;
   int unique_size = unique.size();
   arma::uvec groups(unique_size);
 
-  arma::mat S = arma::cor(X);
   // Rcpp::stop("Well until here");
 
   for(int i=0; i < unique_size; ++i) {
 
-      Rcpp::List fit = efast(S, unique[i], x.cor, x.estimator, x.rotation, x.projection,
-                             x.nullable_nobs,
+      Rcpp::List fit = efast(xefa.R, unique[i], x.cor, x.estimator, x.rotation, x.projection,
+                             xefa.missing, x.nullable_nobs,
                              x.nullable_Target, x.nullable_Weight,
                              x.nullable_PhiTarget, x.nullable_PhiWeight,
                              x.nullable_blocks,
@@ -395,12 +416,14 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arm
 
       Rcpp::List rot = fit["rotation"];
       arma::mat Phi = rot["phi"];
-      arma::mat loadings = rot["loadings"];
+      arma::mat loadings = rot["lambda"];
       arma::mat L = loadings * Phi;
-      arma::mat W = arma::solve(S, L);
-      arma::mat fs = X * W;
-
-      Rcpp::List second_order = pa(fs, nboot, "pearson", nullable_quantile, mean,
+      arma::mat W = arma::solve(xefa.R, L);
+      if(xefa.X.has_nan()) xefa.X.replace(arma::datum::nan, 0); // Avoid NAs in the multiplication
+      arma::mat fs = xefa.X * W;
+      arma::mat Sfs = arma::cor(fs);
+      // Rcpp::stop("Well until here");
+      Rcpp::List second_order = pa(fs, Sfs, nboot, "pearson", nullable_quantile, mean,
                                    replace, R_NilValue, false);
 
       arma::uvec indexes = arma::find(dims == unique[i]);
@@ -426,113 +449,113 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string type, Rcpp::Nullable<arm
 
 }
 
-Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
-                    Rcpp::Nullable<Rcpp::List> nullable_efa,
-                    int cores) {
-
-  arma::mat S = arma::cor(X);
-  int q = S.n_cols;
-  arma::mat CV_eigvals(N, q);
-  int p = X.n_rows;
-  arma::uvec indexes = consecutive(0, p-1);
-  int half = p/2;
-
-#ifdef _OPENMP
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-#endif
-  for(int i=0; i < N; ++i) {
-
-    arma::uvec selected = arma::randperm(p, half);
-    arma::mat A = X.rows(selected);
-    arma::mat B = X;
-    B.shed_rows(selected);
-    arma::mat cor_A = arma::cor(A);
-    arma::mat cor_B = arma::cor(B);
-    arma::vec eigval;
-    arma::mat eigvec;
-    eig_sym(eigval, eigvec, cor_A);
-
-    arma::vec cv_values = eigvec.t() * cor_B * eigvec;
-    CV_eigvals.row(i) = arma::diagvec(cv_values);
-
-  }
-
-  arma::vec avg_CV_eigvals = arma::mean(CV_eigvals, 0);
-  arma::uvec which = arma::find(avg_CV_eigvals > 1);
-  int dim = which.size();
-
-  Rcpp::List result;
-  result["CV_eigvals"] = avg_CV_eigvals;
-  result["dim"] = dim;
-
-  if(dim <= 1 || !hierarchical) return result;
-
-  Rcpp::List efa;
-
-  if(nullable_efa.isNotNull()) {
-    efa = nullable_efa;
-  }
-
-  // Arguments to pass to efa:
-
-  arguments_efast x;
-
-  pass_to_efast(efa, x);
-
-  // efa:
-
-  Rcpp::List fit = efast(S, dim, x.cor, x.estimator, x.rotation, x.projection,
-                         x.nullable_nobs,
-                         x.nullable_Target, x.nullable_Weight,
-                         x.nullable_PhiTarget, x.nullable_PhiWeight,
-                         x.nullable_blocks,
-                         x.nullable_block_weights,
-                         x.nullable_oblq_factors,
-                         x.gamma, x.epsilon, x.k, x.w,
-                         x.random_starts, x.cores,
-                         x.nullable_init, x.nullable_efa_control,
-                         x.nullable_rot_control);
-
-  Rcpp::List rot = fit["rotation"];
-  arma::mat Phi = rot["lambda"];
-  arma::mat loadings = rot["lambda"];
-  arma::mat L = loadings * Phi;
-  arma::mat W = arma::solve(S, L);
-  arma::mat fs = X * W;
-
-  arma::mat CV_eigvals2(N, dim);
-
-  omp_set_num_threads(cores);
-#pragma omp parallel for
-  for(int i=0; i < N; ++i) {
-
-    arma::uvec selected = arma::randperm(p, half);
-    arma::mat A = fs.rows(selected);
-    arma::mat B = fs;
-    B.shed_rows(selected);
-    arma::mat cor_A = arma::cor(A);
-    arma::mat cor_B = arma::cor(B);
-    arma::vec eigval;
-    arma::mat eigvec;
-    eig_sym(eigval, eigvec, cor_A);
-
-    arma::vec cv_values = eigvec.t() * cor_B * eigvec;
-    CV_eigvals2.row(i) = arma::diagvec(cv_values);
-
-  }
-
-  arma::vec avg_CV_eigvals2 = arma::mean(CV_eigvals2, 0);
-  // arma::uvec which2 = arma::find(avg_CV_eigvals2 > 1);
-  // int dim2 = which2.size();
-  arma::uvec ones = arma::find((avg_CV_eigvals2 < 1) == 1);
-  int dim2 = ones[0];
-
-  result["CV_eigvals2"] = avg_CV_eigvals2;
-  result["dim2"] = dim2;
-  result["fit"] = fit;
-  result["fs"] = fs;
-
-  return result;
-
-}
+// Rcpp::List cv_eigen(arma::mat X, int N, bool hierarchical,
+//                     Rcpp::Nullable<Rcpp::List> nullable_efa,
+//                     int cores) {
+//
+//   arma::mat S = arma::cor(X);
+//   int q = S.n_cols;
+//   arma::mat CV_eigvals(N, q);
+//   int p = X.n_rows;
+//   arma::uvec indexes = consecutive(0, p-1);
+//   int half = p/2;
+//
+// #ifdef _OPENMP
+//   omp_set_num_threads(cores);
+// #pragma omp parallel for
+// #endif
+//   for(int i=0; i < N; ++i) {
+//
+//     arma::uvec selected = arma::randperm(p, half);
+//     arma::mat A = X.rows(selected);
+//     arma::mat B = X;
+//     B.shed_rows(selected);
+//     arma::mat cor_A = arma::cor(A);
+//     arma::mat cor_B = arma::cor(B);
+//     arma::vec eigval;
+//     arma::mat eigvec;
+//     eig_sym(eigval, eigvec, cor_A);
+//
+//     arma::vec cv_values = eigvec.t() * cor_B * eigvec;
+//     CV_eigvals.row(i) = arma::diagvec(cv_values);
+//
+//   }
+//
+//   arma::vec avg_CV_eigvals = arma::mean(CV_eigvals, 0);
+//   arma::uvec which = arma::find(avg_CV_eigvals > 1);
+//   int dim = which.size();
+//
+//   Rcpp::List result;
+//   result["CV_eigvals"] = avg_CV_eigvals;
+//   result["dim"] = dim;
+//
+//   if(dim <= 1 || !hierarchical) return result;
+//
+//   Rcpp::List efa;
+//
+//   if(nullable_efa.isNotNull()) {
+//     efa = nullable_efa;
+//   }
+//
+//   // Arguments to pass to efa:
+//
+//   arguments_efast x;
+//
+//   pass_to_efast(efa, x);
+//
+//   // efa:
+//
+//   Rcpp::List fit = efast(S, dim, x.cor, x.estimator, x.rotation, x.projection,
+//                          "none", x.nullable_nobs,
+//                          x.nullable_Target, x.nullable_Weight,
+//                          x.nullable_PhiTarget, x.nullable_PhiWeight,
+//                          x.nullable_blocks,
+//                          x.nullable_block_weights,
+//                          x.nullable_oblq_factors,
+//                          x.gamma, x.epsilon, x.k, x.w,
+//                          x.random_starts, x.cores,
+//                          x.nullable_init, x.nullable_efa_control,
+//                          x.nullable_rot_control);
+//
+//   Rcpp::List rot = fit["rotation"];
+//   arma::mat Phi = rot["lambda"];
+//   arma::mat loadings = rot["lambda"];
+//   arma::mat L = loadings * Phi;
+//   arma::mat W = arma::solve(S, L);
+//   arma::mat fs = X * W;
+//
+//   arma::mat CV_eigvals2(N, dim);
+//
+//   omp_set_num_threads(cores);
+// #pragma omp parallel for
+//   for(int i=0; i < N; ++i) {
+//
+//     arma::uvec selected = arma::randperm(p, half);
+//     arma::mat A = fs.rows(selected);
+//     arma::mat B = fs;
+//     B.shed_rows(selected);
+//     arma::mat cor_A = arma::cor(A);
+//     arma::mat cor_B = arma::cor(B);
+//     arma::vec eigval;
+//     arma::mat eigvec;
+//     eig_sym(eigval, eigvec, cor_A);
+//
+//     arma::vec cv_values = eigvec.t() * cor_B * eigvec;
+//     CV_eigvals2.row(i) = arma::diagvec(cv_values);
+//
+//   }
+//
+//   arma::vec avg_CV_eigvals2 = arma::mean(CV_eigvals2, 0);
+//   // arma::uvec which2 = arma::find(avg_CV_eigvals2 > 1);
+//   // int dim2 = which2.size();
+//   arma::uvec ones = arma::find((avg_CV_eigvals2 < 1) == 1);
+//   int dim2 = ones[0];
+//
+//   result["CV_eigvals2"] = avg_CV_eigvals2;
+//   result["dim2"] = dim2;
+//   result["fit"] = fit;
+//   result["fs"] = fs;
+//
+//   return result;
+//
+// }

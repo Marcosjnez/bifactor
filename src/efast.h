@@ -78,8 +78,8 @@ Rcpp::List rotate_efa(arguments_rotate x, rotation_manifold *manifold, rotation_
 }
 
 Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimator,
-                 Rcpp::CharacterVector char_rotation,
-                 std::string projection,
+                 Rcpp::CharacterVector char_rotation, std::string projection,
+                 std::string missing,
                  Rcpp::Nullable<int> nullable_nobs,
                  Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
@@ -97,39 +97,17 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  Rcpp::List correlation_result;
-  arma::mat R;
   arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = cor;
+  xefa.estimator = estimator;
+  xefa.p = X.n_cols;
+  xefa.q = nfactors;
+  xefa.missing = missing;
+  xefa.cores = cores;
 
-  // ALLOW DWLS for continuous data
-
-  if(X.is_square()) {
-
-    R = X;
-
-  } else {
-
-    xefa.nobs = X.n_rows;
-
-    if(cor == "poly") {
-      if(estimator == "dwls") {
-        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
-        arma::mat W = correlation_result["acov"];
-        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
-      } else {
-        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
-      }
-      arma::mat polys = correlation_result["correlation"];
-      R = polys;
-    } else if(cor == "pearson") {
-      R = arma::cor(X);
-      correlation_result["type"] = "pearson";
-      correlation_result["correlation"] = R;
-    } else {
-      Rcpp::stop("Unkown correlation method");
-    }
-
-  }
+  check_cor(xefa);
+  Rcpp::List correlation_result = xefa.correlation_result;
 
   if(nullable_nobs.isNotNull()) {
     xefa.nobs = Rcpp::as<int>(nullable_nobs);
@@ -137,11 +115,6 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
 
-  xefa.estimator = estimator;
-  xefa.cor = cor;
-  xefa.R = R;
-  xefa.p = R.n_cols;
-  xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;
   xefa.nullable_init = nullable_init;
@@ -163,11 +136,11 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   double f_null;
   if(estimator == "uls" || estimator == "pa") {
-    f_null = 0.5*(arma::accu(R % R) - xefa.p);
+    f_null = 0.5*(arma::accu(xefa.R % xefa.R) - xefa.p);
   } else if(estimator == "dwls") {
-    f_null = 0.5*arma::accu(R % R % xefa.Inv_W);
+    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.Inv_W);
   } else if(estimator == "ml") {
-    f_null = -arma::log_det_sympd(R);
+    f_null = -arma::log_det_sympd(xefa.R);
   } else if(estimator == "minrank") {
     f_null = 0;
   }
@@ -207,7 +180,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   arguments_rotate x;
   x.lambda = lambda;
-  x.p = R.n_rows, x.q = nfactors;
+  x.p = xefa.p, x.q = xefa.q;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.clf_epsilon = clf_epsilon;
@@ -318,8 +291,8 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
 // Do not export this (overloaded to support std::vector<std::string> rotation):
 Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimator,
-                 std::vector<std::string> rotation,
-                 std::string projection,
+                 std::vector<std::string> rotation, std::string projection,
+                 std::string missing,
                  Rcpp::Nullable<int> nullable_nobs,
                  Rcpp::Nullable<arma::mat> nullable_Target,
                  Rcpp::Nullable<arma::mat> nullable_Weight,
@@ -337,47 +310,22 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  Rcpp::List correlation_result;
-  arma::mat R;
   arguments_efa xefa;
+  xefa.X = X;
+  xefa.cor = cor;
+  xefa.estimator = estimator;
+  xefa.p = X.n_cols;
+  xefa.q = nfactors;
+  xefa.missing = missing;
+  xefa.cores = cores;
 
-  if(X.is_square()) {
-
-    R = X;
-
-  } else {
-
-    xefa.nobs = X.n_rows;
-
-    if(cor == "poly") {
-      if(estimator == "dwls") {
-        correlation_result = polyfast(X, "var", "none", 0.00, 0L, false, cores);
-        arma::mat W = correlation_result["acov"];
-        xefa.Inv_W = 1/W; xefa.Inv_W.diag().zeros();
-      } else {
-        correlation_result = polyfast(X, "none", "none", 0.00, 0L, false, cores);
-      }
-      arma::mat polys = correlation_result["correlation"];
-      R = polys;
-    } else if(cor == "pearson") {
-      R = arma::cor(X);
-      correlation_result["type"] = "pearson";
-      correlation_result["correlation"] = R;
-    } else {
-      Rcpp::stop("Unkown correlation method");
-    }
-
-  }
+  check_cor(xefa);
+  Rcpp::List correlation_result = xefa.correlation_result;
 
   if(nullable_nobs.isNotNull()) {
     xefa.nobs = Rcpp::as<int>(nullable_nobs);
   }
 
-  xefa.estimator = estimator;
-  xefa.cor = cor;
-  xefa.R = R;
-  xefa.p = R.n_cols;
-  xefa.q = nfactors;
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;
   xefa.nullable_init = nullable_init;
@@ -400,7 +348,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   arguments_rotate x;
   x.lambda = lambda;
-  x.p = R.n_rows, x.q = nfactors;
+  x.p = xefa.p, x.q = xefa.q;
   // x.lambda.set_size(x.p, x.q);
   x.Phi.set_size(x.q, x.q); x.Phi.eye();
   x.gamma = gamma, x.epsilon = epsilon, x.k = k, x.w = w, x.clf_epsilon = {0.01};
@@ -426,11 +374,11 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
 
   double f_null;
   if(estimator == "uls" || estimator == "pa") {
-    f_null = 0.5*(arma::accu(R % R) - x.p);
+    f_null = 0.5*(arma::accu(xefa.R % xefa.R) - x.p);
   } else if(estimator == "dwls") {
-    f_null = 0.5*arma::accu(R % R % xefa.Inv_W);
+    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.Inv_W);
   } else if(estimator == "ml") {
-    f_null = -arma::log_det_sympd(R);
+    f_null = -arma::log_det_sympd(xefa.R);
   } else if(estimator == "minrank") {
     f_null = 0;
   }

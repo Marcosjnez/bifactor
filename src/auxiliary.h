@@ -1,9 +1,137 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 18/03/2022
+ * Modification date: 10/09/2023
  *
  */
+
+arma::mat pairwise_cor(arma::mat X) {
+
+  const size_t numCols = X.n_cols;
+
+  // Initialize the correlation matrix
+  arma::mat corrMatrix(numCols, numCols, arma::fill::eye);
+
+  // Loop over all pairs of columns
+  for (size_t i = 0; i < (numCols-1); ++i) {
+    for (size_t j = (i+1); j < numCols; ++j) {
+      // Get the columns for the pair (i, j)
+      arma::vec col1 = X.col(i);
+      arma::vec col2 = X.col(j);
+
+      // Find indices where both columns have non-NaN values
+      arma::uvec validIndices = arma::find_finite(col1 % col2);
+
+      // Extract non-NaN values from both columns
+      arma::vec validCol1 = col1(validIndices);
+      arma::vec validCol2 = col2(validIndices);
+
+      // Calculate the correlation between the two columns
+      double correlation = as_scalar(arma::cor(validCol1, validCol2));
+
+      // Assign the correlation value to the correlation matrix
+      corrMatrix(i, j) = corrMatrix(j, i) = correlation;
+    }
+  }
+
+  return corrMatrix;
+}
+
+void missingness(arguments_cfa& x) {
+
+  bool missing = x.X.has_nan();
+
+  if(missing) {
+
+    if(x.missing == "impute.mean") {
+      for(int i=0; i < x.p; ++i) {
+        arma::vec xvec = x.X.col(i);
+        if(x.cor == "poly") {
+          int number = std::round(arma::mean(xvec(arma::find_finite(xvec))));
+          x.X.col(i).replace(arma::datum::nan, number);
+        } else {
+          double number = arma::mean(xvec(arma::find_finite(xvec)));
+          x.X.col(i).replace(arma::datum::nan, number);
+        }
+      }
+    } else if(x.missing == "impute.median") {
+      for(int i=0; i < x.p; ++i) {
+        arma::vec xvec = x.X.col(i);
+        if(x.cor == "poly") {
+          int number = std::round(arma::median(xvec(arma::find_finite(xvec))));
+          x.X.col(i).replace(arma::datum::nan, number);
+        } else {
+          double number = arma::median(xvec(arma::find_finite(xvec)));
+          x.X.col(i).replace(arma::datum::nan, number);
+        }
+      }
+    } else if(x.missing == "complete.cases") {
+      std::vector<int> indices;
+      for (int i = 0; i < x.nobs; ++i) {
+        // Check if the row contains any NaN values
+        if(x.X.row(i).has_nan()) {
+          indices.push_back(i);
+        }
+      }
+      arma::uvec remove = arma::conv_to<arma::uvec>::from(indices);
+      x.X.shed_rows(remove);
+    } else if(x.missing == "pairwise.complete.cases") {
+
+    } else {
+      Rcpp::stop("Please, provide a method to handle missing data via the 'missing' argument");
+    }
+
+  }
+
+}
+
+void missingness(arguments_efa& x) {
+
+  bool missing = x.X.has_nan();
+
+  if(missing) {
+
+    if(x.missing == "impute.mean") {
+      for(int i=0; i < x.p; ++i) {
+        arma::vec xvec = x.X.col(i);
+        if(x.cor == "poly") {
+          int number = std::round(arma::mean(xvec(arma::find_finite(xvec))));
+          x.X.col(i).replace(arma::datum::nan, number);
+        } else {
+          double number = arma::mean(xvec(arma::find_finite(xvec)));
+          x.X.col(i).replace(arma::datum::nan, number);
+        }
+      }
+    } else if(x.missing == "impute.median") {
+      for(int i=0; i < x.p; ++i) {
+        arma::vec xvec = x.X.col(i);
+        if(x.cor == "poly") {
+          int number = std::round(arma::median(xvec(arma::find_finite(xvec))));
+          x.X.col(i).replace(arma::datum::nan, number);
+        } else {
+          double number = arma::median(xvec(arma::find_finite(xvec)));
+          x.X.col(i).replace(arma::datum::nan, number);
+        }
+      }
+    } else if(x.missing == "complete.cases") {
+      std::vector<int> indices;
+      for (int i = 0; i < x.nobs; ++i) {
+        // Check if the row contains any NaN values
+        if(x.X.row(i).has_nan()) {
+          indices.push_back(i);
+        }
+      }
+      arma::uvec remove = arma::conv_to<arma::uvec>::from(indices);
+      x.X.shed_rows(remove);
+    } else if(x.missing == "pairwise.complete.cases") {
+      return;
+    } else {
+      Rcpp::stop("Please, provide a method to handle missing data via the 'missing' argument");
+    }
+
+  }
+
+}
 
 double root_quad(double a, double b, double c) {
 
