@@ -1,4 +1,5 @@
 print.efa <- function(x, nobs = NULL, ...) {
+
   efa <- x
   # Check if nobs was provided
   if(is.null(nobs)) {
@@ -31,7 +32,7 @@ print.efa <- function(x, nobs = NULL, ...) {
   cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 1], 3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 1], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Maximum Residual", 1], 3), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
       " and the objective function was ", round(ObjFn, 2), "\n", sep="")
   if(!is.null(nobs)) {
@@ -46,9 +47,11 @@ print.efa <- function(x, nobs = NULL, ...) {
   # Loadings
   cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
   invisible(NULL)
+
 }
 
 print.bifactor <- function(x, nobs = NULL, ...) {
+
   efa <- x
   # Check if nobs was provided
   if(is.null(nobs)) {
@@ -82,7 +85,7 @@ print.bifactor <- function(x, nobs = NULL, ...) {
   cat("Elapsed time of ", round(efa$elapsed * 1e-9, 3), " seconds", "\n", sep="")
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 1], 3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 1], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Maximum Residual", 1], 3), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
       " and the objective function was ", round(ObjFn, 2), "\n", sep="")
   if(!is.null(nobs)) {
@@ -97,4 +100,5 @@ print.bifactor <- function(x, nobs = NULL, ...) {
   # Loadings
   cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
   invisible(NULL)
+
 }

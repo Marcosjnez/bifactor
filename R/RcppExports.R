@@ -29,24 +29,24 @@ retr_poblq <- function(X, oblq_factors) {
     .Call(`_bifactor_retr_poblq`, X, oblq_factors)
 }
 
-sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
-    .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, nobs, first_efa, second_efa, cores)
+sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", missing = "pairwise.complete.cases", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+    .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, missing, nobs, first_efa, second_efa, cores)
 }
 
 rotate <- function(loadings, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
     .Call(`_bifactor_rotate`, loadings, rotation, projection, gamma, epsilon, k, w, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, normalization, rot_control, random_starts, cores)
 }
 
-efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = as.character( c("oblimin")), projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-    .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = as.character( c("oblimin")), projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+    .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, missing, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 get_target <- function(loadings, Phi, cutoff = 0) {
     .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
 }
 
-bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-    .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+    .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, missing, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
@@ -57,32 +57,16 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
     .Call(`_bifactor_se`, fit, nobs, X, type, eta)
 }
 
-parallel <- function(X, nboot = 100L, type = "pearson", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-    .Call(`_bifactor_parallel`, X, nboot, type, quant, mean, replace, PA, hierarchical, efa, cores)
-}
-
-cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
-    .Call(`_bifactor_cv_eigen`, X, N, hierarchical, efa, cores)
+parallel <- function(X, nboot = 100L, cor = "pearson", missing = "pairwise.complete.cases", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_parallel`, X, nboot, cor, missing, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 check_deriv <- function(L, Phi, dL, dP, rotation = as.character( c("oblimin")), projection = "oblq", Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1) {
     .Call(`_bifactor_check_deriv`, L, Phi, dL, dP, rotation, projection, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w)
 }
 
-polyfast <- function(X, acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
-    .Call(`_bifactor_polyfast`, X, acov, smooth, min_eigval, nboot, fit, cores)
-}
-
-poly2 <- function(X, cores) {
-    .Call(`_bifactor_poly2`, X, cores)
-}
-
-fpoly <- function(X, S) {
-    .Call(`_bifactor_fpoly`, X, S)
-}
-
-old_poly <- function(X, cores) {
-    .Call(`_bifactor_old_poly`, X, cores)
+polyfast <- function(X, missing = "pairwise.complete.cases", acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
+    .Call(`_bifactor_polyfast`, X, missing, acov, smooth, min_eigval, nboot, fit, cores)
 }
 
 count <- function(X, n, max_X) {
@@ -95,13 +79,5 @@ joint_frequency_table <- function(X, n, max_X, Y, max_Y) {
 
 dbinorm <- function(p, x, y) {
     .Call(`_bifactor_dbinorm`, p, x, y)
-}
-
-COV2 <- function(rho, tau1, tau2, mvphi1, mvphi2) {
-    .Call(`_bifactor_COV2`, rho, tau1, tau2, mvphi1, mvphi2)
-}
-
-std_2_matrix <- function(tabs, n) {
-    .Call(`_bifactor_std_2_matrix`, tabs, n)
 }
 

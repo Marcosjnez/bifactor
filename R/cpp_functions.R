@@ -166,6 +166,7 @@ retr_poblq <- function(X, oblq_factors) {
 #' @param n_groups Number of group factors.
 #' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
 #' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".
+#' @param missing The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param first_efa Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.
 #' @param second_efa Arguments to pass to \code{efast} in the second-order factor extraction. See \code{efast} for the default arguments.
@@ -207,8 +208,8 @@ retr_poblq <- function(X, oblq_factors) {
 #'}
 #'
 #' @export
-sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
-  .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, nobs, first_efa, second_efa, cores)
+sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", missing = "pairwise.complete.cases", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+  .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, missing, nobs, first_efa, second_efa, cores)
 }
 
 #' @title
@@ -293,6 +294,7 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".
 #' @param rotation Rotation criterion. Available rotations: "varimax", "cf" (Crawford-Ferguson), "oblimin", "geomin", "target", "xtarget" (extended target) and "none". Defaults to "oblimin".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique), "poblq" (partially oblique). Defaults to "oblq".
+#' @param missing The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param Target Target matrix for the loadings. Defaults to NULL.
 #' @param Weight Weight matrix for the loadings. Defaults to NULL.
@@ -357,8 +359,8 @@ rotate <- function(loadings, rotation = "oblimin", projection = "oblq", gamma = 
 #'}
 #'
 #' @export
-efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = "oblimin", projection = "oblq", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
-  .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = "oblimin", projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0, epsilon = 1e-02, k = 0, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+  .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, missing, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
 }
 
 #' @title
@@ -411,6 +413,7 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #' @param cor Correlation method. Available correlations: c("pearson", "poly"). Defaults to "pearson".
 #' @param estimator EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variable), "uls" (minimum residuals), "pa" (principal axis) or "minrank" (minimum rank). Defaults to "uls".
 #' @param projection Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".
+#' @param missing The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".
 #' @param nobs Sample size. Defaults to NULL.
 #' @param PhiTarget Target matrix for the factor correlations. Defaults to NULL.
 #' @param PhiWeight Weight matrix for the factor correlations. Defaults to NULL.
@@ -486,8 +489,8 @@ get_target <- function(loadings, Phi = NULL, cutoff = 0) {
 #'}
 #'
 #' @export
-bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
-  .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+  .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, missing, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
 }
 
 #' @title
@@ -557,7 +560,7 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).
 #' @usage
 #'
-#' parallel(X, nboot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
+#' parallel(X, nboot = 100L, cor = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
 #' PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 #'
 #' @description
@@ -567,6 +570,7 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' @param X Raw data matrix.
 #' @param nboot Number of bootstrap samples.
 #' @param type Type of correlations: "pearson" or "poly".
+#' @param missing The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".
 #' @param quant Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.
 #' @param mean Logical. Compare the sample eigenvalues to the mean of the bootstrap eigenvalues. Defaults to TRUE.
 #' @param replace Logical indicating whether the columns of \code{X} should be permuted with replacement.
@@ -586,39 +590,8 @@ se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
 #' Horn, J. L. (1965). A Rationale and Test For the Number of Factors in Factor Analysis, Psychometrika, 30, 179-85. https://doi.org/10.1007/BF02289447
 #'
 #' @export
-parallel <- function(X, nboot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_parallel`, X, nboot, type, quant, mean, replace, PA, hierarchical, efa, cores)
-}
-
-#' @title
-#' Cross-validated eigenvalues.
-#' @usage
-#'
-#' cv_eigen(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L)
-#'
-#' @description
-#'
-#' Estimate cross-validated eigenvalues and the dimensionality using the Kaiser's rule.
-#'
-#' @param X Raw data matrix.
-#' @param N Number of cross-validated samples.
-#' @param hierarchical Logical indicating whether a second cross-validated eigenvalues estimation should be performed from the factor scores obtained after a first factor analysis analysis.
-#' @param efa A list of arguments to pass to \code{efast} when \code{hierarchical = TRUE}.
-#' @param cores Number of cores to perform parallel computations.
-#'
-#' @details
-#'
-#' None yet.
-#'
-#' @return A list with the cross-validated eigenvalues and the estimated dimensionality.
-#'
-#' @references
-#'
-#' Chen F., Roch S., Rohe K., Yu S (2021). Estimating Graph Dimension with Cross-validated Eigenvalues, arXiv. https://arxiv.org/abs/2108.03336
-#'
-#' @export
-cv_eigen <- function(X, N = 100L, hierarchical = FALSE, efa = NULL, cores = 1L) {
-  .Call(`_bifactor_cv_eigen`, X, N, hierarchical, efa, cores)
+parallel <- function(X, nboot = 100L, cor = "pearson", missing = "pairwise.complete.cases", quant = NULL, mean = TRUE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+  .Call(`_bifactor_parallel`, X, nboot, cor, missing, quant, mean, replace, PA, hierarchical, efa, cores)
 }
 
 #' @title
@@ -674,6 +647,7 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #' Compute huge polychoric correlation matrices very fast.
 #'
 #' @param X Matrix of categorical scores. The lowest score must start at 0.
+#' @param missing The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".
 #' @param acov Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Use "bootstrap" for estimating the asymptotic covariance matrix by resampling. Defaults to "none".
 #' @param smooth Smooth the matrix to be positive definite ("pd"), positive semi-definite ("psd"), or estimate the maximum likely polychoric correlation matrix under the positive semi-definite constraint ("analytical"). Defaults to "none".
 #' @param min_eigval Minimum eigenvalue when smooth = "pd". Defaults to 0.001.
@@ -687,6 +661,6 @@ check_deriv <- function(L, Phi, dL, dP, rotation = "oblimin", projection = "oblq
 #'
 #' @return A list with the polychoric correlations, the thresholds, and the elapsed time in nanoseconds.
 #' @export
-polyfast <- function(X, acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
-  .Call(`_bifactor_polyfast`, X, acov, smooth, min_eigval, nboot, fit, cores)
+polyfast <- function(X, missing = "pairwise.complete.cases", acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
+  .Call(`_bifactor_polyfast`, X, missing, acov, smooth, min_eigval, nboot, fit, cores)
 }

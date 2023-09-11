@@ -1,4 +1,5 @@
 summary.efa <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits = 2, ...) {
+
   efa <- object
   # Check if nobs was provided
   if(is.null(nobs)) {
@@ -82,7 +83,7 @@ summary.efa <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")
   cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 2], 3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 2], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Maximum Residual", 2], 3), sep="")
   cat("\n","The degrees of freedom for the null model are ", efa$modelInfo$df_null,
       " and the objective function was ", round(efa$modelInfo$f_null,2), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
@@ -100,9 +101,11 @@ summary.efa <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits
   Results <- list("loadings"=lambda, "communalities"=h2, "uniqueness"=u2, "complexity"=com,
                   "VAF"=VAF, "phi"=phi, "fit"=fit)
   invisible(Results)
+
 }
 
 summary.bifactor <- function(object, nobs = NULL, suppress = 0, order = FALSE, digits = 2, ...) {
+
   efa <- object
   # Check if nobs was provided
   if(is.null(nobs)) {
@@ -186,7 +189,7 @@ summary.bifactor <- function(object, nobs = NULL, suppress = 0, order = FALSE, d
   cat("\n","Goodness-of-fit and model misfit indices", sep="")
   cat("\n","Mean item complexity = ", round(mean(com),1), sep="")
   cat("\n","The standardized root mean square residual (SRMR) is ", round(fit$indices["SRMR", 2], 3), sep="")
-  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Max Res", 2], 3), sep="")
+  cat("\n","The largest absolute value of standardized residual correlation is ", round(fit$indices["Maximum Residual", 2], 3), sep="")
   cat("\n","The degrees of freedom for the null model are ", efa$modelInfo$df_null,
       " and the objective function was ", round(efa$modelInfo$f_null,2), sep="")
   cat("\n","The degrees of freedom for the model are ", efa$modelInfo$df,
@@ -204,4 +207,5 @@ summary.bifactor <- function(object, nobs = NULL, suppress = 0, order = FALSE, d
   Results <- list("loadings"=lambda, "communalities"=h2, "uniqueness"=u2, "complexity"=com,
                   "VAF"=VAF, "phi"=phi, "fit"=fit)
   invisible(Results)
+
 }
