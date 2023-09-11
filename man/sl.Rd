@@ -18,6 +18,8 @@ first_efa = NULL, second_efa = NULL, cores = 1L)
 
 \item{estimator}{EFA fitting estimator: "ml" (maximum likelihood for multivariate normal variables), "uls" (minimum residuals), "pa" (principal axis) and "minrank" (minimum rank). Defaults to "uls".}
 
+\item{missing}{The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".}
+
 \item{nobs}{Sample size. Defaults to NULL.}
 
 \item{first_efa}{Arguments to pass to \code{efast} in the first-order factor extraction. See \code{efast} for the default arguments.}

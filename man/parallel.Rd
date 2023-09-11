@@ -4,7 +4,7 @@
 \alias{parallel}
 \title{Hierarchical parallel analysis using either principal components (PCA) or principal axis factoring (PAF).}
 \usage{
-parallel(X, nboot = 100L, type = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
+parallel(X, nboot = 100L, cor = "pearson", quant = NULL, mean = TRUE, replace = FALSE,
 PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 }
 \arguments{
@@ -12,7 +12,7 @@ PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 
 \item{nboot}{Number of bootstrap samples.}
 
-\item{type}{Type of correlations: "pearson" or "poly".}
+\item{missing}{The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".}
 
 \item{quant}{Vector of quantiles of the distribution of bootstrap eigenvalues to which the compare the sample eigenvalues.}
 
@@ -27,6 +27,8 @@ PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L)
 \item{efa}{A list of arguments to pass to \code{efast} when \code{hierarchical = TRUE}.}
 
 \item{cores}{Number of cores to perform the parallel bootstrapping.}
+
+\item{type}{Type of correlations: "pearson" or "poly".}
 }
 \value{
 A list with the bootstrapped eigenvalues and the estimated dimensionality.

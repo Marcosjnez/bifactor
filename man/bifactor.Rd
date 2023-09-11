@@ -27,6 +27,8 @@ second_efa = NULL, verbose = TRUE)
 
 \item{projection}{Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique) and "poblq" (partially oblique). Defaults to "oblq".}
 
+\item{missing}{The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".}
+
 \item{nobs}{Sample size. Defaults to NULL.}
 
 \item{PhiTarget}{Target matrix for the factor correlations. Defaults to NULL.}

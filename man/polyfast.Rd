@@ -9,6 +9,8 @@ polyfast(X, acov = "none", smooth = "pd", min_eigval = 0.001, nboot = 1000L, fit
 \arguments{
 \item{X}{Matrix of categorical scores. The lowest score must start at 0.}
 
+\item{missing}{The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".}
+
 \item{acov}{Use acov = 'cov' to obtain the asymptotic covariance matrix and acov = 'var' to simply obtain the asymptotic variances. Use "bootstrap" for estimating the asymptotic covariance matrix by resampling. Defaults to "none".}
 
 \item{smooth}{Smooth the matrix to be positive definite ("pd"), positive semi-definite ("psd"), or estimate the maximum likely polychoric correlation matrix under the positive semi-definite constraint ("analytical"). Defaults to "none".}

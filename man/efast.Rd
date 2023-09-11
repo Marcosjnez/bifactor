@@ -26,6 +26,8 @@ init = NULL, efa_control = NULL, rot_control = NULL)
 
 \item{projection}{Projection method. Available projections: "orth" (orthogonal), "oblq" (oblique), "poblq" (partially oblique). Defaults to "oblq".}
 
+\item{missing}{The way to handle missing data. Options: c("impute.mean", "impute.median", "complete.cases", "pairwise.complete.cases"). Defaults to "pairwise.complete.cases".}
+
 \item{nobs}{Sample size. Defaults to NULL.}
 
 \item{Target}{Target matrix for the loadings. Defaults to NULL.}
