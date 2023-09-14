@@ -36,22 +36,33 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
   Rcpp::Timer timer;
   Rcpp::List result, SL_result;
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = cor;
-  xefa.estimator = estimator;
-  xefa.p = X.n_cols;
-  xefa.q = n_generals + n_groups;
-  xefa.missing = missing;
-
-  check_cor(xefa);
-  Rcpp::List correlation_result = xefa.correlation_result;
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = cor;
+  xcor.estimator = estimator;
+  xcor.p = X.n_cols;
+  xcor.q = n_generals + n_groups;
+  xcor.missing = missing;
+  xcor.cores = cores;
+  if(nullable_nobs.isNotNull()) {
+    xcor.nobs = Rcpp::as<int>(nullable_nobs);
+  }
+  check_cor(xcor);
+  Rcpp::List correlation_result = xcor.correlation_result;
 
   result["correlation"] = correlation_result;
 
-  if(nullable_nobs.isNotNull()) {
-    xefa.nobs = Rcpp::as<int>(nullable_nobs);
-  }
+  arguments_efa xefa;
+  xefa.X = xcor.X;
+  xefa.R = xcor.R;
+  xefa.W = xcor.W;
+  xefa.cor = xcor.cor;
+  xcor.estimator = xcor.estimator;
+  xefa.p = xcor.p;
+  xefa.q = xcor.q;
+  xefa.missing = xcor.missing;
+  xefa.cores = xcor.cores;
+  xefa.nobs = xcor.nobs;
 
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;

@@ -118,7 +118,7 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
 
   if(fit) {
 
-    x.cor = polys;
+    x.correlation = polys;
     // Select one specific criteria:
     cor_criterion* criterion = choose_cor_criterion("poly");
     criterion->F(x);
@@ -258,15 +258,15 @@ Rcpp::List polyfast(arma::mat X, std::string missing, std::string acov, const st
 
   Rcpp::Timer timer;
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = "poly";
-  xefa.p = X.n_cols;
-  xefa.nobs = X.n_rows;
-  xefa.missing = missing;
-  missingness(xefa);
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = "poly";
+  xcor.p = X.n_cols;
+  xcor.nobs = X.n_rows;
+  xcor.missing = missing;
+  missingness(xcor);
 
-  polyfast_object x = poly(xefa.X, smooth, min_eigval, false, cores);
+  polyfast_object x = poly(xcor.X, smooth, min_eigval, false, cores);
   // polyfast_object x = poly(X, smooth, min_eigval, false, cores);
 
   timer.step("polychorics");

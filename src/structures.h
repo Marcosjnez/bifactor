@@ -93,7 +93,7 @@ typedef struct arguments_efast{
 typedef struct arguments_efa{
 
   arma::mat init;
-  arma::mat R, loadings, Rhat, residuals, Phi, Inv_W, X, gL, gU, g, smoothed;
+  arma::mat R, loadings, Rhat, residuals, Phi, W, X, gL, gU, g, smoothed;
   int q, p, nobs = 0;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
@@ -105,7 +105,7 @@ typedef struct arguments_efa{
   arma::mat rg, dir, dpsi, dH;
   int iteration, iterations = 0L, maxit = 1000L;
   bool convergence = false, heywood = false;
-  std::string manifold = "identity";
+  std::string manifold = "box";
   int random_starts = 1L, cores = 1L;
   double ss = 1, inprod = 1, ng = 1, eps = 1e-05,
     c1 = 10e-04, c2 = 0.5, rho = 0.5;
@@ -122,21 +122,27 @@ typedef struct arguments_efa{
 
 typedef struct arguments_cor{
 
-  int nobs, q, iteration = 0L, maxit = 1e04;
+  int nobs, p, q, iteration = 0L, maxit = 1e04, cores = 1L;
   double f = 0.00, eps = 1e-05, ng = 1, ss = 1, inprod = 1, n_pairs;
   bool convergence = false;
   std::vector<size_t> s;
   std::vector<std::vector<double>> taus, mvphi;
   std::vector<std::vector<std::vector<int>>> n;
-  arma::mat T, cor, dT, dir;
+  arma::mat T, correlation, dT, dir;
   arma::mat g, rg;
   arma::mat dg, dH;
   arma::mat dcor, gcor, dgcor;
+
+  std::string estimator = "uls", cor = "pearson", missing = "pairwise.complete.cases",
+    std_error = "normal";
+  arma::mat X, R, W;
+  Rcpp::List correlation_result;
 
 } args_cor;
 
 typedef struct arguments_cfa{
 
+  // CFA;
   arma::mat borrar;
   double f = 0.00;
   std::string estimator = "gls", projection = "id", missing = "pairwise.complete.cases",
@@ -170,8 +176,24 @@ typedef struct arguments_cfa{
   bool convergence = false;
 
   // Checks:
-  Rcpp::Nullable<Rcpp::List> nullable_cfa_control = R_NilValue;
-  std::string optim = "gradient", manifold = "raw";
+  Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;
+  std::string optim = "L-BFGS", std_error = "normal";
+
+  // EFA
+  arma::mat init;
+  arma::mat loadings, Phi, gL, gU, smoothed;
+  arma::mat reduced_R, eigvec;
+  arma::vec u, eigval, sqrt_psi, psi2, g_psi2;
+  double efa_factr = 1e07;
+  arma::vec lower = {0.005}, upper = {0.995};
+  int iterations = 0L;
+  bool heywood = false;
+  std::string normalization = "none";
+  int lambda_parameters;
+  arma::uvec lower_tri_ind;
+  Rcpp::Nullable<Rcpp::List> nullable_efa_control, nullable_first_efa,
+  nullable_second_efa, nullable_init;
+  Rcpp::List correlation_result;
 
 } args_cfa;
 

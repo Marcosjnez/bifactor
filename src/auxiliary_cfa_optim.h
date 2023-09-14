@@ -128,7 +128,7 @@ void tcg(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion,
 
 // Newton Trust-region algorithm:
 
-cfa_NTR ntr(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   /*
    * Riemannian trust-region algorithm
@@ -261,15 +261,11 @@ cfa_NTR ntr(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   } while (x.iteration < x.maxit);
 
-  cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
-
-  return result;
-
 }
 
 // Gradient descent algorithm:
 
-cfa_NTR gd(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void gd(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 0.5, c2 = 0.5;
@@ -313,15 +309,11 @@ cfa_NTR gd(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   } while (x.iteration < x.maxit);
 
-  cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
-
-  return result;
-
 }
 
 // BFGS algorithm:
 
-cfa_NTR bfgs(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void bfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
@@ -378,15 +370,11 @@ cfa_NTR bfgs(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) 
 
   } while (x.iteration < x.maxit);
 
-  cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
-
-  return result;
-
 }
 
 // L-BFGS algorithm:
 
-cfa_NTR lbfgs(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void lbfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
@@ -401,7 +389,7 @@ cfa_NTR lbfgs(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion)
   manifold->proj(x);  // Update the Riemannian gradient x.rg
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
-  x.ng = sqrt(x.inprod);
+  x.ng = std::sqrt(x.inprod);
   // x.ss = 1;
   int pp = x.parameters.size();
   arma::mat B(pp, pp, arma::fill::eye);
@@ -472,9 +460,9 @@ cfa_NTR lbfgs(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion)
 
   } while (x.iteration < x.maxit);
 
-  cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
+  // cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
 
-  return result;
+  // return result;
 
 }
 

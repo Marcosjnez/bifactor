@@ -2,8 +2,8 @@ void check_cfa(arguments_cfa& x) {
 
   Rcpp::List cfa_control;
   // Check control parameters:
-  if (x.nullable_cfa_control.isNotNull()) {
-    cfa_control = Rcpp::as<Rcpp::List>(x.nullable_cfa_control);
+  if (x.nullable_control.isNotNull()) {
+    cfa_control = Rcpp::as<Rcpp::List>(x.nullable_control);
   }
 
   if(x.p < x.q) Rcpp::stop("Too many factors");
@@ -11,36 +11,74 @@ void check_cfa(arguments_cfa& x) {
   // Choose custom weight matrix for the dwls estimator:
   if(cfa_control.containsElementNamed("W")) {
     arma::mat W = cfa_control["W"];
+    if(W.n_cols != x.p | W.n_rows != x.p) {
+      Rcpp::stop("W must be a matrix with the same dimensions as the correlation matrix");
+    }
     x.W = W;
-  } else if(x.W.is_empty() & x.estimator == "dwls") {
-    Rcpp::stop("For the dwls estimator, please introduce the raw data or provide the reciprocal of the variance of the correlations in cfa_control = list(W = ...)");
   }
 
-  if(x.estimator == "dwls") {
-    if(x.cor == "poly") {
-      Rcpp::stop("The dwls estimator is only available for cor = 'poly'");
+  if(x.X.is_square() & (x.estimator == "dwls" | x.estimator == "efa_dwls")) {
+    arma::vec asymp_diag;
+    if(x.std_error == "normal") {
+      asymp_diag = arma::diagvec(asymptotic_normal(x.R));
+      x.correlation_result["std_error"] = "normal";
+    } else {
+      Rcpp::stop("estimator = 'dwls' requires either the raw data or a weight matrix W of the same dimension as the correlation matrix (control = list(W = ...))");
     }
+    arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
+    x.W = 1/W; x.W.diag().zeros();
+  }
+
+  if(x.estimator == "uls") {
+    arma::mat W(x.p, x.p, arma::fill::ones);
+    x.W = W;
+  }
+
+  if(x.estimator == "efa_dwls") {
+    // The existence of x.W is checked in checks_cor
     if(x.optim == "gradient") {
-      Rcpp::warning("To achive convergence with the dwls estimator and gradient optim algorithm, you may need to increase the number of maximum iterations: cfa_control = list(maxit = 100000)");
+      Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
+    }
+    x.optim = "L-BFGS"; // Differentials for efa criteria unavailable
+    x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
+    x.projection = "dwls";
+    x.maxit = 10000;
+    x.psi = arma::randu(x.lambda_parameters);
+    x.lambda.set_size(x.p, x.q); x.lambda.zeros();
+    x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
+  }
+
+  if(x.estimator == "gls") {
+    if(x.W.is_empty()) {
+      Rcpp::stop("For the gls estimator, please provide a weight matrix in efa_control = list(W = ...)");
     }
   }
 
-  // Check initial values:
-  // if (x.nullable_init.isNotNull()) {
-  //   Rcpp::warning("Initial values not available for the dwls estimator");
-  //   x.psi = Rcpp::as<arma::vec>(x.nullable_init);
-  // } else { // Check for positive definiteness only if custom init values are not specified
-  //   if(x.R.is_sympd()) {
-  //     x.psi = 1/arma::diagvec(arma::inv_sympd(x.R));
-  //   } else {
-  //     x.smoothed = smoothing(x.R, 0.001);
-  //     x.psi = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
-  //   }
-  // }
+  if(x.estimator == "efa_uls" | x.estimator == "efa_ml") {
+    x.optim = "L-BFGS";
+    x.projection = "box";
+    // Generate initial values for EFA:
+    if (x.nullable_init.isNotNull()) {
+      Rcpp::warning("Initial values not available for the dwls estimator");
+      x.parameters = Rcpp::as<arma::vec>(x.nullable_init);
+    } else { // Check for positive definiteness only if custom init values are not specified
+      if(x.R.is_sympd()) {
+        x.parameters = 1/arma::diagvec(arma::inv_sympd(x.R));
+      } else {
+        x.smoothed = smoothing(x.R, 0.001);
+        x.parameters = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
+      }
+    }
+  }
+
+  if(x.estimator == "efa_dwls") {
+    x.optim = "L-BFGS";
+    x.projection = "dwls";
+  }
 
   if(cfa_control.containsElementNamed("projection")) {
-    std::string manifold = cfa_control["projection"];
-    x.manifold = manifold;
+    std::string projection = cfa_control["projection"];
+    x.projection = projection;
   }
 
   if(cfa_control.containsElementNamed("optim")) {
@@ -62,19 +100,19 @@ void check_cfa(arguments_cfa& x) {
     x.maxit = 1e3;
   }
 
-  // if(cfa_control.containsElementNamed("upper")) {
-  //   arma::vec upper = cfa_control["upper"];
-  //   x.upper = upper;
-  // } else {
-  //   x.upper = arma::diagvec(x.R);
-  // }
-  // if(cfa_control.containsElementNamed("lower")) {
-  //   arma::vec lower = cfa_control["lower"];
-  //   x.lower = lower;
-  // } else {
-  //   x.lower.set_size(x.p);
-  //   for(int i=0; i < x.p; ++i) x.lower[i] = 0.005;
-  // }
+  if(cfa_control.containsElementNamed("upper")) {
+    arma::vec upper = cfa_control["upper"];
+    x.upper = upper;
+  } else {
+    x.upper = arma::diagvec(x.R);
+  }
+  if(cfa_control.containsElementNamed("lower")) {
+    arma::vec lower = cfa_control["lower"];
+    x.lower = lower;
+  } else {
+    x.lower.set_size(x.p);
+    for(int i=0; i < x.p; ++i) x.lower[i] = 0.005;
+  }
 
   if(cfa_control.containsElementNamed("c1")) {
     x.c1 = cfa_control["c1"];
@@ -110,18 +148,7 @@ void check_cfa(arguments_cfa& x) {
     Rcpp::stop("The number of cores should be a positive integer");
   }
 
-  // if(x.estimator == "dwls") {
-  //   x.optim = "L-BFGS";
-  //   x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
-  //   x.manifold = "dwls";
-  //   x.maxit = 10000;
-  //   x.psi = arma::randu(x.lambda_parameters);
-  //   // x.psi = arma::randu(x.lambda_parameters + x.p);
-  //   x.lambda.set_size(x.p, x.q); x.lambda.zeros();
-  //   x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
-  // }
-
-  // Arrange stuff:
+  // Arrange stuff for CFA:
   x.Ip.set_size(x.p, x.p); x.Ip.eye();
   x.Iq.set_size(x.q, x.q); x.Iq.eye();
   x.w = arma::vectorise(x.W);

@@ -5,6 +5,37 @@
  *
  */
 
+// [[Rcpp::export]]
+arma::vec diagcov(arma::mat X) {
+
+    const size_t numCols = X.n_cols;
+
+    // Initialize the correlation matrix
+    arma::vec diag_cov(numCols);
+
+    // Loop over all pairs of columns
+    for (size_t i = 0; i < numCols; ++i) {
+        // Get the columns for the pair (i, j)
+        arma::vec col = X.col(i);
+
+        // Find indices where both columns have non-NaN values
+        arma::uvec validIndices = arma::find_finite(col);
+
+        // Extract non-NaN values from both columns
+        arma::vec validCol = col(validIndices);
+        validCol -= arma::mean(validCol);
+
+        // Calculate the correlation between the two columns
+        double d = arma::accu(validCol % validCol) / (validIndices.n_elem-1);
+
+        // Assign the correlation value to the correlation matrix
+        diag_cov(i) = d;
+    }
+
+    return diag_cov;
+
+}
+
 arma::mat pairwise_cor(arma::mat X) {
 
   const size_t numCols = X.n_cols;
@@ -37,55 +68,7 @@ arma::mat pairwise_cor(arma::mat X) {
   return corrMatrix;
 }
 
-void missingness(arguments_cfa& x) {
-
-  bool missing = x.X.has_nan();
-
-  if(missing) {
-
-    if(x.missing == "impute.mean") {
-      for(int i=0; i < x.p; ++i) {
-        arma::vec xvec = x.X.col(i);
-        if(x.cor == "poly") {
-          int number = std::round(arma::mean(xvec(arma::find_finite(xvec))));
-          x.X.col(i).replace(arma::datum::nan, number);
-        } else {
-          double number = arma::mean(xvec(arma::find_finite(xvec)));
-          x.X.col(i).replace(arma::datum::nan, number);
-        }
-      }
-    } else if(x.missing == "impute.median") {
-      for(int i=0; i < x.p; ++i) {
-        arma::vec xvec = x.X.col(i);
-        if(x.cor == "poly") {
-          int number = std::round(arma::median(xvec(arma::find_finite(xvec))));
-          x.X.col(i).replace(arma::datum::nan, number);
-        } else {
-          double number = arma::median(xvec(arma::find_finite(xvec)));
-          x.X.col(i).replace(arma::datum::nan, number);
-        }
-      }
-    } else if(x.missing == "complete.cases") {
-      std::vector<int> indices;
-      for (int i = 0; i < x.nobs; ++i) {
-        // Check if the row contains any NaN values
-        if(x.X.row(i).has_nan()) {
-          indices.push_back(i);
-        }
-      }
-      arma::uvec remove = arma::conv_to<arma::uvec>::from(indices);
-      x.X.shed_rows(remove);
-    } else if(x.missing == "pairwise.complete.cases") {
-
-    } else {
-      Rcpp::stop("Please, provide a method to handle missing data via the 'missing' argument");
-    }
-
-  }
-
-}
-
-void missingness(arguments_efa& x) {
+void missingness(arguments_cor& x) {
 
   bool missing = x.X.has_nan();
 

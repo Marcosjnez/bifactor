@@ -66,7 +66,7 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
     }
 
     // update gradient
-    criterion->gLPU(x2);
+    criterion->G(x2);
     manifold->grad(x2);
     // criterion->G(x2);
     manifold->proj(x2);
@@ -101,7 +101,7 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
       alpha_hi = x.ss;
     } else {
       // update gradient
-      criterion->gLPU(x);
+      criterion->G(x);
       manifold->grad(x);
       manifold->proj(x2);
       x2.inprod = arma::accu(x.dir % x2.rg);
@@ -142,10 +142,10 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
   do{
 
     // Differential of L and P
-    manifold->dLPU(x);
+    manifold->dparam(x);
 
     // Differential of the gradient of L and P
-    criterion->dgLPU(x);
+    criterion->dG(x);
 
     // Differential of g
     manifold->dgrad(x);
@@ -218,7 +218,7 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
   // Rcpp::Rcout << "x.f = " << x.f << std::endl;
 
   // Gradient wrt L
-  criterion->gLPU(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
+  criterion->G(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
 
   // Rcpp::Rcout << "x.gL = " << x.gL << std::endl;
 
@@ -229,7 +229,7 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
   manifold->proj(x); // update x.rg and x.A
 
   // Differential of the gradient of L and P
-  // criterion->dgLPU(x); // update dgL and dgP
+  // criterion->dG(x); // update dgL and dgP
 
   // Rcpp::Rcout << "x.dgL = " << x.dgL << std::endl;
 
@@ -275,10 +275,10 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
     manifold->retr(new_x); // update x.T
 
     // Differential of L and P
-    manifold->dLPU(x); // update x.dL, x.dP and Inv_T_dt
+    manifold->dparam(x); // update x.dL, x.dP and Inv_T_dt
 
     // Differential of the gradient of L and P
-    criterion->dgLPU(x); // update dgL and dgP
+    criterion->dG(x); // update dgL and dgP
 
     // Differential of g
     manifold->dgrad(x); // update dg
@@ -319,7 +319,7 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
       x = new_x;
 
       // update gradient
-      criterion->gLPU(x);
+      criterion->G(x);
       manifold->grad(x);
 
       // Riemannian gradient
@@ -358,7 +358,7 @@ efa_NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
   manifold->param(x); // update x.L, x.Phi and x.Inv_T
   criterion->F(x);
   // update gradient
-  criterion->gLPU(x);
+  criterion->G(x);
   manifold->grad(x);
   // criterion->G(x);
   // Riemannian gradient
@@ -386,7 +386,7 @@ efa_NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
     }
 
     // update gradient
-    criterion->gLPU(x);
+    criterion->G(x);
     manifold->grad(x);
     // criterion->G(x);
     // Riemannian gradient
@@ -420,7 +420,7 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
   manifold->param(x); // update x.L, x.Phi and x.Inv_T
   criterion->F(x);
   // update the gradient
-  criterion->gLPU(x);  // Update the gradient wrt x.L and x.Phi
+  criterion->G(x);  // Update the gradient wrt x.L and x.Phi
   manifold->grad(x);  // Update the gradient wrt x.T
   // criterion->G(x);
   // Riemannian gradient
@@ -455,7 +455,7 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
     armijo(x, manifold, criterion, ss_fac, ss_min);
 
     // update gradient
-    criterion->gLPU(x);
+    criterion->G(x);
     manifold->grad(x);
     // criterion->G(x);
     // Riemannian gradient

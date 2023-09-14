@@ -53,11 +53,12 @@
 #include "se.h"
 #include "dimensionality.h"
 #include "check_deriv.h"
-// #include "cfa_checks.h"
-// #include "cfa_criteria.h"
-// #include "cfa_manifolds.h"
-// #include "auxiliary_cfa_optim.h"
-// #include "cfa_optim.h"
+#include "cfa_checks.h"
+#include "cfa_criteria.h"
+#include "cfa_manifolds.h"
+#include "auxiliary_cfa_optim.h"
+#include "cfa_optim.h"
+#include "cfast.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -206,3 +207,17 @@ Rcpp::List polyfast(arma::mat X, std::string missing = "pairwise.complete.cases"
                     const std::string smooth = "none", double min_eigval = 0.001,
                     const int nboot = 1000L, const bool fit = false,
                     const int cores = 1L);
+
+// [[Rcpp::export]]
+Rcpp::List cfast(arma::vec parameters, arma::mat X, int nfactors,
+                 arma::uvec lambda_indexes,
+                 arma::uvec phi_indexes,
+                 arma::uvec psi_indexes,
+                 std::string cor = "pearson", std::string estimator = "uls",
+                 std::string missing = "pairwise.complete.cases",
+                 Rcpp::Nullable<int> nobs = R_NilValue,
+                 Rcpp::Nullable<arma::mat> Target = R_NilValue,
+                 Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
+                 int random_starts = 1L, int cores = 1L,
+                 Rcpp::Nullable<arma::vec> init = R_NilValue,
+                 Rcpp::Nullable<Rcpp::List> control = R_NilValue);

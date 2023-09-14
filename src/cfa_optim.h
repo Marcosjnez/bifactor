@@ -4,21 +4,21 @@ class cfa_optim {
 
 public:
 
-  virtual cfa_NTR optim(arguments_cfa x, cfa_manifold *manifold,
+  virtual void optim(arguments_cfa& x, cfa_manifold *manifold,
                     cfa_criterion *criterion) = 0;
 
 };
 
 // Riemannian gradient descent:
 
-class RGD:public cfa_optim {
+class cfa_RGD:public cfa_optim {
 
 public:
 
-  cfa_NTR optim(arguments_cfa x, cfa_manifold *manifold,
+  void optim(arguments_cfa& x, cfa_manifold *manifold,
             cfa_criterion *criterion) {
 
-    return gd(x, manifold, criterion);
+    gd(x, manifold, criterion);
 
   }
 
@@ -26,14 +26,14 @@ public:
 
 // Riemannian Newton Trust-Region:
 
-class RNTR:public cfa_optim {
+class cfa_RNTR:public cfa_optim {
 
 public:
 
-  cfa_NTR optim(arguments_cfa x, cfa_manifold *manifold,
+  void optim(arguments_cfa& x, cfa_manifold *manifold,
             cfa_criterion *criterion) {
 
-    return ntr(x, manifold, criterion);
+    ntr(x, manifold, criterion);
 
   }
 
@@ -41,14 +41,14 @@ public:
 
 // BFGS algorithm:
 
-class BFGS:public cfa_optim {
+class cfa_BFGS:public cfa_optim {
 
 public:
 
-  cfa_NTR optim(arguments_cfa x, cfa_manifold *manifold,
+  void optim(arguments_cfa& x, cfa_manifold *manifold,
             cfa_criterion *criterion) {
 
-    return bfgs(x, manifold, criterion);
+    bfgs(x, manifold, criterion);
 
   }
 
@@ -56,14 +56,14 @@ public:
 
 // L-BFGS algorithm:
 
-class LBFGS:public cfa_optim {
+class cfa_LBFGS:public cfa_optim {
 
 public:
 
-  cfa_NTR optim(arguments_cfa x, cfa_manifold *manifold,
+  void optim(arguments_cfa& x, cfa_manifold *manifold,
             cfa_criterion *criterion) {
 
-    return lbfgs(x, manifold, criterion);
+    lbfgs(x, manifold, criterion);
 
   }
 
@@ -75,13 +75,13 @@ cfa_optim* choose_cfa_optim(std::string optim) {
 
   cfa_optim* algorithm;
   if(optim == "gradient") {
-    algorithm = new RGD();
+    algorithm = new cfa_RGD();
   } else if(optim == "newtonTR") {
-    algorithm = new RNTR();
+    algorithm = new cfa_RNTR();
   } else if(optim == "BFGS") {
-    algorithm = new BFGS();
+    algorithm = new cfa_BFGS();
   } else if(optim == "L-BFGS") {
-    algorithm = new LBFGS();
+    algorithm = new cfa_LBFGS();
   } else {
 
     Rcpp::stop("Available optimization rutines for cfa: \n 'gradient', 'BFGS', 'L-BFGS', 'newtonTR'. The default method is 'newtonTR'.");

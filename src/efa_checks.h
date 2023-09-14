@@ -44,19 +44,36 @@ void check_efa(arguments_efa& x) {
   if(x.p < x.q) Rcpp::stop("Too many factors");
 
   // Choose custom weight matrix for the dwls estimator:
-  if(efa_control.containsElementNamed("Inv_W")) {
-    arma::mat Inv_W = efa_control["Inv_W"];
-    x.Inv_W = Inv_W;
-  } else if(x.Inv_W.is_empty() & x.estimator == "dwls") {
-    Rcpp::stop("For the dwls estimator, please introduce the raw data or provide the reciprocal of the variance of the correlations in efa_control = list(Inv_W = ...)");
+  if(efa_control.containsElementNamed("W")) {
+    arma::mat W = efa_control["W"];
+    if(W.n_cols != x.p | W.n_rows != x.p) {
+      Rcpp::stop("W must be a matrix with the same dimensions as the correlation matrix");
+    }
+    x.W = W;
+  }
+
+  if(x.estimator == "uls") {
+    arma::mat W(x.p, x.p, arma::fill::ones);
+    x.W = W;
   }
 
   if(x.estimator == "dwls") {
-    if(x.cor == "poly") {
-      Rcpp::stop("The dwls estimator is only available for cor = 'poly'");
-    }
+    // The existence of x.W is checked in checks_cor
     if(x.optim == "gradient") {
-      Rcpp::warning("To achive convergence with the dwls estimator and gradient optim algorithm, you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
+      Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
+    }
+    x.optim = "L-BFGS"; // Differentials for efa criteria unavailable
+    x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
+    x.manifold = "dwls";
+    x.maxit = 10000;
+    x.psi = arma::randu(x.lambda_parameters);
+    x.lambda.set_size(x.p, x.q); x.lambda.zeros();
+    x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
+  }
+
+  if(x.estimator == "gls") {
+    if(x.W.is_empty()) {
+      Rcpp::stop("For the gls estimator, please provide a weight matrix in efa_control = list(W = ...)");
     }
   }
 
@@ -142,17 +159,6 @@ void check_efa(arguments_efa& x) {
   }
   if(x.cores < 1) {
     Rcpp::stop("The number of cores should be a positive integer");
-  }
-
-  if(x.estimator == "dwls") {
-    x.optim = "L-BFGS";
-    x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
-    x.manifold = "dwls";
-    x.maxit = 10000;
-    x.psi = arma::randu(x.lambda_parameters);
-    // x.psi = arma::randu(x.lambda_parameters + x.p);
-    x.lambda.set_size(x.p, x.q); x.lambda.zeros();
-    x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
   }
 
 }

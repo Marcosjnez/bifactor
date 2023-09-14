@@ -97,23 +97,36 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = cor;
-  xefa.estimator = estimator;
-  xefa.p = X.n_cols;
-  xefa.q = nfactors;
-  xefa.missing = missing;
-  xefa.cores = cores;
-
-  check_cor(xefa);
-  Rcpp::List correlation_result = xefa.correlation_result;
-
+  // cor structure:
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = cor;
+  xcor.estimator = estimator;
+  xcor.p = X.n_cols;
+  xcor.q = nfactors;
+  xcor.missing = missing;
+  xcor.cores = cores;
   if(nullable_nobs.isNotNull()) {
-    xefa.nobs = Rcpp::as<int>(nullable_nobs);
+    xcor.nobs = Rcpp::as<int>(nullable_nobs);
   }
+  check_cor(xcor);
+  Rcpp::List correlation_result = xcor.correlation_result;
 
   std::vector<std::string> rotation = Rcpp::as<std::vector<std::string>>(char_rotation);
+
+  // efa structure:
+  arguments_efa xefa;
+  xefa.X = xcor.X;
+  xefa.R = xcor.R;
+  xefa.W = xcor.W;
+  xefa.cor = xcor.cor;
+  xcor.estimator = xcor.estimator;
+  xefa.p = xcor.p;
+  xefa.q = xcor.q;
+  xefa.missing = xcor.missing;
+  xefa.cores = xcor.cores;
+  xefa.nobs = xcor.nobs;
+  xefa.random_starts = random_starts;
 
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;
@@ -138,7 +151,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   if(estimator == "uls" || estimator == "pa") {
     f_null = 0.5*(arma::accu(xefa.R % xefa.R) - xefa.p);
   } else if(estimator == "dwls") {
-    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.Inv_W);
+    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.W);
   } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(xefa.R);
   } else if(estimator == "minrank") {
@@ -310,25 +323,38 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = cor;
-  xefa.estimator = estimator;
-  xefa.p = X.n_cols;
-  xefa.q = nfactors;
-  xefa.missing = missing;
-  xefa.cores = cores;
-
-  check_cor(xefa);
-  Rcpp::List correlation_result = xefa.correlation_result;
-
+  // cor structure:
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = cor;
+  xcor.estimator = estimator;
+  xcor.p = X.n_cols;
+  xcor.q = nfactors;
+  xcor.missing = missing;
+  xcor.cores = cores;
   if(nullable_nobs.isNotNull()) {
-    xefa.nobs = Rcpp::as<int>(nullable_nobs);
+    xcor.nobs = Rcpp::as<int>(nullable_nobs);
   }
+  check_cor(xcor);
+  Rcpp::List correlation_result = xcor.correlation_result;
+
+  // efa structure:
+  arguments_efa xefa;
+  xefa.X = xcor.X;
+  xefa.R = xcor.R;
+  xefa.W = xcor.W;
+  xefa.cor = xcor.cor;
+  xcor.estimator = xcor.estimator;
+  xefa.p = xcor.p;
+  xefa.q = xcor.q;
+  xefa.missing = xcor.missing;
+  xefa.cores = xcor.cores;
+  xefa.nobs = xcor.nobs;
 
   xefa.upper = arma::diagvec(xefa.R);
   xefa.nullable_efa_control = nullable_efa_control;
   xefa.nullable_init = nullable_init;
+  xefa.random_starts = random_starts;
 
   check_efa(xefa);
 
@@ -376,7 +402,7 @@ Rcpp::List efast(arma::mat X, int nfactors, std::string cor, std::string estimat
   if(estimator == "uls" || estimator == "pa") {
     f_null = 0.5*(arma::accu(xefa.R % xefa.R) - x.p);
   } else if(estimator == "dwls") {
-    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.Inv_W);
+    f_null = 0.5*arma::accu(xefa.R % xefa.R % xefa.W);
   } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(xefa.R);
   } else if(estimator == "minrank") {

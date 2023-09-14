@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 28/05/2022
+ * Modification date: 14/09/2023
  *
  */
 
@@ -13,7 +13,7 @@ public:
 
   virtual void param(arguments_efa& x) = 0;
 
-  virtual void dLPU(arguments_efa& x) = 0;
+  virtual void dparam(arguments_efa& x) = 0;
 
   virtual void grad(arguments_efa& x) = 0;
 
@@ -35,17 +35,17 @@ public:
 
   void param(arguments_efa& x) {
 
-    x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    x.psi2 = x.psi;
 
   }
 
-  void dLPU(arguments_efa& x) {
+  void dparam(arguments_efa& x) {
 
   }
 
   void grad(arguments_efa& x) {
 
-    x.g = x.g_psi2 % (0.5*abs(x.upper - x.lower) % cos(x.psi));
+    x.g = x.g_psi2;
 
   }
 
@@ -83,7 +83,7 @@ public:
 
   }
 
-  void dLPU(arguments_efa& x) {
+  void dparam(arguments_efa& x) {
 
   }
 
@@ -124,45 +124,38 @@ public:
   void param(arguments_efa& x) {
 
     x.lambda.elem(x.lower_tri_ind) = x.psi;
-    // x.lambda.elem(x.lower_tri_ind) = x.psi.head(x.lambda_parameters);
-    // x.uniquenesses = x.psi.tail(x.p);
 
   }
 
-  void dLPU(arguments_efa& x) {
+  void dparam(arguments_efa& x) {
 
   }
 
   void grad(arguments_efa& x) {
 
     x.g = arma::vectorise(x.gL.elem(x.lower_tri_ind));
-    // x.g = arma::join_cols(arma::vectorise(x.gL.elem(x.lower_tri_ind)), arma::vectorise(x.gU));
 
   }
 
   void dgrad(arguments_efa& x) {
 
+    // x.dg = x.G;
+
   }
 
   void proj(arguments_efa& x) {
 
-    // arma::mat rgL = x.lambda * skew(x.lambda.t() * x.gL);
     x.rg = x.g;
 
   }
 
   void hess(arguments_efa& x) {
 
-    // arma::mat drg = x.dg - x.dT * symm(x.T.t() * x.g);
-    // x.dH = x.T * skew(x.T.t() * drg);
+    // x.dH = x.dg;
 
   }
 
   void retr(arguments_efa& x) {
-
-    // arma::mat Q, R;
-    // arma::qr_econ(Q, R, x.lambda);
-    // x.psi.cols(0, x.q-1) = Q;
 
   }
 

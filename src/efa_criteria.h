@@ -13,11 +13,11 @@ public:
 
   virtual void F(arguments_efa& x) = 0;
 
-  virtual void gLPU(arguments_efa& x) = 0;
+  virtual void G(arguments_efa& x) = 0;
 
-  virtual void hLPU(arguments_efa& x) = 0;
+  virtual void dG(arguments_efa& x) = 0;
 
-  virtual void dgLPU(arguments_efa& x) = 0;
+  virtual void H(arguments_efa& x) = 0;
 
   virtual void outcomes(arguments_efa& x) = 0;
 
@@ -43,7 +43,7 @@ public:
 
   }
 
-  void gLPU(arguments_efa& x) {
+  void G(arguments_efa& x) {
 
     arma::vec e_values = x.eigval(arma::span(0, x.p - x.q - 1));
     arma::mat e_vectors = x.eigvec(arma::span::all, arma::span(0, x.p - x.q - 1));
@@ -51,9 +51,9 @@ public:
 
   }
 
-  void hLPU(arguments_efa& x) {}
+  void dG(arguments_efa& x) {}
 
-  void dgLPU(arguments_efa& x) {}
+  void H(arguments_efa& x) {}
 
   void outcomes(arguments_efa& x) {
 
@@ -103,7 +103,7 @@ public:
 
   }
 
-  void gLPU(arguments_efa& x) {
+  void G(arguments_efa& x) {
 
     arma::mat A = x.eigvec(arma::span::all, arma::span(x.p-x.q, x.p-1));
     arma::vec eigenvalues = x.eigval(arma::span(x.p-x.q, x.p-1));
@@ -112,9 +112,9 @@ public:
 
   }
 
-  void hLPU(arguments_efa& x) {}
+  void dG(arguments_efa& x) {}
 
-  void dgLPU(arguments_efa& x) {}
+  void H(arguments_efa& x) {}
 
   void outcomes(arguments_efa& x) {
 
@@ -157,21 +157,21 @@ public:
     x.Rhat = x.lambda * x.lambda.t();// + arma::diagmat(x.uniquenesses);
     // x.Rhat.diag().ones();
     x.residuals = x.R - x.Rhat;
-    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.Inv_W);
+    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.W);
 
   }
 
-  void gLPU(arguments_efa& x) {
+  void G(arguments_efa& x) {
 
-    x.gL = -2*(x.residuals % x.Inv_W) * x.lambda; // * x.Phi;
+    x.gL = -2*(x.residuals % x.W) * x.lambda; // * x.Phi;
     // arma::mat DW_res = x.residuals % x.DW;
     // x.gU = -arma::diagvec(DW_res);
 
   }
 
-  void hLPU(arguments_efa& x) {}
+  void dG(arguments_efa& x) {}
 
-  void dgLPU(arguments_efa& x) {}
+  void H(arguments_efa& x) {}
 
   void outcomes(arguments_efa& x) {
 
@@ -201,11 +201,19 @@ efa_criterion* choose_efa_criterion(std::string estimator) {
 
     criterion = new dwls();
 
-  } else if(estimator == "minrank" | estimator == "pa") {
+  } else if(estimator == "gls") {
+
+    Rcpp::stop("The 'gls' estimator is not available yet");
+
+  } else if(estimator == "pa") {
+
+  } else if(estimator == "minrank") {
+
+    Rcpp::stop("The 'minrank' estimator is not available yet");
 
   } else {
 
-    Rcpp::stop("Available estimators: \n uls, ml, dwls, minrank, pa");
+    Rcpp::stop("Available estimators: \n uls, ml, dwls, gls, minrank, pa");
 
   }
 

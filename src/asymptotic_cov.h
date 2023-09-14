@@ -7,21 +7,31 @@
 
 // #include "auxiliary_manifolds.h"
 
+// [[Rcpp::export]]
 arma::mat asymptotic_general(arma::mat X) {
 
   /*
    * Browne and Shapiro (Equation 3.2; 1986)
    */
 
-  arma::mat colmeans = arma::mean(X, 0);
-  X.each_row() -= colmeans; // Centered matrix
-  arma::mat S = arma::cov(X, 1); // Covariance matrix
-  arma::vec d = arma::sqrt(arma::diagvec(S));
-  arma::mat diag_d_inv = arma::diagmat(1/d);
-  arma::mat P = diag_d_inv * S * diag_d_inv; // Correlation matrix
-  arma::vec p = arma::vectorise(P);
+  arma::vec d;
+  arma::mat P;
 
-  int q = P.n_rows;
+  // Compute the standard deviations and correlation matrix of X:
+  if(X.has_nan()) {
+    d = arma::sqrt(diagcov(X));
+    P = pairwise_cor(X);
+  } else {
+    arma::mat colmeans = arma::mean(X, 0);
+    X.each_row() -= colmeans; // Centered matrix
+    arma::mat S = arma::cov(X, 1); // Covariance matrix
+    d = arma::sqrt(arma::diagvec(S));
+    arma::mat diag_d_inv = arma::diagmat(1/d);
+    P = diag_d_inv * S * diag_d_inv; // Correlation matrix
+  }
+
+  arma::vec p = arma::vectorise(P);
+  int q = X.n_cols;
   int qq = q*q;
   arma::mat Theta(qq, qq); // Fourth-order moments
 
@@ -35,7 +45,12 @@ arma::mat asymptotic_general(arma::mat X) {
         for(int k=0; k < q; ++k) {
           arma::vec m = X(arma::span::all, i) % X(arma::span::all, j) %
           X(arma::span::all, k) % X(arma::span::all, h);
-          Theta(ij, kh) = arma::mean(m) / (d[i]*d[j]*d[k]*d[h]);
+          // Find indices where the vector has non-NaN values:
+          arma::uvec validIndices = arma::find_finite(m);
+          // Extract non-NaN values from the vector:
+          arma::vec v = m(validIndices);
+          // m.replace(arma::datum::nan, 0);  // replace each NaN with 0
+          Theta(ij, kh) = arma::mean(v) / (d[i]*d[j]*d[k]*d[h]);
           ++kh;
         }
       }
@@ -63,6 +78,7 @@ arma::mat asymptotic_general(arma::mat X) {
 
 }
 
+// [[Rcpp::export]]
 arma::mat asymptotic_normal(arma::mat P) {
 
   /*
@@ -91,6 +107,7 @@ arma::mat asymptotic_normal(arma::mat P) {
 
 }
 
+// [[Rcpp::export]]
 arma::mat asymptotic_elliptical(arma::mat P, double eta) {
 
   /*
@@ -103,6 +120,7 @@ arma::mat asymptotic_elliptical(arma::mat P, double eta) {
 
 }
 
+// [[Rcpp::export]]
 arma::mat asymptotic_poly(const arma::mat X, const arma::mat R, const int cores) {
 
   /*

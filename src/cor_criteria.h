@@ -36,7 +36,7 @@ public:
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
-            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
+            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.correlation(l, k),
                                  x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
             x.f -= x.n[K][i][j] * std::log(ppi) / x.nobs;
           }
@@ -56,13 +56,13 @@ public:
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
-            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
+            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.correlation(l, k),
                   x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
             // PDF of the Bivariate normal:
-            double gij = dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
-              dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j+1]) -
-              dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j]) +
-              dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j]);
+            double gij = dbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
+              dbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j+1]) -
+              dbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j]) +
+              dbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j]);
             if(ppi < 1e-09) ppi = 1e-09; // Avoid division by zero
             x.gcor(l, k) -= x.n[K][i][j] / ppi * gij / x.nobs; // Update Gradient
             x.gcor(k, l) = x.gcor(l, k);
@@ -83,20 +83,20 @@ public:
         for (size_t i = 0; i < x.s[l]; ++i) {
           for (size_t j = 0; j < x.s[k]; ++j) {
             // CDF of the bivariate normal:
-            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.cor(l, k),
+            double ppi = pbinorm(x.taus[l][i], x.taus[k][j], x.taus[l][i + 1], x.taus[k][j + 1], x.correlation(l, k),
                                  x.mvphi[l][i], x.mvphi[k][j], x.mvphi[l][i+1], x.mvphi[k][j+1]);
             // PDF of the Bivariate normal:
-            double gij = dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
-              dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j+1]) -
-              dbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j]) +
-              dbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j]);
+            double gij = dbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
+              dbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j+1]) -
+              dbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j]) +
+              dbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j]);
             // Derivative of the PDF of the Bivariate normal:
-            double hij = ddbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
-              ddbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j+1]) -
-              ddbinorm(x.cor(l, k), x.taus[l][i+1], x.taus[k][j]) +
-              ddbinorm(x.cor(l, k), x.taus[l][i], x.taus[k][j]);
+            double hij = ddbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j+1]) -
+              ddbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j+1]) -
+              ddbinorm(x.correlation(l, k), x.taus[l][i+1], x.taus[k][j]) +
+              ddbinorm(x.correlation(l, k), x.taus[l][i], x.taus[k][j]);
             if(ppi < 1e-09) ppi = 1e-09; // Avoid division by zero
-            // double term = hij - gij*x.cor(l, k);
+            // double term = hij - gij*x.correlation(l, k);
             x.dgcor(l, k) += x.n[K][i][j]*(gij*gij - ppi*hij)/(ppi*ppi) / x.nobs * x.dcor(l, k);
             x.dgcor(k, l) = x.dgcor(l, k);
           }

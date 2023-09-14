@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jiménez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 31/08/2023
+ * Modification date: 14/09/2023
  *
  */
 
@@ -193,7 +193,173 @@ public:
 
   void outcomes(arguments_cfa& x) {
 
+    x.uniquenesses = x.R.diag() - arma::diagvec(x.Rhat);
+    x.Rhat.diag() = x.R.diag();
+
+  };
+
+};
+
+/*
+ * ULS
+ */
+
+class efa_uls: public cfa_criterion {
+
+public:
+
+  void F(arguments_cfa& x) {
+
+    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    x.reduced_R = x.R - arma::diagmat(x.psi2);
+    // x.reduced_R = x.R - arma::diagmat(x.psi);
+    eig_sym(x.eigval, x.eigvec, x.reduced_R);
+    arma::vec e = x.eigval(arma::span(0, x.p - x.q - 1));
+
+    x.f = 0.5*arma::accu(e % e);
+
+  }
+
+  void G(arguments_cfa& x) {
+
+    arma::vec e_values = x.eigval(arma::span(0, x.p - x.q - 1));
+    arma::mat e_vectors = x.eigvec(arma::span::all, arma::span(0, x.p - x.q - 1));
+    x.g_psi2 = -arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
+
+  }
+
+  void dG(arguments_cfa& x) {}
+
+  void H(arguments_cfa& x) {}
+
+  void H2(arguments_cfa& x) {}
+
+  void outcomes(arguments_cfa& x) {
+
+    arma::vec eigval;
+    arma::mat eigvec;
+    eig_sym(eigval, eigvec, x.reduced_R);
+
+    arma::vec eigval2 = reverse(eigval);
+    arma::mat eigvec2 = reverse(eigvec, 1);
+
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, x.q-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, x.q-1));
+    for(int i=0; i < x.q; ++i) {
+      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
+    }
+    arma::mat D = arma::diagmat(sqrt(eigenvalues));
+
+    x.lambda = A * D;
+    x.Rhat = x.lambda * x.lambda.t();
     x.uniquenesses = 1 - arma::diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
+    x.Rhat.diag() = x.R.diag();
+
+  };
+
+};
+
+/*
+ * ml
+ */
+
+class efa_ml: public cfa_criterion {
+
+public:
+
+  void F(arguments_cfa& x) {
+
+    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    x.sqrt_psi = sqrt(x.psi2);
+    // x.sqrt_psi = sqrt(x.psi);
+    arma::mat sc = arma::diagmat(1/x.sqrt_psi);
+    x.reduced_R = sc * x.R * sc;
+    eig_sym(x.eigval, x.eigvec, x.reduced_R);
+    arma::vec e = x.eigval(arma::span(0, x.p - x.q - 1));
+
+    // double objective = -arma::accu(log(e) + 1/e - 1);
+    x.f = -(arma::accu(log(e) - e) + x.p - x.q);
+
+  }
+
+  void G(arguments_cfa& x) {
+
+    arma::mat A = x.eigvec(arma::span::all, arma::span(x.p-x.q, x.p-1));
+    arma::vec eigenvalues = x.eigval(arma::span(x.p-x.q, x.p-1));
+    // x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi)/x.psi;
+    x.g_psi2 = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi2)/x.psi2;
+
+  }
+
+  void dG(arguments_cfa& x) {}
+
+  void H(arguments_cfa& x) {}
+
+  void H2(arguments_cfa& x) {}
+
+  void outcomes(arguments_cfa& x) {
+
+    arma::vec eigval;
+    arma::mat eigvec;
+    eig_sym(eigval, eigvec, x.reduced_R);
+
+    arma::vec eigval2 = reverse(eigval);
+    arma::mat eigvec2 = reverse(eigvec, 1);
+
+    arma::mat A = eigvec2(arma::span::all, arma::span(0, x.q-1));
+    arma::vec eigenvalues = eigval2(arma::span(0, x.q-1)) - 1;
+    for(int i=0; i < x.q; ++i) {
+      if(eigenvalues[i] < 0) eigenvalues[i] = 0;
+    }
+    arma::mat D = diagmat(sqrt(eigenvalues));
+    arma::mat w = A * D;
+
+    x.lambda = diagmat(x.sqrt_psi) * w;
+    x.Rhat = x.lambda * x.lambda.t();
+    x.uniquenesses = 1 - diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
+    x.Rhat.diag() = x.R.diag();
+
+  };
+
+};
+
+/*
+ * DWLS
+ */
+
+class efa_dwls: public cfa_criterion {
+
+public:
+
+  void F(arguments_cfa& x) {
+
+    // W is a matrix with the inverse variance of the polychoric correlations
+    // Only the variance, not the covariances, are considered in W
+    x.Rhat = x.lambda * x.lambda.t();// + arma::diagmat(x.uniquenesses);
+    // x.Rhat.diag().ones();
+    x.residuals = x.R - x.Rhat;
+    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.W);
+
+  }
+
+  void G(arguments_cfa& x) {
+
+    x.gL = -2*(x.residuals % x.W) * x.lambda; // * x.Phi;
+    // arma::mat DW_res = x.residuals % x.DW;
+    // x.gU = -arma::diagvec(DW_res);
+
+  }
+
+  void dG(arguments_cfa& x) {}
+
+  void H(arguments_cfa& x) {}
+
+  void H2(arguments_cfa& x) {}
+
+  void outcomes(arguments_cfa& x) {
+
+    x.Rhat = x.lambda * x.lambda.t();
+    x.uniquenesses = 1 - arma::diagvec(x.Rhat); // x.R.diag() - arma::diagvec(x.Rhat) FIX
     x.Rhat.diag() = x.R.diag();
 
   };
@@ -210,9 +376,25 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
     criterion = new gls();
 
+  } else if (estimator == "efa_uls") {
+
+    criterion = new efa_uls();
+
+  } else if(estimator == "efa_ml") {
+
+    criterion = new efa_ml();
+
+  } else if(estimator == "efa_dwls") {
+
+    criterion = new efa_dwls();
+
+  } else if(estimator == "minrank") {
+
+    Rcpp::stop("The 'minrank' estimator is not available yet");
+
   } else {
 
-    Rcpp::stop("Available estimators: uls");
+    Rcpp::stop("Available estimators: uls, ml, dwls, and gls");
 
   }
 

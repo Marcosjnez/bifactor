@@ -65,7 +65,7 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   if(estimator == "uls" || estimator == "pa") {
     f_null = 0.5*(arma::accu(R % R) - R.n_cols);
   } else if(estimator == "dwls") {
-    f_null = 0.5*arma::accu(R % R % xefa.Inv_W);
+    f_null = 0.5*arma::accu(R % R % xefa.W);
   } else if(estimator == "ml") {
     f_null = -arma::log_det_sympd(R);
   } else if(estimator == "minrank") {

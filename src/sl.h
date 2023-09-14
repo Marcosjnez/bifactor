@@ -8,21 +8,21 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   Rcpp::Timer timer;
   Rcpp::List result;
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = cor;
-  xefa.estimator = estimator;
-  xefa.p = X.n_cols;
-  xefa.q = n_generals + n_groups;
-  xefa.missing = missing;
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = cor;
+  xcor.estimator = estimator;
+  xcor.p = X.n_cols;
+  xcor.q = n_generals + n_groups;
+  xcor.missing = missing;
 
-  check_cor(xefa);
-  Rcpp::List correlation_result = xefa.correlation_result;
+  check_cor(xcor);
+  Rcpp::List correlation_result = xcor.correlation_result;
 
   result["correlation"] = correlation_result;
 
   if(nullable_nobs.isNotNull()) {
-    xefa.nobs = Rcpp::as<int>(nullable_nobs);
+    xcor.nobs = Rcpp::as<int>(nullable_nobs);
   }
 
   Rcpp::List first, second;
@@ -35,8 +35,8 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
     second = second_efa;
   }
 
-  int nfactors = n_generals + n_groups;
-  int n_items = xefa.R.n_rows;
+  int nfactors = xcor.q;
+  int n_items = xcor.p;
 
   // Arguments to pass to first efa in SL:
 
@@ -56,7 +56,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
 
   // First efa:
 
-  Rcpp::List first_order_efa = efast(xefa.R, n_groups, x1.cor, x1.estimator, x1.rotation,
+  Rcpp::List first_order_efa = efast(xcor.R, n_groups, x1.cor, x1.estimator, x1.rotation,
                                      x1.projection, "none", nullable_nobs,
                                      x1.nullable_Target, x1.nullable_Weight,
                                      x1.nullable_PhiTarget, x1.nullable_PhiWeight,
@@ -158,7 +158,7 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   }
 
   Rcpp::List modelInfo;
-  modelInfo["R"] = xefa.R;
+  modelInfo["R"] = xcor.R;
   modelInfo["n_generals"] = n_generals;
   modelInfo["n_groups"] = n_groups;
   modelInfo["nullable_nobs"] = nullable_nobs;

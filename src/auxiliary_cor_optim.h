@@ -253,7 +253,7 @@ cor_NTR cor_ntr(arguments_cor x, cor_manifold *manifold, cor_criterion *criterio
 
   } while (x.iteration < x.maxit);
 
-  cor_NTR result = std::make_tuple(x.cor, x.T, x.f, x.iteration, x.convergence);
+  cor_NTR result = std::make_tuple(x.correlation, x.T, x.f, x.iteration, x.convergence);
 
   return result;
 
@@ -304,7 +304,7 @@ cor_NTR cor_gd(arguments_cor x, cor_manifold *manifold, cor_criterion *criterion
 
   } while (x.iteration < x.maxit);
 
-  cor_NTR result = std::make_tuple(x.cor, x.T, x.f, x.iteration, x.convergence);
+  cor_NTR result = std::make_tuple(x.correlation, x.T, x.f, x.iteration, x.convergence);
 
   return result;
 

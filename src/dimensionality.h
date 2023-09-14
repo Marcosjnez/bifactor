@@ -352,12 +352,12 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string cor, std::string missing
                     bool hierarchical, Rcpp::Nullable<Rcpp::List> nullable_efa,
                     int cores) {
 
-  arguments_efa xefa;
-  xefa.X = X;
-  xefa.cor = cor;
-  xefa.p = X.n_cols;
-  xefa.missing = missing;
-  xefa.cores = cores;
+  arguments_cor xcor;
+  xcor.X = X;
+  xcor.cor = cor;
+  xcor.p = X.n_cols;
+  xcor.missing = missing;
+  xcor.cores = cores;
 
   Rcpp::List efa;
   if(nullable_efa.isNotNull()) {
@@ -365,13 +365,13 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string cor, std::string missing
   }
   if (efa.containsElementNamed("estimator")) {
     std::string estimator_ = efa["estimator"];
-    xefa.estimator = estimator_;
+    xcor.estimator = estimator_;
   }
 
-  check_cor(xefa);
-  Rcpp::List correlation_result = xefa.correlation_result;
+  check_cor(xcor);
+  Rcpp::List correlation_result = xcor.correlation_result;
 
-  Rcpp::List first_order = pa(xefa.X, xefa.R, nboot, cor, nullable_quantile, mean, replace, nullable_PA, cores);
+  Rcpp::List first_order = pa(xcor.X, xcor.R, nboot, cor, nullable_quantile, mean, replace, nullable_PA, cores);
 
   first_order["correlation"] = correlation_result;
   if(!hierarchical) return first_order;
@@ -402,8 +402,8 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string cor, std::string missing
 
   for(int i=0; i < unique_size; ++i) {
 
-      Rcpp::List fit = efast(xefa.R, unique[i], x.cor, x.estimator, x.rotation, x.projection,
-                             xefa.missing, x.nullable_nobs,
+      Rcpp::List fit = efast(xcor.R, unique[i], x.cor, x.estimator, x.rotation, x.projection,
+                             xcor.missing, x.nullable_nobs,
                              x.nullable_Target, x.nullable_Weight,
                              x.nullable_PhiTarget, x.nullable_PhiWeight,
                              x.nullable_blocks,
@@ -418,9 +418,9 @@ Rcpp::List parallel(arma::mat X, int nboot, std::string cor, std::string missing
       arma::mat Phi = rot["phi"];
       arma::mat loadings = rot["lambda"];
       arma::mat L = loadings * Phi;
-      arma::mat W = arma::solve(xefa.R, L);
-      if(xefa.X.has_nan()) xefa.X.replace(arma::datum::nan, 0); // Avoid NAs in the multiplication
-      arma::mat fs = xefa.X * W;
+      arma::mat W = arma::solve(xcor.R, L);
+      if(xcor.X.has_nan()) xcor.X.replace(arma::datum::nan, 0); // Avoid NAs in the multiplication
+      arma::mat fs = xcor.X * W;
       arma::mat Sfs = arma::cor(fs);
       // Rcpp::stop("Well until here");
       Rcpp::List second_order = pa(fs, Sfs, nboot, "pearson", nullable_quantile, mean,

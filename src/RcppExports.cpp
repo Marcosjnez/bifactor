@@ -11,6 +11,64 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// asymptotic_general
+arma::mat asymptotic_general(arma::mat X);
+RcppExport SEXP _bifactor_asymptotic_general(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(asymptotic_general(X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// asymptotic_normal
+arma::mat asymptotic_normal(arma::mat P);
+RcppExport SEXP _bifactor_asymptotic_normal(SEXP PSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type P(PSEXP);
+    rcpp_result_gen = Rcpp::wrap(asymptotic_normal(P));
+    return rcpp_result_gen;
+END_RCPP
+}
+// asymptotic_elliptical
+arma::mat asymptotic_elliptical(arma::mat P, double eta);
+RcppExport SEXP _bifactor_asymptotic_elliptical(SEXP PSEXP, SEXP etaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type P(PSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    rcpp_result_gen = Rcpp::wrap(asymptotic_elliptical(P, eta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// asymptotic_poly
+arma::mat asymptotic_poly(const arma::mat X, const arma::mat R, const int cores);
+RcppExport SEXP _bifactor_asymptotic_poly(SEXP XSEXP, SEXP RSEXP, SEXP coresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(asymptotic_poly(X, R, cores));
+    return rcpp_result_gen;
+END_RCPP
+}
+// diagcov
+arma::vec diagcov(arma::mat X);
+RcppExport SEXP _bifactor_diagcov(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(diagcov(X));
+    return rcpp_result_gen;
+END_RCPP
+}
 // smoothing
 arma::mat smoothing(arma::mat X, double min_eigval);
 RcppExport SEXP _bifactor_smoothing(SEXP XSEXP, SEXP min_eigvalSEXP) {
@@ -321,6 +379,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cfast
+Rcpp::List cfast(arma::vec parameters, arma::mat X, int nfactors, arma::uvec lambda_indexes, arma::uvec phi_indexes, arma::uvec psi_indexes, std::string cor, std::string estimator, std::string missing, Rcpp::Nullable<int> nobs, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> PhiTarget, int random_starts, int cores, Rcpp::Nullable<arma::vec> init, Rcpp::Nullable<Rcpp::List> control);
+RcppExport SEXP _bifactor_cfast(SEXP parametersSEXP, SEXP XSEXP, SEXP nfactorsSEXP, SEXP lambda_indexesSEXP, SEXP phi_indexesSEXP, SEXP psi_indexesSEXP, SEXP corSEXP, SEXP estimatorSEXP, SEXP missingSEXP, SEXP nobsSEXP, SEXP TargetSEXP, SEXP PhiTargetSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP initSEXP, SEXP controlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type parameters(parametersSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type lambda_indexes(lambda_indexesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type phi_indexes(phi_indexesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type psi_indexes(psi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::string >::type cor(corSEXP);
+    Rcpp::traits::input_parameter< std::string >::type estimator(estimatorSEXP);
+    Rcpp::traits::input_parameter< std::string >::type missing(missingSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Target(TargetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiTarget(PhiTargetSEXP);
+    Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type init(initSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type control(controlSEXP);
+    rcpp_result_gen = Rcpp::wrap(cfast(parameters, X, nfactors, lambda_indexes, phi_indexes, psi_indexes, cor, estimator, missing, nobs, Target, PhiTarget, random_starts, cores, init, control));
+    return rcpp_result_gen;
+END_RCPP
+}
 // count
 std::vector<int> count(const std::vector<int>& X, const int n, const int max_X);
 RcppExport SEXP _bifactor_count(SEXP XSEXP, SEXP nSEXP, SEXP max_XSEXP) {
@@ -364,6 +448,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_bifactor_asymptotic_general", (DL_FUNC) &_bifactor_asymptotic_general, 1},
+    {"_bifactor_asymptotic_normal", (DL_FUNC) &_bifactor_asymptotic_normal, 1},
+    {"_bifactor_asymptotic_elliptical", (DL_FUNC) &_bifactor_asymptotic_elliptical, 2},
+    {"_bifactor_asymptotic_poly", (DL_FUNC) &_bifactor_asymptotic_poly, 3},
+    {"_bifactor_diagcov", (DL_FUNC) &_bifactor_diagcov, 1},
     {"_bifactor_smoothing", (DL_FUNC) &_bifactor_smoothing, 2},
     {"_bifactor_random_orth", (DL_FUNC) &_bifactor_random_orth, 2},
     {"_bifactor_random_oblq", (DL_FUNC) &_bifactor_random_oblq, 2},
@@ -381,6 +470,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 11},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 17},
     {"_bifactor_polyfast", (DL_FUNC) &_bifactor_polyfast, 8},
+    {"_bifactor_cfast", (DL_FUNC) &_bifactor_cfast, 16},
     {"_bifactor_count", (DL_FUNC) &_bifactor_count, 3},
     {"_bifactor_joint_frequency_table", (DL_FUNC) &_bifactor_joint_frequency_table, 5},
     {"_bifactor_dbinorm", (DL_FUNC) &_bifactor_dbinorm, 3},

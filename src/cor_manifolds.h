@@ -38,7 +38,7 @@ public:
 
   void param(arguments_cor& x) {
 
-    x.cor = x.T.t() * x.T;
+    x.correlation = x.T.t() * x.T;
 
   }
 
