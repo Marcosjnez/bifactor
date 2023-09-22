@@ -221,7 +221,7 @@ arma::mat smoothing(arma::mat X, double min_eigval = 0.001) {
   arma::mat eigvec;
 
   arma::eig_sym(eigval, eigvec, X);
-  arma::vec new_eigval = arma::clamp(eigval, min_eigval, eigval.max());
+  arma::vec new_eigval = arma::clamp(eigval, min_eigval, arma::datum::inf);
 
   arma::mat smoothed = eigvec * arma::diagmat(new_eigval) * eigvec.t();
   arma::mat diag = arma::diagmat(1/arma::sqrt(arma::diagvec(smoothed)));

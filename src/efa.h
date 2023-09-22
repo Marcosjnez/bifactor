@@ -21,7 +21,7 @@ void extract_efa(arguments_efa& x, efa_manifold *manifold, efa_criterion *criter
   efa_optim* algorithm = choose_efa_optim(x.optim);
 
   arguments_efa args = x;
-  // args.psi = x.init;
+  // args.parameters = x.init;
 
   x1 = algorithm->optim(args, manifold, criterion);
 
@@ -214,7 +214,7 @@ Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion
 
   } else if(x.estimator == "pa") {
 
-    Rcpp::List pa_result = principal_axis(x.psi, x.R, x.q, x.eps, x.maxit);
+    Rcpp::List pa_result = principal_axis(x.parameters, x.R, x.q, x.eps, x.maxit);
 
     arma::mat w_temp = pa_result["lambda"];
     arma::vec uniquenesses_temp = pa_result["uniquenesses"];
@@ -230,8 +230,8 @@ Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion
   } else if (x.estimator == "minrank") {
 
     arma::vec communalities = sdp_cpp(x.R);
-    x.psi = 1 - communalities;
-    arma::mat reduced_R = x.R - diagmat(x.psi);
+    x.parameters = 1 - communalities;
+    arma::mat reduced_R = x.R - diagmat(x.parameters);
 
     arma::vec eigval;
     arma::mat eigvec;

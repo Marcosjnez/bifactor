@@ -4,8 +4,7 @@ class cfa_optim {
 
 public:
 
-  virtual void optim(arguments_cfa& x, cfa_manifold *manifold,
-                    cfa_criterion *criterion) = 0;
+  virtual void optim(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
 
 };
 
@@ -15,10 +14,9 @@ class cfa_RGD:public cfa_optim {
 
 public:
 
-  void optim(arguments_cfa& x, cfa_manifold *manifold,
-            cfa_criterion *criterion) {
+  void optim(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
-    gd(x, manifold, criterion);
+    gd(x, structs);
 
   }
 
@@ -30,10 +28,9 @@ class cfa_RNTR:public cfa_optim {
 
 public:
 
-  void optim(arguments_cfa& x, cfa_manifold *manifold,
-            cfa_criterion *criterion) {
+  void optim(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
-    ntr(x, manifold, criterion);
+    ntr(x, structs);
 
   }
 
@@ -45,10 +42,9 @@ class cfa_BFGS:public cfa_optim {
 
 public:
 
-  void optim(arguments_cfa& x, cfa_manifold *manifold,
-            cfa_criterion *criterion) {
+  void optim(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
-    bfgs(x, manifold, criterion);
+    bfgs(x, structs);
 
   }
 
@@ -60,10 +56,9 @@ class cfa_LBFGS:public cfa_optim {
 
 public:
 
-  void optim(arguments_cfa& x, cfa_manifold *manifold,
-            cfa_criterion *criterion) {
+  void optim(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
-    lbfgs(x, manifold, criterion);
+    lbfgs(x, structs);
 
   }
 
@@ -84,7 +79,7 @@ cfa_optim* choose_cfa_optim(std::string optim) {
     algorithm = new cfa_LBFGS();
   } else {
 
-    Rcpp::stop("Available optimization rutines for cfa: \n 'gradient', 'BFGS', 'L-BFGS', 'newtonTR'. The default method is 'newtonTR'.");
+    Rcpp::stop("Available optimization rutines for cfa: \n 'gradient', 'BFGS', 'L-BFGS', and 'newtonTR'.");
 
   }
 

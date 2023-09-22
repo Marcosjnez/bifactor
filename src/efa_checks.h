@@ -66,9 +66,21 @@ void check_efa(arguments_efa& x) {
     x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
     x.manifold = "dwls";
     x.maxit = 10000;
-    x.psi = arma::randu(x.lambda_parameters);
+    x.parameters = arma::randu(x.lambda_parameters);
     x.lambda.set_size(x.p, x.q); x.lambda.zeros();
     x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
+  }
+
+  if(x.X.is_square() & x.estimator == "dwls") {
+    arma::vec asymp_diag;
+    if(x.std_error == "normal") {
+      asymp_diag = arma::diagvec(asymptotic_normal(x.R));
+      x.correlation_result["std_error"] = "normal";
+    } else {
+      Rcpp::stop("estimator = 'dwls' requires either the raw data or a weight matrix W of the same dimension as the correlation matrix (control = list(W = ...))");
+    }
+    arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
+    x.W = 1/W; x.W.diag().zeros();
   }
 
   if(x.estimator == "gls") {
@@ -80,13 +92,13 @@ void check_efa(arguments_efa& x) {
   // Check initial values:
   if (x.nullable_init.isNotNull()) {
     Rcpp::warning("Initial values not available for the dwls estimator");
-    x.psi = Rcpp::as<arma::vec>(x.nullable_init);
+    x.parameters = Rcpp::as<arma::vec>(x.nullable_init);
   } else { // Check for positive definiteness only if custom init values are not specified
     if(x.R.is_sympd()) {
-      x.psi = 1/arma::diagvec(arma::inv_sympd(x.R));
+      x.parameters = 1/arma::diagvec(arma::inv_sympd(x.R));
     } else {
       x.smoothed = smoothing(x.R, 0.001);
-      x.psi = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
+      x.parameters = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
     }
   }
 

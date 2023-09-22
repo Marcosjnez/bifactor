@@ -33,9 +33,9 @@ public:
 
   void F(arguments_efa& x) {
 
-    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.parameters);
     x.reduced_R = x.R - arma::diagmat(x.psi2);
-    // x.reduced_R = x.R - arma::diagmat(x.psi);
+    // x.reduced_R = x.R - arma::diagmat(x.parameters);
     eig_sym(x.eigval, x.eigvec, x.reduced_R);
     arma::vec e = x.eigval(arma::span(0, x.p - x.q - 1));
 
@@ -90,9 +90,9 @@ public:
 
   void F(arguments_efa& x) {
 
-    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.parameters);
     x.sqrt_psi = sqrt(x.psi2);
-    // x.sqrt_psi = sqrt(x.psi);
+    // x.sqrt_psi = sqrt(x.parameters);
     arma::mat sc = arma::diagmat(1/x.sqrt_psi);
     x.reduced_R = sc * x.R * sc;
     eig_sym(x.eigval, x.eigvec, x.reduced_R);
@@ -107,7 +107,7 @@ public:
 
     arma::mat A = x.eigvec(arma::span::all, arma::span(x.p-x.q, x.p-1));
     arma::vec eigenvalues = x.eigval(arma::span(x.p-x.q, x.p-1));
-    // x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi)/x.psi;
+    // x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.parameters)/x.parameters;
     x.g_psi2 = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi2)/x.psi2;
 
   }

@@ -1,16 +1,19 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 03/09/2023
+ * Modification date: 17/09/2023
  *
  */
 
 // Line-search satisfying the armijo condition:
 
-void armijo(arguments_cfa& x, cfa_manifold *manifold,
-            cfa_criterion *criterion,
+void armijo(arguments_optim& x, std::vector<arguments_cfa>& structs,
             double ss_fac, double ss_min, double max_iter,
             double c1, double c2, double eps) {
+
+  // int nblocks = structs.size();
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
 
   x.ss = std::max(ss_min, x.ss * ss_fac);
   // x.ss = x.ss*2;
@@ -23,11 +26,12 @@ void armijo(arguments_cfa& x, cfa_manifold *manifold,
 
     ++iteration;
     x.parameters = parameters + x.ss*x.dir;
+    // for(int i=0; i < nblocks; ++i) structs[i].parameters = x.parameters;
     // Projection onto the manifold
-    manifold->retr(x);
+    manifold->retr(x, structs);
     // Parameterization
-    manifold->param(x);
-    criterion->F(x);
+    manifold->param(x, structs);
+    criterion->F(x, structs);
     double df = x.f - f0;
     if (df < c1 * x.ss * x.inprod || x.ss < 1e-09) // armijo condition
       break;
@@ -46,13 +50,16 @@ void armijo(arguments_cfa& x, cfa_manifold *manifold,
 
 // Conjugate-gradient method to solve the Riemannian Newton equation in the Trust-Region algorithm:
 
-void tcg(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion,
+void tcg(arguments_optim& x, std::vector<arguments_cfa>& structs,
          arma::vec& dir, bool& att_bnd, double ng, arma::vec c, double rad) {
 
   /*
    * Truncated conjugate gradient sub-solver for the trust-region sub-problem
    * From Liu (Algorithm 4; 2020)
    */
+
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
 
   dir.zeros();
   arma::vec dir0;
@@ -68,16 +75,16 @@ void tcg(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion,
   do{
 
     // Differential of transformed parameters
-    manifold->dparam(x);
+    manifold->dparam(x, structs);
 
     // Differential of the euclidean gradient
-    criterion->dG(x);
+    criterion->dG(x, structs);
 
     // Differential of g
-    manifold->dgrad(x);
+    manifold->dgrad(x, structs);
 
     // Riemannian hessian
-    manifold->hess(x);
+    manifold->hess(x, structs);
 
     dHd = arma::accu(x.dparameters % x.dH);
 
@@ -128,36 +135,30 @@ void tcg(arguments_cfa x, cfa_manifold *manifold, cfa_criterion *criterion,
 
 // Newton Trust-region algorithm:
 
-void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void ntr(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
   /*
    * Riemannian trust-region algorithm
    * From Liu (Algorithm 2; 2020)
    */
 
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
+
   // Parameterization
-  manifold->param(x); // update x.L, x.Phi and x.Inv_T
+  manifold->param(x, structs);
 
   // Objective
-  criterion->F(x); // update x.f, x.L2, x.IgCL2N, x.term, x.f1 and x.f2
+  criterion->F(x, structs);
 
-  // Rcpp::Rcout << "x.f = " << x.f << std::endl;
+  // Gradient wrt transformed parameters
+  criterion->G(x, structs);
 
-  // Gradient wrt L and P
-  criterion->G(x); // update x.gL, x.gP, x.f1, x.f2 and x.LoL2
-
-  // Rcpp::Rcout << "x.gL = " << x.gL << std::endl;
-
-  // Gradient wtr T
-  manifold->grad(x); // update x.g
+  // Gradient
+  manifold->grad(x, structs);
 
   // Riemannian gradient
-  manifold->proj(x); // update x.rg and x.A
-
-  // Differential of the gradient of L and P
-  // criterion->dgLP(x); // update dgL and dgP
-
-  // Rcpp::Rcout << "x.dgL = " << x.dgL << std::endl;
+  manifold->proj(x, structs);
 
   x.ng = sqrt(arma::accu(x.rg % x.rg));
 
@@ -182,7 +183,7 @@ void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
   x.iteration = 0;
   double goa, preddiff;
 
-  arguments_cfa new_x;
+  arguments_optim new_x;
   arma::vec dir(x.parameters.size());
 
   x.convergence = false;
@@ -190,33 +191,33 @@ void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
   do{
 
     // subsolver
-    tcg(x, manifold, criterion, dir, att_bnd, x.ng, c, rad);
+    tcg(x, structs, dir, att_bnd, x.ng, c, rad);
     x.dparameters = dir;
     new_x = x;
     new_x.parameters += dir;
 
     // Projection onto the manifold
-    manifold->retr(new_x); // update x.T
+    manifold->retr(new_x, structs);
 
-    // Differential of L and P
-    manifold->dparam(x); // update x.dL, x.dP and Inv_T_dt
+    // Differential of transformed parameters
+    manifold->dparam(x, structs);
 
-    // Differential of the gradient of L and P
-    criterion->dG(x); // update dgL and dgP
+    // Differential of the gradient wrt transformed parameters
+    criterion->dG(x, structs);
 
     // Differential of g
-    manifold->dgrad(x); // update dg
+    manifold->dgrad(x, structs);
 
     // Riemannian hessian
-    manifold->hess(x); // update dH
+    manifold->hess(x, structs);
 
     preddiff = - arma::accu(x.dparameters % ( x.rg + 0.5 * x.dH) );
 
     // Parameterization
-    manifold->param(new_x);
+    manifold->param(new_x, structs);
 
     // objective
-    criterion->F(new_x);
+    criterion->F(new_x, structs);
 
     if ( std::abs(preddiff) <= arma::datum::eps ) {
 
@@ -243,11 +244,11 @@ void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
       x = new_x;
 
       // update the gradient
-      criterion->G(x);
-      manifold->grad(x);
+      criterion->G(x, structs);
+      manifold->grad(x, structs);
 
       // Riemannian gradient
-      manifold->proj(x);
+      manifold->proj(x, structs);
 
       x.ng = sqrt(arma::accu(x.rg % x.rg));
 
@@ -265,19 +266,24 @@ void ntr(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
 // Gradient descent algorithm:
 
-void gd(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void gd(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 0.5, c2 = 0.5;
 
   // Parameterization
-  manifold->param(x); // update x.L, x.Phi and x.Inv_T
-  criterion->F(x);
+  manifold->param(x, structs);
+  criterion->F(x, structs);
+
   // update gradient
-  criterion->G(x);
-  manifold->grad(x);
+  criterion->G(x, structs);
+  manifold->grad(x, structs);
+
   // Riemannian gradient
-  manifold->proj(x);
+  manifold->proj(x, structs);
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = sqrt(x.inprod);
@@ -289,14 +295,15 @@ void gd(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
     // x.ss *= 2;
 
-    armijo(x, manifold, criterion, ss_fac, ss_min,
+    armijo(x, structs, ss_fac, ss_min,
            10, c1, c2, x.eps);
 
-    // update gradient
-    criterion->G(x);
-    manifold->grad(x);
+    // Update the gradient
+    criterion->G(x, structs);
+    manifold->grad(x, structs);
+
     // Riemannian gradient
-    manifold->proj(x);
+    manifold->proj(x, structs);
     x.dir = -x.rg;
     x.inprod = arma::accu(-x.dir % x.rg);
     x.ng = sqrt(x.inprod);
@@ -313,19 +320,22 @@ void gd(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
 // BFGS algorithm:
 
-void bfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void bfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
 
   // Parameterization
-  manifold->param(x); // update x.L, x.Phi and x.Inv_T
-  criterion->F(x);
+  manifold->param(x, structs); // update x.L, x.Phi and x.Inv_T
+  criterion->F(x, structs);
   // update the gradient
-  criterion->G(x);
-  manifold->grad(x);
+  criterion->G(x, structs);
+  manifold->grad(x, structs);
   // Riemannian gradient
-  manifold->proj(x);
+  manifold->proj(x, structs);
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = sqrt(x.inprod);
@@ -342,14 +352,13 @@ void bfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
     arma::mat old_parameters = x.parameters;
     arma::mat old_rg = x.rg;
 
-    armijo(x, manifold, criterion, ss_fac, ss_min,
-           30, c1, c2, x.eps);
+    armijo(x, structs, ss_fac, ss_min, 30, c1, c2, x.eps);
 
     // update gradient
-    criterion->G(x);
-    manifold->grad(x);
+    criterion->G(x, structs);
+    manifold->grad(x, structs);
     // Riemannian gradient
-    manifold->proj(x);
+    manifold->proj(x, structs);
 
     arma::vec y = x.rg - old_rg;
     arma::vec s = x.parameters - old_parameters;
@@ -374,19 +383,23 @@ void bfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
 
 // L-BFGS algorithm:
 
-void lbfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
+void lbfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+  cfa_manifold2* manifold = new ultimate_manifold();
+  cfa_criterion2* criterion = new ultimate_criterion();
 
   x.iteration = 0;
   double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
 
   // Parameterization
-  manifold->param(x); // update x.L, x.Phi and x.Inv_T
-  criterion->F(x);    // Compute the objective with x.L and x.Phi
+  manifold->param(x, structs); // update x.L, x.Phi and x.Inv_T
+  criterion->F(x, structs);    // Compute the objective with x.L and x.Phi
   // update the gradient
-  criterion->G(x);  // Update the gradient wrt x.L and x.Phi
-  manifold->grad(x);  // Update the gradient wrt x.T
+  criterion->G(x, structs);  // Update the gradient wrt x.L and x.Phi
+  // Rcpp::Rcout<<x.gradient<<std::endl;
+  manifold->grad(x, structs);  // Update the gradient wrt x.T
   // Riemannian gradient
-  manifold->proj(x);  // Update the Riemannian gradient x.rg
+  manifold->proj(x, structs);  // Update the Riemannian gradient x.rg
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = std::sqrt(x.inprod);
@@ -416,14 +429,13 @@ void lbfgs(arguments_cfa& x, cfa_manifold *manifold, cfa_criterion *criterion) {
     arma::vec old_rg = x.rg;
 
     // Update x.ss, x.T, x.L, x.Phi and x.Inv_T and x.f
-    armijo(x, manifold, criterion, ss_fac, ss_min,
-           30, c1, c2, x.eps);
+    armijo(x, structs, ss_fac, ss_min, 30, c1, c2, x.eps);
 
     // update gradient
-    criterion->G(x);
-    manifold->grad(x);
+    criterion->G(x, structs);
+    manifold->grad(x, structs);
     // Riemannian gradient
-    manifold->proj(x);
+    manifold->proj(x, structs);
 
     arma::vec q = x.rg;
     s[k] = x.parameters - old_parameters;

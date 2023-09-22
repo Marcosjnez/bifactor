@@ -20,13 +20,13 @@ void armijo(arguments_efa& x, efa_manifold *manifold, efa_criterion *criterion,
   // x.ss = x.ss*2;
   double f0 = x.f;
   int iteration = 0;
-  arma::vec psi = x.psi;
+  arma::vec parameters = x.parameters;
   x.inprod = arma::accu(x.dir % x.rg);
 
   do{
 
     ++iteration;
-    x.psi = psi + x.ss*x.dir;
+    x.parameters = parameters + x.ss*x.dir;
     // Projection onto the manifold
     manifold->retr(x); // update x.T
     // Parameterization
@@ -55,7 +55,7 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
 
     ++inner_iter;
 
-    x2.psi = x.psi + x.ss*x.dir;
+    x2.parameters = x.parameters + x.ss*x.dir;
     // Parameterization
     manifold->param(x);
     criterion->F(x2);
@@ -89,10 +89,10 @@ void strong_wolfe(arguments_efa& x, efa_manifold *manifold, efa_criterion *crite
   // zoom phase
   for(int i=0; i < 5; ++i) {
 
-    xlo.psi = x.psi + alpha_lo*x.dir;
+    xlo.parameters = x.parameters + alpha_lo*x.dir;
     criterion->F(xlo);
     x.ss = 0.5*(alpha_lo + alpha_hi);
-    x2.psi = x.psi + x.ss*x.dir;
+    x2.parameters = x.parameters + x.ss*x.dir;
     // Parameterization
     manifold->param(x); // update x.L, x.Phi and x.Inv_T
     criterion->F(x);
@@ -132,8 +132,8 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
   arma::vec dir0;
 
   double alpha, rr0, tau, beta, dHd;
-  x.dpsi = -x.rg; // Initial search direction
-  arma::vec r = x.dpsi; // Initial residual
+  x.dparameters = -x.rg; // Initial search direction
+  arma::vec r = x.dparameters; // Initial residual
   double rr = ng * ng;
   double tol = ng * std::min(pow(ng, c[0]), c[1]);
 
@@ -153,13 +153,13 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
     // Riemannian hessian
     manifold->hess(x);
 
-    dHd = arma::accu(x.dpsi % x.dH);
+    dHd = arma::accu(x.dparameters % x.dH);
 
     if(dHd <= 0) {
 
-      tau = root_quad(arma::accu(x.dpsi % x.dpsi), 2 * arma::accu(dir % x.dpsi),
+      tau = root_quad(arma::accu(x.dparameters % x.dparameters), 2 * arma::accu(dir % x.dparameters),
                       arma::accu(dir % dir) - rad * rad); // Solve equation 39
-      dir = dir + tau * x.dpsi;
+      dir = dir + tau * x.dparameters;
       att_bnd = true;
 
       break;
@@ -169,13 +169,13 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
     rr0 = rr;
     alpha = rr0 / dHd;
     dir0 = dir;
-    dir = dir + alpha * x.dpsi; // update proposal
+    dir = dir + alpha * x.dparameters; // update proposal
 
     if (sqrt(arma::accu(dir % dir)) >= rad) {
 
-      tau = root_quad(arma::accu(x.dpsi % x.dpsi), 2 * arma::accu(dir0 % x.dpsi),
+      tau = root_quad(arma::accu(x.dparameters % x.dparameters), 2 * arma::accu(dir0 % x.dparameters),
                       arma::accu(dir0 % dir0) - rad * rad); // Solve equation 39
-      dir = dir0 + tau * x.dpsi;
+      dir = dir0 + tau * x.dparameters;
       att_bnd = true;
 
       break;
@@ -193,7 +193,7 @@ void tcg(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion,
     }
 
     beta = rr / rr0;
-    x.dpsi = r + beta * x.dpsi;
+    x.dparameters = r + beta * x.dparameters;
     iter = iter + 1;
 
   } while (iter < 5);
@@ -267,9 +267,9 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
 
     // subsolver
     tcg(x, manifold, criterion, dir, att_bnd, ng, c, rad);
-    x.dpsi = dir;
+    x.dparameters = dir;
     new_x = x;
-    new_x.psi += dir;
+    new_x.parameters += dir;
 
     // Projection onto the manifold
     manifold->retr(new_x); // update x.T
@@ -286,7 +286,7 @@ efa_NTR ntr(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
     // Riemannian hessian
     manifold->hess(x); // update dH
 
-    preddiff = - arma::accu(x.dpsi % ( x.rg + 0.5 * x.dH) );
+    preddiff = - arma::accu(x.dparameters % ( x.rg + 0.5 * x.dH) );
 
     // Parameterization
     manifold->param(new_x);
@@ -380,7 +380,7 @@ efa_NTR gd(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion) {
       armijo(x, manifold, criterion, ss_fac, ss_min);
     } else if(x.search == "wolfe") {
       strong_wolfe(x, manifold, criterion);
-      x.psi += x.ss * x.dir; // For strong_wolve
+      x.parameters += x.ss * x.dir; // For strong_wolve
       manifold->param(x); // update x.L, x.Phi and x.Inv_T
       criterion->F(x); // For strong_wolve
     }
@@ -429,7 +429,7 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = sqrt(x.inprod);
   // x.ss = 1;
-  int p1 = x.psi.size();
+  int p1 = x.parameters.size();
   arma::mat B(p1, p1, arma::fill::eye);
 
   std::vector<arma::vec> s(x.maxit), y(x.maxit);
@@ -449,7 +449,7 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
     max[0] = min; max[1] = 0;
     int m = max.max();
 
-    arma::vec old_psi = x.psi;
+    arma::vec old_parameters = x.parameters;
     arma::vec old_rg = x.rg;
 
     armijo(x, manifold, criterion, ss_fac, ss_min);
@@ -462,7 +462,7 @@ efa_NTR lbfgs(arguments_efa x, efa_manifold *manifold, efa_criterion *criterion)
     manifold->proj(x);
 
     arma::vec q = arma::vectorise(x.rg);
-    s[k] = arma::vectorise(x.psi - old_psi);
+    s[k] = arma::vectorise(x.parameters - old_parameters);
     y[k] = arma::vectorise(x.rg - old_rg);
     p[k] = 1/arma::accu(y[k] % s[k]);
 

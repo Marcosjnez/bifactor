@@ -35,7 +35,7 @@ public:
 
   void param(arguments_efa& x) {
 
-    x.psi2 = x.psi;
+    x.psi2 = x.parameters;
 
   }
 
@@ -79,7 +79,7 @@ public:
 
   void param(arguments_efa& x) {
 
-    x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
+    x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.parameters);
 
   }
 
@@ -89,7 +89,7 @@ public:
 
   void grad(arguments_efa& x) {
 
-    x.g = x.g_psi2 % (0.5*abs(x.upper - x.lower) % cos(x.psi));
+    x.g = x.g_psi2 % (0.5*abs(x.upper - x.lower) % cos(x.parameters));
 
   }
 
@@ -123,7 +123,7 @@ public:
 
   void param(arguments_efa& x) {
 
-    x.lambda.elem(x.lower_tri_ind) = x.psi;
+    x.lambda.elem(x.lower_tri_ind) = x.parameters;
 
   }
 

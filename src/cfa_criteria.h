@@ -43,6 +43,8 @@ public:
 
   void G(arguments_cfa& x) {
 
+    x.gradient.set_size(x.parameters.n_elem); x.gradient.zeros();
+
     x.lambda_phi = x.lambda * x.phi;
     x.W_residuals = x.W % x.residuals;
     x.glambda = -2* x.W_residuals * x.lambda_phi;
@@ -51,24 +53,23 @@ public:
     x.gphi.diag() *= 0.5;
     x.gpsi = -2*x.W_residuals;
     x.gpsi.diag() *= 0.5;
+    // x.gphi = -x.lambda.t() * x.W_residuals_lambda;
+    // x.gpsi = -x.W_residuals;
 
-    x.gradient = arma::join_cols(x.glambda.elem(x.lambda_indexes),
-                                 x.gphi.elem(x.phi_indexes),
-                                 x.gpsi.elem(x.psi_indexes));
+    x.gradient(x.lambda_indexes) += x.glambda.elem(x.target_indexes);
+    x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    x.gradient(x.psi_indexes) += x.gpsi.elem(x.targetpsi_indexes);
 
   }
 
   void dG(arguments_cfa& x) {
 
-    x.dlambda.elem(x.lambda_indexes) = x.dparameters.head(x.n_lambda);
-    x.dphi.elem(x.phi_indexes) = x.dparameters.subvec(x.n_lambda, x.n_lambda + x.n_phi - 1);
-    x.dphi = arma::symmatl(x.dphi);
-    x.dpsi.elem(x.psi_indexes) = x.dparameters.tail(x.n_psi);
-    x.dpsi = arma::symmatl(x.dpsi);
+    x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
 
     // dglambda:
     arma::mat dg1 = -2*x.W_residuals * x.dlambda * x.phi;
-    arma::mat W_dresiduals = -x.W % (x.dlambda * x.lambda_phi.t() + x.lambda_phi * x.dlambda.t());
+    arma::mat W_dresiduals = -x.W % (x.dlambda * x.lambda_phi.t() +
+      x.lambda_phi * x.dlambda.t());
     arma::mat dg2 = -2*W_dresiduals * x.lambda_phi;
     x.dglambda = dg1 + dg2;
 
@@ -76,14 +77,16 @@ public:
     W_dresiduals = -x.W % (x.lambda * x.dphi * x.lambda.t());
     x.dgphi = -2*x.lambda.t() * W_dresiduals * x.lambda;
     x.dgphi.diag() *= 0.5;
+    // x.dgphi = -x.lambda.t() * W_dresiduals * x.lambda;
 
     // dgpsi:
     x.dgpsi = 2*x.W % x.dpsi;
     x.dgpsi.diag() *= 0.5;
+    // x.dgpsi = x.W % x.dpsi;
 
-    x.dgradient = arma::join_cols(x.dglambda.elem(x.lambda_indexes),
-                                  x.dgphi.elem(x.phi_indexes),
-                                  x.dgpsi.elem(x.psi_indexes));
+    x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
+    x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    x.dgradient(x.psi_indexes) += x.dgpsi.elem(x.targetpsi_indexes);
 
   }
 
@@ -148,15 +151,9 @@ public:
      * dambda_dpsi.t()   dpsi_dphi      hpsi
      */
 
-    arma::mat col1 = arma::join_cols(x.hlambda(x.lambda_indexes, x.lambda_indexes),
-                                     x.dlambda_dphi(x.lambda_indexes, x.phi_indexes).t(),
-                                     x.dlambda_dpsi(x.lambda_indexes, x.psi_indexes).t());
-    arma::mat col2 = arma::join_cols(x.dlambda_dphi(x.lambda_indexes, x.phi_indexes),
-                                     x.hphi(x.phi_indexes, x.phi_indexes),
-                                     x.dpsi_dphi(x.psi_indexes, x.phi_indexes));
-    arma::mat col3 = arma::join_cols(x.dlambda_dpsi(x.lambda_indexes, x.psi_indexes),
-                                     x.dpsi_dphi(x.psi_indexes, x.phi_indexes).t(),
-                                     x.hpsi(x.psi_indexes, x.psi_indexes));
+    arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
+    arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
+    arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
     x.hessian = arma::join_rows(col1, col2, col3);
 
   }
@@ -185,16 +182,195 @@ public:
     g.cols(x.indexes_diag_p) *= 0.5;
     x.dpsi_dS = g; //(x.psi_indexes, x.S_indexes);
 
-    x.df2_dLPUdS = arma::join_cols(x.dlambda_dS(x.lambda_indexes, x.S_indexes),
-                                   x.dphi_dS(x.phi_indexes, x.S_indexes),
-                                   x.dpsi_dS(x.psi_indexes, x.S_indexes));
+    x.df2_dLPUdS = arma::join_cols(x.dlambda_dS, x.dphi_dS, x.dpsi_dS);
 
   }
 
   void outcomes(arguments_cfa& x) {
 
-    x.uniquenesses = x.R.diag() - arma::diagvec(x.Rhat);
-    x.Rhat.diag() = x.R.diag();
+    // x.uniquenesses = x.R.diag() - arma::diagvec(x.Rhat);
+    // x.Rhat.diag() = x.R.diag();
+
+  };
+
+};
+
+/*
+ * GLS / DWLS / ULS
+ */
+
+class cfa_ml: public cfa_criterion {
+
+public:
+
+  void F(arguments_cfa& x) {
+
+    x.Rhat = x.lambda * x.phi * x.lambda.t() + x.psi;
+    if(!x.Rhat.is_sympd()) {
+      arma::vec eigval;
+      arma::mat eigvec;
+      eig_sym(eigval, eigvec, x.Rhat);
+      arma::vec d = arma::clamp(eigval, 0.1, eigval.max());
+      x.Rhat = eigvec * arma::diagmat(d) * eigvec.t();
+    }
+    x.Rhat_inv = arma::inv_sympd(x.Rhat);
+    x.f = arma::log_det_sympd(x.Rhat) - x.logdetR +
+      arma::accu(x.R % x.Rhat_inv) - x.p;
+
+  }
+
+  void G(arguments_cfa& x) {
+
+    x.gradient.set_size(x.parameters.n_elem); x.gradient.zeros();
+
+    x.residuals = x.R - x.Rhat;
+    x.Ri_res_Ri = 2*x.Rhat_inv * -x.residuals * x.Rhat_inv;
+    x.lambda_phi = x.lambda * x.phi;
+    x.glambda = x.Ri_res_Ri * x.lambda_phi;
+
+    x.gphi = x.lambda.t() * x.Ri_res_Ri * x.lambda;
+    x.gphi.diag() *= 0.5;
+
+    arma::mat dlogdetRhatdU = 2*x.Rhat_inv;
+    dlogdetRhatdU.diag() *= 0.5;
+    arma::mat dRhat_invdU = 2*(-x.Rhat_inv * x.R * x.Rhat_inv);
+    dRhat_invdU.diag() *= 0.5;
+    x.gpsi = dRhat_invdU + dlogdetRhatdU;
+
+    x.gradient(x.lambda_indexes) += x.glambda.elem(x.target_indexes);
+    x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    x.gradient(x.psi_indexes) += x.gpsi.elem(x.targetpsi_indexes);
+
+  }
+
+  void dG(arguments_cfa& x) {
+
+    x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
+
+    // dglambda:
+    arma::mat dRhat = x.dlambda * x.lambda_phi.t() + x.lambda_phi * x.dlambda.t();
+    arma::mat dresiduals = -dRhat;
+    arma::mat dRhat_inv = -x.Rhat_inv * -dresiduals * x.Rhat_inv;
+    arma::mat dRi_res_Ri = 2*(dRhat_inv * -x.residuals * x.Rhat_inv -
+      x.Rhat_inv * -x.residuals * dRhat_inv + x.Rhat_inv * -dresiduals * x.Rhat_inv);
+    x.dglambda = x.lambda.t() * dRi_res_Ri * x.lambda;
+
+    // dgphi:
+    dRhat = x.lambda * x.phi * x.lambda;
+    dresiduals = -dRhat;
+    dRhat_inv = -x.Rhat_inv * -dRhat * x.Rhat_inv;
+    dRi_res_Ri = 2*(dRhat_inv * -x.residuals * x.Rhat_inv + x.Rhat_inv * -x.residuals * dRhat_inv +
+      x.Rhat_inv * -dresiduals * x.Rhat_inv);
+    x.dgphi = x.lambda.t() * dRi_res_Ri * x.lambda;
+    x.dgphi.diag() *= 0.5;
+
+    // dgpsi:
+    dRhat = x.dpsi;
+    dRhat_inv = -x.Rhat_inv * dRhat * x.Rhat_inv;
+    arma::mat ddlogdetRhat = 2*dRhat_inv;
+    ddlogdetRhat.diag() *= 0.5;
+    arma::mat ddRhat_inv = 2*(-dRhat_inv * x.R * x.Rhat_inv + -x.Rhat_inv * x.R * dRhat_inv);
+    x.dgpsi = ddlogdetRhat + ddRhat_inv;
+    x.dgpsi.diag() *= 0.5;
+
+    x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
+    x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    x.dgradient(x.psi_indexes) += x.dgpsi.elem(x.targetpsi_indexes);
+
+  }
+
+  void H(arguments_cfa& x) {
+
+    // Rcpp::Rcout << "hlambda" << std::endl;
+    // Lambda
+    arma::mat h1 = arma::kron(x.phi, x.Ri_res_Ri);
+
+    arma::mat dRhat_dL = gLRhat(x.lambda, x.phi);
+    arma::mat dRi_res_Ri_dRhat = 2*arma::kron(x.Rhat_inv, x.Rhat_inv) -
+      arma::kron(x.Ri_res_Ri, x.Rhat_inv) - arma::kron(x.Rhat_inv, x.Ri_res_Ri);
+    arma::mat dRi_res_Ri_dL = dRi_res_Ri_dRhat * dRhat_dL;
+    arma::mat h2 = arma::kron(x.lambda_phi.t(), x.Ip) * dRi_res_Ri_dL;
+
+    x.hlambda = h1 + h2;
+
+    // Rcpp::Rcout << "hphi" << std::endl;
+    // Phi
+    arma::mat dRhat_dP = gPRhat(x.lambda, x.phi, x.indexes_diag_q);
+    arma::mat dRi_res_Ri_dP = dRi_res_Ri_dRhat * dRhat_dP;
+
+    x.hphi = arma::kron(x.lambda.t(), x.lambda.t()) * dRi_res_Ri_dP;
+    x.hphi.rows(x.indexes_diag_q) *= 0.5;
+
+    // Rcpp::Rcout << "hpsi" << std::endl;
+    // Psi
+    arma::mat dRhat_dU = gURhat(x.psi);
+    arma::mat dRi_res_Ri_dU = dRi_res_Ri_dRhat * dRhat_dU;
+    x.hpsi = dRi_res_Ri_dU;
+    x.hpsi.rows(x.indexes_diag_p) *= 0.5;
+
+    // Rcpp::Rcout << "dlambda_dphi" << std::endl;
+    // Lambda & Phi
+    arma::mat h21 = arma::kron(x.Iq, x.Ri_res_Ri * x.lambda);
+    h2 = h21;
+    h2 += h21 * dxt(x.q, x.q);
+    h2.cols(x.indexes_diag_q) = h21.cols(x.indexes_diag_q);
+    x.dlambda_dphi = h1 + h2; //(x.lambda_indexes, x.phi_indexes);
+
+    // Rcpp::Rcout << "dlambda_dpsi" << std::endl;
+    // Lambda & Psi
+    x.dlambda_dpsi = arma::kron(x.lambda_phi.t(), x.Ip) * dRi_res_Ri_dU;
+
+    // Rcpp::Rcout << "dpsi_dphi" << std::endl;
+    // Phi & Psi
+    x.dpsi_dphi = dRi_res_Ri_dP;
+    x.dpsi_dphi *= 0.5;
+
+    /*
+     * Join all the derivatives such that
+     * hLambda           dlambda_dphi   dlambda_dpsi
+     * dlambda_dphi.t()  hphi           dpsi_dphi.t()
+     * dambda_dpsi.t()   dpsi_dphi      hpsi
+     */
+
+    arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
+    arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
+    arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
+    x.hessian = arma::join_rows(col1, col2, col3);
+
+  }
+
+  void H2(arguments_cfa& x) {
+
+    // Rcpp::Rcout << "dlambda_dS" << std::endl;
+    arma::mat g1 = -2*x.lambda_phit_kron_Ip;
+    g1.each_row() %= x.w.t();
+    arma::mat g2 = g1 * dxt(x.p, x.p);
+    arma::mat g = g1 + g2;
+    g.cols(x.indexes_diag_p) *= 0.5;
+    x.dlambda_dS = g; //(x.lambda_indexes, x.S_indexes);
+
+    // Rcpp::Rcout << "dphi_dS" << std::endl;
+    g1 = -2*arma::kron(x.lambda.t(), x.lambda.t());
+    g1.each_row() %= x.w.t();
+    g2 = g1 * dxt(x.p, x.p);
+    g = g1 + g2;
+    g.cols(x.indexes_diag_p) *= 0.5;
+    g.rows(x.indexes_diag_q) *= 0.5;
+    x.dphi_dS = g; //(x.phi_indexes, x.S_indexes);
+
+    // Rcpp::Rcout << "dpsi_dS" << std::endl;
+    g = -2*arma::diagmat(x.w);
+    g.cols(x.indexes_diag_p) *= 0.5;
+    x.dpsi_dS = g; //(x.psi_indexes, x.S_indexes);
+
+    x.df2_dLPUdS = arma::join_cols(x.dlambda_dS, x.dphi_dS, x.dpsi_dS);
+
+  }
+
+  void outcomes(arguments_cfa& x) {
+
+    // x.uniquenesses = x.R.diag() - arma::diagvec(x.Rhat);
+    // x.Rhat.diag() = x.R.diag();
 
   };
 
@@ -228,7 +404,9 @@ public:
 
   }
 
-  void dG(arguments_cfa& x) {}
+  void dG(arguments_cfa& x) {
+    Rcpp::stop("uls estimator not available with this optimization algorithm");
+  }
 
   void H(arguments_cfa& x) {}
 
@@ -291,11 +469,15 @@ public:
 
   }
 
-  void dG(arguments_cfa& x) {}
+  void dG(arguments_cfa& x) {
+    Rcpp::stop("ml estimator not available with this optimization algorithm");
+  }
 
-  void H(arguments_cfa& x) {}
+  void H(arguments_cfa& x) {
+  }
 
-  void H2(arguments_cfa& x) {}
+  void H2(arguments_cfa& x) {
+  }
 
   void outcomes(arguments_cfa& x) {
 
@@ -350,7 +532,9 @@ public:
 
   }
 
-  void dG(arguments_cfa& x) {}
+  void dG(arguments_cfa& x) {
+    Rcpp::stop("dwls estimator not available with this optimization algorithm");
+  }
 
   void H(arguments_cfa& x) {}
 
@@ -380,6 +564,10 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
     criterion = new efa_uls();
 
+  } else if (estimator == "ml") {
+
+    criterion = new cfa_ml();
+
   } else if(estimator == "efa_ml") {
 
     criterion = new efa_ml();
@@ -401,3 +589,100 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
   return criterion;
 
 }
+
+class cfa_criterion2 {
+
+public:
+
+  virtual void F(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+  virtual void G(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+  virtual void dG(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+  virtual void H(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+  virtual void H2(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+  virtual void outcomes(arguments_optim& x, std::vector<arguments_cfa>& structs) = 0;
+
+};
+
+class ultimate_criterion: public cfa_criterion2 {
+
+public:
+
+  void F(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+    cfa_criterion* criterion;
+    x.f = 0;
+
+    for(int i=0; i < x.nblocks; ++i) {
+
+      criterion = choose_cfa_criterion(structs[i].estimator);
+      criterion->F(structs[i]);
+      x.f += structs[i].f;
+
+    }
+
+  }
+
+  void G(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+    cfa_criterion* criterion;
+    x.gradient.set_size(x.parameters.n_elem); x.gradient.zeros();
+
+    for(int i=0; i < x.nblocks; ++i) {
+
+      criterion = choose_cfa_criterion(structs[i].estimator);
+      criterion->G(structs[i]);
+      x.gradient += structs[i].gradient;
+
+    }
+
+  }
+
+  void dG(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+    cfa_criterion* criterion;
+    x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
+
+    for(int i=0; i < x.nblocks; ++i) {
+
+      criterion = choose_cfa_criterion(structs[i].estimator);
+      criterion->dG(structs[i]);
+      x.dgradient += structs[i].dgradient;
+
+    }
+
+  }
+
+  void H(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+  }
+
+  void H2(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+  }
+
+  void outcomes(arguments_optim& x, std::vector<arguments_cfa>& structs) {
+
+    x.lambda.resize(x.nblocks), x.phi.resize(x.nblocks), x.psi.resize(x.nblocks),
+    x.Rhat.resize(x.nblocks), x.residuals.resize(x.nblocks), x.fs.resize(x.nblocks),
+    x.R.resize(x.nblocks);
+
+    for(int i=0; i < x.nblocks; ++i) {
+
+      x.lambda[i] = structs[i].lambda;
+      x.phi[i] = structs[i].phi;
+      x.psi[i] = structs[i].psi;
+      x.Rhat[i] = structs[i].Rhat;
+      x.residuals[i] = structs[i].residuals;
+      x.fs[i] = structs[i].f;
+      x.R[i] = structs[i].R;
+
+    }
+
+  }
+
+};

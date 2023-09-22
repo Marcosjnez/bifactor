@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 31/08/2023
+ * Modification date: 17/09/2023
  *
  */
 
@@ -97,12 +97,13 @@ typedef struct arguments_efa{
   int q, p, nobs = 0;
   double f = 0;
   arma::mat lambda, phi, reduced_R, eigvec;
-  arma::vec u, uniquenesses, eigval, psi, sqrt_psi, psi2, g_psi2;
+  arma::vec u, uniquenesses, eigval, parameters, sqrt_psi, psi2, g_psi2;
   std::string estimator = "uls";
   double efa_factr = 1e07;
-  std::string optim = "gradient", cor = "pearson", missing = "pairwise.complete.cases";
+  std::string optim = "gradient", cor = "pearson", missing = "pairwise.complete.cases",
+    std_error = "normal";
   arma::vec lower = {0.005}, upper = {0.995};
-  arma::mat rg, dir, dpsi, dH;
+  arma::mat rg, dir, dparameters, dH;
   int iteration, iterations = 0L, maxit = 1000L;
   bool convergence = false, heywood = false;
   std::string manifold = "box";
@@ -142,9 +143,10 @@ typedef struct arguments_cor{
 
 typedef struct arguments_cfa{
 
+  bool confirmatory = false;
   // CFA;
   arma::mat borrar;
-  double f = 0.00;
+  double f = 0.00, logdetR;
   std::string estimator = "gls", projection = "id", missing = "pairwise.complete.cases",
     cor = "pearson";
   int nobs, p, q, n_lambda, n_phi, n_psi;
@@ -159,9 +161,13 @@ typedef struct arguments_cfa{
   hlambda, hphi, hpsi, dlambda_dphi, dlambda_dpsi, dpsi_dphi, hessian,
   dlambda_dS, dphi_dS, dpsi_dS, df2_dLPUdS;
 
-  arma::vec parameters, dparameters, gradient, dgradient, uniquenesses, w;
-  arma::uvec lambda_indexes, phi_indexes, psi_indexes, S_indexes;
+  arma::mat Rhat_inv, Ri_res_Ri;
+
+  arma::vec parameters, transformed, dparameters, gradient, dgradient, uniquenesses, w;
+  arma::uvec lambda_indexes, phi_indexes, psi_indexes, S_indexes,
+  target_indexes, targetphi_indexes, targetpsi_indexes;
   arma::uvec indexes_diag_q, indexes_diag_p, indexes_diag_q2, indexes_p, indexes_q;
+  arma::uvec target_positive;
 
   // Manifold stuff:
   arma::vec g, dg, rg, dH;
@@ -196,6 +202,28 @@ typedef struct arguments_cfa{
   Rcpp::List correlation_result;
 
 } args_cfa;
+
+typedef struct arguments_optim{
+
+  int nblocks;
+  double f = 0.00;
+  // Optim stuff:
+  double c1 = 10e-04, c2 = 0.5, rho = 0.5, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
+  int M = 5L, armijo_maxit = 10L, iteration = 0L, maxit = 10000L,
+    random_starts = 1L, cores = 1L;
+  std::string search = "back";
+  bool convergence = false;
+  arma::vec parameters, dparameters, gradient, dgradient, g, dg, rg, dH, dir;
+
+  // Checks:
+  Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;
+  std::string optim = "L-BFGS", std_error = "normal";
+
+  // Output:
+  std::vector<arma::mat> lambda, phi, psi, Rhat, residuals, R;
+  std::vector<double> fs;
+
+} args_opt;
 
 typedef std::tuple<arma::mat, arma::vec, arma::mat, double, int, bool> efa_NTR;
 typedef std::tuple<arma::mat, arma::mat, arma::mat, double, int, bool> NTR;

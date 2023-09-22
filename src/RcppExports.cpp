@@ -379,29 +379,65 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// cfast
-Rcpp::List cfast(arma::vec parameters, arma::mat X, int nfactors, arma::uvec lambda_indexes, arma::uvec phi_indexes, arma::uvec psi_indexes, std::string cor, std::string estimator, std::string missing, Rcpp::Nullable<int> nobs, Rcpp::Nullable<arma::mat> Target, Rcpp::Nullable<arma::mat> PhiTarget, int random_starts, int cores, Rcpp::Nullable<arma::vec> init, Rcpp::Nullable<Rcpp::List> control);
-RcppExport SEXP _bifactor_cfast(SEXP parametersSEXP, SEXP XSEXP, SEXP nfactorsSEXP, SEXP lambda_indexesSEXP, SEXP phi_indexesSEXP, SEXP psi_indexesSEXP, SEXP corSEXP, SEXP estimatorSEXP, SEXP missingSEXP, SEXP nobsSEXP, SEXP TargetSEXP, SEXP PhiTargetSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP initSEXP, SEXP controlSEXP) {
+// cfa
+Rcpp::List cfa(arma::vec parameters, std::vector<arma::mat> X, arma::ivec nfactors, arma::ivec nobs, std::vector<arma::mat> lambda, std::vector<arma::mat> phi, std::vector<arma::mat> psi, std::vector<arma::uvec> lambda_indexes, std::vector<arma::uvec> phi_indexes, std::vector<arma::uvec> psi_indexes, std::vector<arma::uvec> target_indexes, std::vector<arma::uvec> targetphi_indexes, std::vector<arma::uvec> targetpsi_indexes, Rcpp::CharacterVector cor, Rcpp::CharacterVector estimator, Rcpp::CharacterVector projection, Rcpp::CharacterVector missing, int random_starts, int cores, Rcpp::Nullable<Rcpp::List> control);
+RcppExport SEXP _bifactor_cfa(SEXP parametersSEXP, SEXP XSEXP, SEXP nfactorsSEXP, SEXP nobsSEXP, SEXP lambdaSEXP, SEXP phiSEXP, SEXP psiSEXP, SEXP lambda_indexesSEXP, SEXP phi_indexesSEXP, SEXP psi_indexesSEXP, SEXP target_indexesSEXP, SEXP targetphi_indexesSEXP, SEXP targetpsi_indexesSEXP, SEXP corSEXP, SEXP estimatorSEXP, SEXP projectionSEXP, SEXP missingSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP controlSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type parameters(parametersSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    Rcpp::traits::input_parameter< int >::type nfactors(nfactorsSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type lambda_indexes(lambda_indexesSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type phi_indexes(phi_indexesSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type psi_indexes(psi_indexesSEXP);
-    Rcpp::traits::input_parameter< std::string >::type cor(corSEXP);
-    Rcpp::traits::input_parameter< std::string >::type estimator(estimatorSEXP);
-    Rcpp::traits::input_parameter< std::string >::type missing(missingSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type nobs(nobsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type Target(TargetSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::mat> >::type PhiTarget(PhiTargetSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type lambda_indexes(lambda_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type phi_indexes(phi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type psi_indexes(psi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type target_indexes(target_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type targetphi_indexes(targetphi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type targetpsi_indexes(targetpsi_indexesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type cor(corSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type estimator(estimatorSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type projection(projectionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type missing(missingSEXP);
     Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
     Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type init(initSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type control(controlSEXP);
-    rcpp_result_gen = Rcpp::wrap(cfast(parameters, X, nfactors, lambda_indexes, phi_indexes, psi_indexes, cor, estimator, missing, nobs, Target, PhiTarget, random_starts, cores, init, control));
+    rcpp_result_gen = Rcpp::wrap(cfa(parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, cor, estimator, projection, missing, random_starts, cores, control));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cfa_test
+Rcpp::List cfa_test(arma::vec parameters, arma::vec dX, std::vector<arma::mat> X, arma::ivec nfactors, arma::ivec nobs, std::vector<arma::mat> lambda, std::vector<arma::mat> phi, std::vector<arma::mat> psi, std::vector<arma::uvec> lambda_indexes, std::vector<arma::uvec> phi_indexes, std::vector<arma::uvec> psi_indexes, std::vector<arma::uvec> target_indexes, std::vector<arma::uvec> targetphi_indexes, std::vector<arma::uvec> targetpsi_indexes, Rcpp::CharacterVector char_cor, Rcpp::CharacterVector char_estimator, Rcpp::CharacterVector char_projection, Rcpp::CharacterVector char_missing, int random_starts, int cores, Rcpp::Nullable<arma::vec> nullable_init, Rcpp::Nullable<Rcpp::List> nullable_control);
+RcppExport SEXP _bifactor_cfa_test(SEXP parametersSEXP, SEXP dXSEXP, SEXP XSEXP, SEXP nfactorsSEXP, SEXP nobsSEXP, SEXP lambdaSEXP, SEXP phiSEXP, SEXP psiSEXP, SEXP lambda_indexesSEXP, SEXP phi_indexesSEXP, SEXP psi_indexesSEXP, SEXP target_indexesSEXP, SEXP targetphi_indexesSEXP, SEXP targetpsi_indexesSEXP, SEXP char_corSEXP, SEXP char_estimatorSEXP, SEXP char_projectionSEXP, SEXP char_missingSEXP, SEXP random_startsSEXP, SEXP coresSEXP, SEXP nullable_initSEXP, SEXP nullable_controlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type parameters(parametersSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type dX(dXSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::mat> >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type lambda_indexes(lambda_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type phi_indexes(phi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type psi_indexes(psi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type target_indexes(target_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type targetphi_indexes(targetphi_indexesSEXP);
+    Rcpp::traits::input_parameter< std::vector<arma::uvec> >::type targetpsi_indexes(targetpsi_indexesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type char_cor(char_corSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type char_estimator(char_estimatorSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type char_projection(char_projectionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type char_missing(char_missingSEXP);
+    Rcpp::traits::input_parameter< int >::type random_starts(random_startsSEXP);
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type nullable_init(nullable_initSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type nullable_control(nullable_controlSEXP);
+    rcpp_result_gen = Rcpp::wrap(cfa_test(parameters, dX, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, char_cor, char_estimator, char_projection, char_missing, random_starts, cores, nullable_init, nullable_control));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -470,7 +506,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_parallel", (DL_FUNC) &_bifactor_parallel, 11},
     {"_bifactor_check_deriv", (DL_FUNC) &_bifactor_check_deriv, 17},
     {"_bifactor_polyfast", (DL_FUNC) &_bifactor_polyfast, 8},
-    {"_bifactor_cfast", (DL_FUNC) &_bifactor_cfast, 16},
+    {"_bifactor_cfa", (DL_FUNC) &_bifactor_cfa, 20},
+    {"_bifactor_cfa_test", (DL_FUNC) &_bifactor_cfa_test, 22},
     {"_bifactor_count", (DL_FUNC) &_bifactor_count, 3},
     {"_bifactor_joint_frequency_table", (DL_FUNC) &_bifactor_joint_frequency_table, 5},
     {"_bifactor_dbinorm", (DL_FUNC) &_bifactor_dbinorm, 3},

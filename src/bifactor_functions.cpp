@@ -29,7 +29,6 @@
 #include "rotation_manifolds.h"
 #include "rotation_criteria.h"
 #include "auxiliary_rotation_optim.h"
-#include "efa_checks.h"
 #include "rotation_checks.h"
 #include "rotation_optim.h"
 #include "rotate.h"
@@ -39,6 +38,7 @@
 #include "auxiliary_cor_optim.h"
 #include "cor_optim.h"
 #include "asymptotic_cov.h"
+#include "efa_checks.h"
 #include "polyfast.h"
 #include "checks_cor.h"
 #include "efa_fit.h"
@@ -58,7 +58,7 @@
 #include "cfa_manifolds.h"
 #include "auxiliary_cfa_optim.h"
 #include "cfa_optim.h"
-#include "cfast.h"
+#include "cfa.h"
 
 // [[Rcpp::export]]
 arma::mat random_orth(int p, int q);
@@ -209,15 +209,22 @@ Rcpp::List polyfast(arma::mat X, std::string missing = "pairwise.complete.cases"
                     const int cores = 1L);
 
 // [[Rcpp::export]]
-Rcpp::List cfast(arma::vec parameters, arma::mat X, int nfactors,
-                 arma::uvec lambda_indexes,
-                 arma::uvec phi_indexes,
-                 arma::uvec psi_indexes,
-                 std::string cor = "pearson", std::string estimator = "uls",
-                 std::string missing = "pairwise.complete.cases",
-                 Rcpp::Nullable<int> nobs = R_NilValue,
-                 Rcpp::Nullable<arma::mat> Target = R_NilValue,
-                 Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
-                 int random_starts = 1L, int cores = 1L,
-                 Rcpp::Nullable<arma::vec> init = R_NilValue,
-                 Rcpp::Nullable<Rcpp::List> control = R_NilValue);
+Rcpp::List cfa(arma::vec parameters,
+               std::vector<arma::mat> X,
+               arma::ivec nfactors,
+               arma::ivec nobs,
+               std::vector<arma::mat> lambda,
+               std::vector<arma::mat> phi,
+               std::vector<arma::mat> psi,
+               std::vector<arma::uvec> lambda_indexes,
+               std::vector<arma::uvec> phi_indexes,
+               std::vector<arma::uvec> psi_indexes,
+               std::vector<arma::uvec> target_indexes,
+               std::vector<arma::uvec> targetphi_indexes,
+               std::vector<arma::uvec> targetpsi_indexes,
+               Rcpp::CharacterVector cor = Rcpp::CharacterVector::create("pearson"),
+               Rcpp::CharacterVector estimator = Rcpp::CharacterVector::create("uls"),
+               Rcpp::CharacterVector projection = Rcpp::CharacterVector::create("id"),
+               Rcpp::CharacterVector missing = Rcpp::CharacterVector::create("pairwise.complete.cases"),
+               int random_starts = 1L, int cores = 1L,
+               Rcpp::Nullable<Rcpp::List> control = R_NilValue);
