@@ -109,13 +109,14 @@ MGg_ml <- function(x, S, ldetS, Inv_W, p, q, Lambda, Phi, Psi,
 
     Rhat_inv <- solve(Rhat)
     Ri_res_Ri <- 2*Rhat_inv %*% (Rhat - S[[i]]) %*% Rhat_inv
-    Ri_res_Ri2 <- Ri_res_Ri
-    Ri_res_Ri2[lower.tri(Ri_res_Ri2)] <- 2*Ri_res_Ri[lower.tri(Ri_res_Ri)]
-    Ri_res_Ri2[upper.tri(Ri_res_Ri2)] <- 2*Ri_res_Ri[upper.tri(Ri_res_Ri)]
+    dlogdetRhatdU <- 2*Rhat_inv
+    diag(dlogdetRhatdU) <- 0.5*diag(dlogdetRhatdU)
+    dRhat_invdU <- 2*(-Rhat_inv %*% S[[i]] %*% Rhat_inv)
+    diag(dRhat_invdU) <- 0.5*diag(dRhat_invdU)
 
     g1 <- c(Ri_res_Ri %*% Lambda[[i]] %*% Phi[[i]])[indexes_target[[i]]]
     g2 <- c(t(Lambda[[i]]) %*% Ri_res_Ri %*% Lambda[[i]])[indexes_targetphi[[i]]]
-    g3 <- Ri_res_Ri2[indexes_targetpsi[[i]]]*0.5
+    g3 <- c(dRhat_invdU + dlogdetRhatdU)[indexes_targetpsi[[i]]]
 
     g[indexes_lambda[[i]]] <- g[indexes_lambda[[i]]] + c(g1)
     g[indexes_phi[[i]]] <- g[indexes_phi[[i]]] + c(g2)

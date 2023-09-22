@@ -89,8 +89,12 @@ polyfast <- function(X, missing = "pairwise.complete.cases", acov = "none", smoo
     .Call(`_bifactor_polyfast`, X, missing, acov, smooth, min_eigval, nboot, fit, cores)
 }
 
-cfast <- function(parameters, X, nfactors, lambda_indexes, phi_indexes, psi_indexes, cor = "pearson", estimator = "uls", missing = "pairwise.complete.cases", nobs = NULL, Target = NULL, PhiTarget = NULL, random_starts = 1L, cores = 1L, init = NULL, control = NULL) {
-    .Call(`_bifactor_cfast`, parameters, X, nfactors, lambda_indexes, phi_indexes, psi_indexes, cor, estimator, missing, nobs, Target, PhiTarget, random_starts, cores, init, control)
+cfa <- function(parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, cor = as.character( c("pearson")), estimator = as.character( c("uls")), projection = as.character( c("id")), missing = as.character( c("pairwise.complete.cases")), random_starts = 1L, cores = 1L, control = NULL) {
+    .Call(`_bifactor_cfa`, parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, cor, estimator, projection, missing, random_starts, cores, control)
+}
+
+cfa_test <- function(parameters, dX, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, char_cor, char_estimator, char_projection, char_missing, random_starts, cores, nullable_init, nullable_control) {
+    .Call(`_bifactor_cfa_test`, parameters, dX, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, char_cor, char_estimator, char_projection, char_missing, random_starts, cores, nullable_init, nullable_control)
 }
 
 count <- function(X, n, max_X) {
