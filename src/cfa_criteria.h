@@ -53,8 +53,16 @@ public:
     x.gphi.diag() *= 0.5;
     x.gpsi = -2*x.W_residuals;
     x.gpsi.diag() *= 0.5;
-    // x.gphi = -x.lambda.t() * x.W_residuals_lambda;
-    // x.gpsi = -x.W_residuals;
+
+    // std::vector<arma::uvec> list_targetindices = {x.target_indexes, x.targetphi_indexes, x.targetpsi_indexes};
+    // FIX arma::uvec target_indices = cum_indices(list_targetindices);
+    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
+    // arma::uvec indices = list_to_vector(list_indices);
+    // arma::vec gL = arma::vectorise(x.glambda);
+    // arma::vec gP = arma::vectorise(x.gphi);
+    // arma::vec gU = arma::vectorise(x.gpsi);
+    // arma::vec gparameters = arma::join_cols(gL, gP, gU);
+    // x.gradient(indices) += gparameters(target_indices);
 
     x.gradient(x.lambda_indexes) += x.glambda.elem(x.target_indexes);
     x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
@@ -77,12 +85,10 @@ public:
     W_dresiduals = -x.W % (x.lambda * x.dphi * x.lambda.t());
     x.dgphi = -2*x.lambda.t() * W_dresiduals * x.lambda;
     x.dgphi.diag() *= 0.5;
-    // x.dgphi = -x.lambda.t() * W_dresiduals * x.lambda;
 
     // dgpsi:
     x.dgpsi = 2*x.W % x.dpsi;
     x.dgpsi.diag() *= 0.5;
-    // x.dgpsi = x.W % x.dpsi;
 
     x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
     x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
@@ -91,6 +97,8 @@ public:
   }
 
   void H(arguments_cfa& x) {
+
+    x.hessian.set_size(x.parameters.n_elem, x.parameters.n_elem); x.hessian.zeros();
 
     x.w = arma::vectorise(x.W);
     // Rcpp::Rcout << "hlambda" << std::endl;
@@ -148,13 +156,22 @@ public:
      * Join all the derivatives such that
      * hLambda           dlambda_dphi   dlambda_dpsi
      * dlambda_dphi.t()  hphi           dpsi_dphi.t()
-     * dambda_dpsi.t()   dpsi_dphi      hpsi
+     * dlambda_dpsi.t()   dpsi_dphi      hpsi
      */
 
     arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
     arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
     arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
-    x.hessian = arma::join_rows(col1, col2, col3);
+    // x.hessian = arma::join_rows(col1, col2, col3);
+    arma::mat hessian = arma::join_rows(col1, col2, col3);
+
+    std::vector<arma::uvec> list_targetindices = {x.target_indexes,
+                                                  x.p*x.q + 1L + x.targetphi_indexes,
+                                                  x.p*x.q + x.q*(x.q+1L) + 2L + x.targetpsi_indexes};
+    arma::uvec target_indices = cum_indices(list_targetindices);
+    std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
+    arma::uvec indices = list_to_vector(list_indices);
+    x.hessian(indices, indices) += hessian(target_indices, target_indices);
 
   }
 
@@ -248,17 +265,18 @@ public:
     x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
 
     // dglambda:
+    x.Ri_res_Ri = 2*x.Rhat_inv * -x.residuals * x.Rhat_inv;
     arma::mat dRhat = x.dlambda * x.lambda_phi.t() + x.lambda_phi * x.dlambda.t();
     arma::mat dresiduals = -dRhat;
     arma::mat dRhat_inv = -x.Rhat_inv * -dresiduals * x.Rhat_inv;
-    arma::mat dRi_res_Ri = 2*(dRhat_inv * -x.residuals * x.Rhat_inv -
+    arma::mat dRi_res_Ri = 2*(dRhat_inv * -x.residuals * x.Rhat_inv +
       x.Rhat_inv * -x.residuals * dRhat_inv + x.Rhat_inv * -dresiduals * x.Rhat_inv);
-    x.dglambda = x.lambda.t() * dRi_res_Ri * x.lambda;
+    x.dglambda = x.Ri_res_Ri * x.dlambda * x.phi + dRi_res_Ri * x.lambda_phi;
 
     // dgphi:
-    dRhat = x.lambda * x.phi * x.lambda;
+    dRhat = x.lambda * x.dphi * x.lambda.t();
     dresiduals = -dRhat;
-    dRhat_inv = -x.Rhat_inv * -dRhat * x.Rhat_inv;
+    dRhat_inv = -x.Rhat_inv * -dresiduals * x.Rhat_inv;
     dRi_res_Ri = 2*(dRhat_inv * -x.residuals * x.Rhat_inv + x.Rhat_inv * -x.residuals * dRhat_inv +
       x.Rhat_inv * -dresiduals * x.Rhat_inv);
     x.dgphi = x.lambda.t() * dRi_res_Ri * x.lambda;
@@ -267,11 +285,11 @@ public:
     // dgpsi:
     dRhat = x.dpsi;
     dRhat_inv = -x.Rhat_inv * dRhat * x.Rhat_inv;
-    arma::mat ddlogdetRhat = 2*dRhat_inv;
+    arma::mat ddlogdetRhat = 2*dRhat_inv.t();
     ddlogdetRhat.diag() *= 0.5;
     arma::mat ddRhat_inv = 2*(-dRhat_inv * x.R * x.Rhat_inv + -x.Rhat_inv * x.R * dRhat_inv);
+    ddRhat_inv.diag() *= 0.5;
     x.dgpsi = ddlogdetRhat + ddRhat_inv;
-    x.dgpsi.diag() *= 0.5;
 
     x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
     x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
@@ -281,10 +299,10 @@ public:
 
   void H(arguments_cfa& x) {
 
+    x.hessian.set_size(x.parameters.n_elem, x.parameters.n_elem); x.hessian.zeros();
     // Rcpp::Rcout << "hlambda" << std::endl;
     // Lambda
     arma::mat h1 = arma::kron(x.phi, x.Ri_res_Ri);
-
     arma::mat dRhat_dL = gLRhat(x.lambda, x.phi);
     arma::mat dRi_res_Ri_dRhat = 2*arma::kron(x.Rhat_inv, x.Rhat_inv) -
       arma::kron(x.Ri_res_Ri, x.Rhat_inv) - arma::kron(x.Rhat_inv, x.Ri_res_Ri);
@@ -310,6 +328,7 @@ public:
 
     // Rcpp::Rcout << "dlambda_dphi" << std::endl;
     // Lambda & Phi
+    h1 = arma::kron(x.lambda_phi.t(), x.Ip) * dRi_res_Ri_dP;
     arma::mat h21 = arma::kron(x.Iq, x.Ri_res_Ri * x.lambda);
     h2 = h21;
     h2 += h21 * dxt(x.q, x.q);
@@ -322,8 +341,13 @@ public:
 
     // Rcpp::Rcout << "dpsi_dphi" << std::endl;
     // Phi & Psi
-    x.dpsi_dphi = dRi_res_Ri_dP;
-    x.dpsi_dphi *= 0.5;
+    arma::mat DXT = dxt(x.q, x.q);
+    arma::mat dRhat_invdP = -arma::kron((x.lambda.t() * x.Rhat_inv.t()).t(), x.Rhat_inv * x.lambda);
+    h1 = dRhat_invdP + dRhat_invdP * DXT;
+    h2 = (arma::kron((x.R * x.Rhat_inv).t(), x.Ip) + arma::kron(x.Ip, x.Rhat_inv * x.R)) * h1;
+    x.dpsi_dphi = 2*(h1 - h2);
+    x.dpsi_dphi.cols(x.indexes_diag_q) *= 0.5;
+    x.dpsi_dphi.rows(x.indexes_diag_p) *= 0.5;
 
     /*
      * Join all the derivatives such that
@@ -335,7 +359,16 @@ public:
     arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
     arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
     arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
-    x.hessian = arma::join_rows(col1, col2, col3);
+    // x.hessian = arma::join_rows(col1, col2, col3);
+    arma::mat hessian = arma::join_rows(col1, col2, col3);
+
+    std::vector<arma::uvec> list_targetindices = {x.target_indexes,
+                                                  x.p*x.q + 1L + x.targetphi_indexes,
+                                                  x.p*x.q + x.q*(x.q+1L) + 2L + x.targetpsi_indexes};
+    arma::uvec target_indices = cum_indices(list_targetindices);
+    std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
+    arma::uvec indices = list_to_vector(list_indices);
+    x.hessian(indices, indices) += hessian(target_indices, target_indices);
 
   }
 

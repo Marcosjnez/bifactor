@@ -1,7 +1,7 @@
 /*
  * Author: Marcos Jimenez
  * email: marcosjnezhquez@gmail.com
- * Modification date: 10/09/2023
+ * Modification date: 23/09/2023
  *
  */
 
@@ -426,6 +426,17 @@ arma::uvec list_to_vector(std::vector<arma::uvec> X) {
 
   return single_vector;
 
+}
+
+arma::uvec cum_indices(std::vector<arma::uvec> x) {
+
+  int n = x.size();
+  for(int i=1; i < n; ++i) {
+    arma::uvec z = x[i-1L];
+    x[i] += z.max() + 1L;
+  }
+  arma::uvec y = list_to_vector(x);
+  return y;
 }
 
 std::vector<arma::uvec> increment(arma::uvec oblq_indexes, int p) {
