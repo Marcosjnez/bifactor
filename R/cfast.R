@@ -1,7 +1,9 @@
 #' @title
 #' Confirmatory factor analysis.
 #' @export
-cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = NULL) {
+cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
+                  estimator = "uls", missing = "pairwise.complete.cases",
+                  nobs = NULL, control = NULL) {
 
   # S is a list of correlation matrices (one for each group)
   # target is a list of matrices for the loadings indicating the parameters
@@ -14,13 +16,13 @@ cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = 
   # The targets must be fully specified, that is, every entry in a target
   # must contain either a character or a numeric value
 
-  n <- length(S) # Number of groups
+  n <- length(X) # Number of groups
   p <- q <- vector(length = n) # Number of variables (p) and factors (q) in each group
   Lambda <- Phi <- Psi <-
     indexes_lambda <- indexes_phi <- indexes_psi <-
     indexes_target <- indexes_targetphi <- indexes_targetpsi <-
     lambda_hat <- phi_hat <- psi_hat <- uniquenesses_hat <-
-    S_hat <- residuals <- list()
+    R <- Rhat <- residuals <- list()
   indexes_factorvars <- indexes_uniquenesses <- c()
 
   # Find the unique elements in all the targets:
@@ -42,8 +44,6 @@ cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = 
     indexes_target[[i]] <- which(target[[i]] %in% parameter_vector) # Which lambdas are estimated in group i
     indexes_targetphi[[i]] <- which(targetphi[[i]] %in% parameter_vector & lower.tri(targetphi[[i]], diag = TRUE)) # Which phis are estimated in group i
     indexes_targetpsi[[i]] <- which(targetpsi[[i]] %in% parameter_vector & lower.tri(targetpsi[[i]], diag = TRUE)) # Which psis are estimated in group i
-    # indexes_targetphi[[i]] <- which(targetphi[[i]] %in% parameter_vector) # Which phis are estimated in group i
-    # indexes_targetpsi[[i]] <- which(targetpsi[[i]] %in% parameter_vector) # Which psis are estimated in group i
 
     # Get the indexes for the factor variances:
     indexes_factorvars <- c(indexes_factorvars,
@@ -108,10 +108,14 @@ cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = 
 
     # Initial lambda and uniqueness values based on the eigendecomposition of
     # the reduced correlation matrix:
-    Si <- S[[i]]
-    u <- 1/diag(solve(Si))
-    diag(Si) <- u
-    e <- eigen(Si)
+    if(nrow(X[[i]]) == ncol(X[[i]])) {
+      S <- X[[i]]
+    } else {
+      S <- cor(X[[i]])
+    }
+    u <- 1/diag(solve(S))
+    diag(S) <- u
+    e <- eigen(S)
     D <- matrix(0, q[i], q[i])
     diag(D) <- sqrt(e$values[1:q[i]])
     V <- e$vectors[, 1:q[i]]
@@ -145,10 +149,10 @@ cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = 
   if(!is.null(control$init)) {
     x <- init
   } else {
-    x <- c(stats::runif(lambda_p), rep(0.5, phi_p), rep(0.5, psi_p))
+    x <- init #c(stats::runif(lambda_p), rep(0.5, phi_p), rep(0.5, psi_p))
   }
 
-  fit <- cfa(parameters = x, X = S, nfactors = q, nobs = rep(100, n),
+  fit <- cfa(parameters = x, X = X, nfactors = q, nobs = rep(100, n),
              lambda = lambda_hat, phi = phi_hat, psi = psi_hat,
              lambda_indexes = indexes_lambda,
              phi_indexes = indexes_phi,
@@ -156,43 +160,32 @@ cfast <- function(S, target, targetphi, targetpsi, estimator = "uls", control = 
              target_indexes = indexes_target,
              targetphi_indexes = indexes_targetphi,
              targetpsi_indexes = indexes_targetpsi,
-             cor = rep("pearson", n), estimator = rep(estimator, n),
+             cor = rep(cor, n), estimator = rep(estimator, n),
              projection = rep("id", n),
-             missing = rep("pairwise.complete.cases", n),
+             missing = rep(missing, n),
              control = control)
 
   # Arrange the parameter estimates in the lambda, phi, and psi matrices:
   for(i in 1:n) {
 
     # Arrange lambda parameter estimates:
-    lambda_hat[[i]][indexes_target[[i]]] <- fit$cfa$parameters[indexes_lambda[[i]]]
+    lambda_hat[[i]] <- matrix(fit$cfa$lambda[[i]], p[i], q[i])
 
     # Arrange phi parameter estimates:
-    phi_hat[[i]][indexes_targetphi[[i]]] <- fit$cfa$parameters[indexes_phi[[i]]]
+    phi_hat[[i]] <- matrix(fit$cfa$phi[[i]], q[i], q[i])
 
     # Arrange psi parameter estimates:
-    psi_hat[[i]][indexes_targetpsi[[i]]] <- fit$cfa$parameters[indexes_psi[[i]]]
+    psi_hat[[i]] <- matrix(fit$cfa$psi[[i]], p[i], p[i])
+    uniquenesses_hat[[i]] <- diag(psi_hat[[i]])
 
     # Model matrix:
-    S_hat[[i]] <- lambda_hat[[i]] %*% phi_hat[[i]] %*% t(lambda_hat[[i]]) + psi_hat[[i]]
-    uniquenesses_hat[[i]] <- diag(psi_hat[[i]])
-    diag(S_hat[[i]]) <- diag(S[[i]]) # Fix rounding errors from the optimization
-    residuals[[i]] <- S[[i]] - S_hat[[i]]
+    R[[i]] <- matrix(fit$cfa$R[[i]], p[i], p[i])
+    Rhat[[i]] <- matrix(fit$cfa$Rhat[[i]], p[i], p[i])
+    residuals[[i]] <- R[[i]] - Rhat[[i]]
 
   }
 
-  # Degrees of freedom:
-  df <- sum(p*(p+1)/2) - length(parameter_vector)
-
-  results <- list(f = fit$cfa$f, convergence = fit$cfa$convergence,
-                  iterations = fit$cfa$iterations, df = df,
-                  lambda = lambda_hat, phi = phi_hat,
-                  psi = psi_hat, uniquenesses = uniquenesses_hat,
-                  model = S_hat, residuals = residuals,
-                  parameter_vector = fit$cfa$parameters,
-                  gradient = c(fit$cfa$gradient))
-
-  return(results)
+  return(fit)
 
 }
 

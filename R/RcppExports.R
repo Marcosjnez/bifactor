@@ -17,10 +17,6 @@ asymptotic_poly <- function(X, R, cores) {
     .Call(`_bifactor_asymptotic_poly`, X, R, cores)
 }
 
-diagcov <- function(X) {
-    .Call(`_bifactor_diagcov`, X)
-}
-
 smoothing <- function(X, min_eigval = 0.001) {
     .Call(`_bifactor_smoothing`, X, min_eigval)
 }
