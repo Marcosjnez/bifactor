@@ -58,17 +58,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// diagcov
-arma::vec diagcov(arma::mat X);
-RcppExport SEXP _bifactor_diagcov(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(diagcov(X));
-    return rcpp_result_gen;
-END_RCPP
-}
 // smoothing
 arma::mat smoothing(arma::mat X, double min_eigval);
 RcppExport SEXP _bifactor_smoothing(SEXP XSEXP, SEXP min_eigvalSEXP) {
@@ -488,7 +477,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bifactor_asymptotic_normal", (DL_FUNC) &_bifactor_asymptotic_normal, 1},
     {"_bifactor_asymptotic_elliptical", (DL_FUNC) &_bifactor_asymptotic_elliptical, 2},
     {"_bifactor_asymptotic_poly", (DL_FUNC) &_bifactor_asymptotic_poly, 3},
-    {"_bifactor_diagcov", (DL_FUNC) &_bifactor_diagcov, 1},
     {"_bifactor_smoothing", (DL_FUNC) &_bifactor_smoothing, 2},
     {"_bifactor_random_orth", (DL_FUNC) &_bifactor_random_orth, 2},
     {"_bifactor_random_oblq", (DL_FUNC) &_bifactor_random_oblq, 2},

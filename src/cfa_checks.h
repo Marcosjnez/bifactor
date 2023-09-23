@@ -7,6 +7,8 @@ void check_cfa(arguments_cfa& x) {
   }
 
   if(x.p < x.q) Rcpp::stop("Too many factors");
+  x.df = arma::accu(x.p*(x.p+1)/2) - x.parameters.size();
+  x.df_null = x.p*(x.p-1)/2;
 
   // Choose custom weight matrix for the dwls estimator:
   if(cfa_control.containsElementNamed("W")) {
@@ -31,10 +33,16 @@ void check_cfa(arguments_cfa& x) {
     x.W = 1/W; x.W.diag().zeros();
   }
 
+  if(x.estimator == "dwls") {
+    arma::mat residuals = x.R; residuals.diag().zeros();
+    x.f_null = 0.5*arma::accu(residuals % residuals % x.W);
+  }
+
   // If estimator = "uls", then W is just filled with ones:
   if(x.estimator == "uls") {
     arma::mat W(x.p, x.p, arma::fill::ones);
     x.W = W;
+    x.f_null = 0.5*(arma::accu(x.R % x.R) - x.p); // Assumes diag of x.R is identity
   }
 
   // estimator = "gls" requires a weight matrix W:
@@ -42,10 +50,12 @@ void check_cfa(arguments_cfa& x) {
     if(x.W.is_empty()) {
       Rcpp::stop("For the gls estimator, please provide a weight matrix in efa_control = list(W = ...)");
     }
+    x.f_null = 0.5*(arma::accu(x.R % x.R) - x.p);
   }
 
   if(x.estimator == "ml") {
     x.logdetR = arma::log_det_sympd(x.R);
+    x.f_null = -x.logdetR;
   }
 
   // estimator = "efa_dwls" is only available with optim = "gradient" and "L-BFGS"
@@ -114,10 +124,6 @@ void check_cfa(arguments_cfa& x) {
   x.indexes_q = arma::trimatl_ind(arma::size(x.phi));
   x.S_indexes = x.indexes_p;
   x.Rhat_inv = x.Ip;
-
-  // x.lambda.set_size(x.p, x.q); x.lambda.zeros();
-  // x.phi.set_size(x.q, x.q); x.phi.zeros();
-  // x.psi.set_size(x.p, x.p); x.psi.zeros();
 
   x.dlambda.set_size(x.p, x.q); x.dlambda.zeros();
   x.dphi.set_size(x.q, x.q); x.dphi.zeros();

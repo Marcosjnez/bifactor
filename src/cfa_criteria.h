@@ -29,7 +29,7 @@ public:
  * GLS / DWLS / ULS
  */
 
-class gls: public cfa_criterion {
+class cfa_dwls: public cfa_criterion {
 
 public:
 
@@ -556,9 +556,13 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
   cfa_criterion *criterion;
 
-  if (estimator == "gls" | estimator == "uls" | estimator == "dwls") {
+  if(estimator == "uls" | estimator == "dwls") {
 
-    criterion = new gls();
+    criterion = new cfa_dwls();
+
+  } else if(estimator == "gls") {
+
+    Rcpp::stop("estimator gls not available yet");
 
   } else if (estimator == "efa_uls") {
 
@@ -667,21 +671,38 @@ public:
 
   void outcomes(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
-    x.lambda.resize(x.nblocks), x.phi.resize(x.nblocks), x.psi.resize(x.nblocks),
-    x.Rhat.resize(x.nblocks), x.residuals.resize(x.nblocks), x.fs.resize(x.nblocks),
-    x.R.resize(x.nblocks);
+    x.lambda = resizeList(x.lambda, x.nblocks), x.phi = resizeList(x.phi, x.nblocks),
+      x.psi = resizeList(x.psi, x.nblocks), x.R = resizeList(x.R, x.nblocks),
+      x.Rhat = resizeList(x.Rhat, x.nblocks), x.residuals = resizeList(x.residuals, x.nblocks);
+
+    x.fs.resize(x.nblocks), x.nobs.resize(x.nblocks), x.p.resize(x.nblocks),
+    x.q.resize(x.nblocks);
+
+    x.cor = resizeChar(x.cor, x.nblocks), x.estimator = resizeChar(x.estimator, x.nblocks),
+      x.projection = resizeChar(x.projection, x.nblocks);
 
     for(int i=0; i < x.nblocks; ++i) {
 
-      x.lambda[i] = structs[i].lambda;
-      x.phi[i] = structs[i].phi;
-      x.psi[i] = structs[i].psi;
-      x.Rhat[i] = structs[i].Rhat;
-      x.residuals[i] = structs[i].residuals;
+      x.lambda(i) = structs[i].lambda;
+      x.phi(i) = structs[i].phi;
+      x.psi(i) = structs[i].psi;
+      x.Rhat(i) = structs[i].Rhat;
+      x.residuals(i) = structs[i].residuals;
       x.fs[i] = structs[i].f;
-      x.R[i] = structs[i].R;
+      x.R(i) = structs[i].R;
+      x.df += structs[i].df;
+      x.df_null += structs[i].df_null;
+      x.f_null += structs[i].f_null;
+      x.cor(i) = structs[i].cor;
+      x.estimator(i) = structs[i].estimator;
+      x.projection(i) = structs[i].projection;
+      x.p[i] = structs[i].p;
+      x.q[i] = structs[i].q;
+      x.nobs[i] = structs[i].nobs;
 
     }
+
+    x.df += x.parameters.size() * (x.nblocks-1L);
 
   }
 

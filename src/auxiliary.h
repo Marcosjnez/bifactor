@@ -5,34 +5,48 @@
  *
  */
 
-// [[Rcpp::export]]
+Rcpp::List resizeList( const Rcpp::List& x, int n ){
+  int oldsize = x.size() ;
+  Rcpp::List y(n) ;
+  for( int i=0; i<oldsize; i++) y[i] = x[i] ;
+  return y ;
+}
+
+Rcpp::CharacterVector resizeChar( const Rcpp::CharacterVector& x, int n ){
+  int oldsize = x.size() ;
+  Rcpp::CharacterVector y(n) ;
+  for( int i=0; i<oldsize; i++) y[i] = x[i] ;
+  return y ;
+}
+
 arma::vec diagcov(arma::mat X) {
 
-    const size_t numCols = X.n_cols;
+  // Get the variance of variabes with missing data
+  const size_t numCols = X.n_cols;
 
-    // Initialize the correlation matrix
-    arma::vec diag_cov(numCols);
+  // Initialize the correlation matrix
+  arma::vec diag_cov(numCols);
 
-    // Loop over all pairs of columns
-    for (size_t i = 0; i < numCols; ++i) {
-        // Get the columns for the pair (i, j)
-        arma::vec col = X.col(i);
+  // Loop over all pairs of columns
+  for (size_t i = 0; i < numCols; ++i) {
+    // Get the columns for the pair (i, j)
+    arma::vec col = X.col(i);
 
-        // Find indices where both columns have non-NaN values
-        arma::uvec validIndices = arma::find_finite(col);
+    // Find indices where both columns have non-NaN values
+    arma::uvec validIndices = arma::find_finite(col);
 
-        // Extract non-NaN values from both columns
-        arma::vec validCol = col(validIndices);
-        validCol -= arma::mean(validCol);
+    // Extract non-NaN values from both columns
+    arma::vec validCol = col(validIndices);
+    validCol -= arma::mean(validCol);
 
-        // Calculate the correlation between the two columns
-        double d = arma::accu(validCol % validCol) / (validIndices.n_elem-1);
+    // Calculate the correlation between the two columns
+    double d = arma::accu(validCol % validCol) / (validIndices.n_elem-1);
 
-        // Assign the correlation value to the correlation matrix
-        diag_cov(i) = d;
-    }
+    // Assign the correlation value to the correlation matrix
+    diag_cov(i) = d;
+  }
 
-    return diag_cov;
+  return diag_cov;
 
 }
 

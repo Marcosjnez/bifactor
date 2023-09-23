@@ -97,6 +97,9 @@ Rcpp::List cfa(arma::vec parameters,
   cfa_criterion2* cfa_criterion = new ultimate_criterion();
   cfa_criterion->outcomes(opt, xcfa);
 
+  Rcpp::List correlation;
+  correlation["correlation"] = opt.R;
+
   Rcpp::List cfa;
   cfa["f"] = opt.f;
   cfa["iterations"] = opt.iteration;
@@ -104,25 +107,25 @@ Rcpp::List cfa(arma::vec parameters,
   cfa["lambda"] = opt.lambda;
   cfa["phi"] = opt.phi;
   cfa["psi"] = opt.psi;
+  cfa["Rhat"] = opt.Rhat;
   cfa["fs"] = opt.fs;
   cfa["parameters"] = opt.parameters;
-  cfa["gradient"] = opt.g;
 
   Rcpp::List modelInfo;
-  // modelInfo["cor"] = xcor[i].cor;
-  // modelInfo["estimator"] = xcfa[i].estimator;
-  // modelInfo["projection"] = xcfa[i].projection;
-  // modelInfo["nvars"] = xcfa[i].p;
-  // modelInfo["nfactors"] = xcfa[i].q;
-  // modelInfo["nobs"] = xcfa[i].nobs;
-  // modelInfo["df"] = df;
-  // modelInfo["df_null"] = df_null;
-  // modelInfo["f_null"] = f_null;
-  // modelInfo["lower"] = xefa.lower;
-  // modelInfo["upper"] = xefa.upper;
+  modelInfo["cor"] = opt.cor;
+  modelInfo["estimator"] = opt.estimator;
+  modelInfo["projection"] = opt.projection;
+  modelInfo["nvars"] = opt.p;
+  modelInfo["nfactors"] = opt.q;
+  modelInfo["nobs"] = opt.nobs;
+  modelInfo["df"] = opt.df;
+  modelInfo["df_null"] = opt.df_null;
+  modelInfo["f_null"] = opt.f_null;
+  modelInfo["lower"] = opt.lower;
+  modelInfo["upper"] = opt.upper;
 
   Rcpp::List result;
-  result["correlation"] = opt.R;
+  result["correlation"] = correlation;
   result["cfa"] = cfa;
   result["modelInfo"] = modelInfo;
 

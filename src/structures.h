@@ -146,7 +146,7 @@ typedef struct arguments_cfa{
   bool confirmatory = false;
   // CFA;
   arma::mat borrar;
-  double f = 0.00, logdetR;
+  double f = 0.00, f_null = 0.00, logdetR;
   std::string estimator = "gls", projection = "id", missing = "pairwise.complete.cases",
     cor = "pearson";
   int nobs, p, q, n_lambda, n_phi, n_psi;
@@ -184,6 +184,7 @@ typedef struct arguments_cfa{
   // Checks:
   Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;
   std::string optim = "L-BFGS", std_error = "normal";
+  int df = 0L, df_null = 0L;
 
   // EFA
   arma::mat init;
@@ -206,7 +207,7 @@ typedef struct arguments_cfa{
 typedef struct arguments_optim{
 
   int nblocks;
-  double f = 0.00;
+  double f = 0.00, f_null = 0.00;
   // Optim stuff:
   double c1 = 10e-04, c2 = 0.5, rho = 0.5, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
   int M = 5L, armijo_maxit = 10L, iteration = 0L, maxit = 10000L,
@@ -218,10 +219,14 @@ typedef struct arguments_optim{
   // Checks:
   Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;
   std::string optim = "L-BFGS", std_error = "normal";
+  arma::uvec lower, upper;
 
   // Output:
-  std::vector<arma::mat> lambda, phi, psi, Rhat, residuals, R;
+  Rcpp::List lambda, phi, psi, Rhat, residuals, R;
   std::vector<double> fs;
+  int df = 0L, df_null = 0L;
+  std::vector<int> nobs, p, q;
+  Rcpp::CharacterVector cor, estimator, projection;
 
 } args_opt;
 
