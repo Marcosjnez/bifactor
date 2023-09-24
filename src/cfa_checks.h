@@ -30,7 +30,7 @@ void check_cfa(arguments_cfa& x) {
       Rcpp::stop("estimator = 'dwls' requires either the raw data or a weight matrix W of the same dimension as the correlation matrix (control = list(W = ...))");
     }
     arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
-    x.W = 1/W; x.W.diag().zeros();
+    x.W = 1/W; x.W.diag().ones();
   }
 
   if(x.estimator == "dwls") {

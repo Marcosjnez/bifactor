@@ -159,7 +159,7 @@ typedef struct arguments_cfa{
   lambda, phi, psi, dlambda, dphi, dpsi,
   glambda, gphi, gpsi, dglambda, dgphi, dgpsi,
   hlambda, hphi, hpsi, dlambda_dphi, dlambda_dpsi, dpsi_dphi, hessian,
-  dlambda_dS, dphi_dS, dpsi_dS, df2_dLPUdS;
+  dlambda_dS, dphi_dS, dpsi_dS, dLPU_dS;
 
   arma::mat Rhat_inv, Ri_res_Ri;
 
@@ -215,6 +215,9 @@ typedef struct arguments_optim{
   std::string search = "back";
   bool convergence = false;
   arma::vec parameters, dparameters, gradient, dgradient, g, dg, rg, dH, dir;
+  arma::mat hessian;
+  std::vector<arma::mat> dLPU_dS;
+  std::vector<arma::vec> se;
 
   // Checks:
   Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;

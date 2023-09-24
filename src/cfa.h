@@ -95,6 +95,24 @@ Rcpp::List cfa(arma::vec parameters,
   cfa_criterion2* cfa_criterion = new ultimate_criterion();
   cfa_criterion->outcomes(opt, xcfa);
 
+  // Standard errors:
+  cfa_criterion->H(opt, xcfa);
+  cfa_criterion->H2(opt, xcfa);
+  // Rcpp::List cfa;
+  // cfa["hessian"] = opt.hessian;
+  // cfa["W"] = xcfa[0].W;
+  // return cfa;
+  arma::mat inv_hessian = arma::inv_sympd(opt.hessian);
+  // arma::mat inv_hessian = arma::inv(opt.hessian);
+  opt.se.resize(opt.nblocks);
+  for(int i=0; i < opt.nblocks; ++i) {
+    arma::uvec indexes = trimatl_ind(arma::size(xcfa[i].R), 0);
+    arma::mat Sigma = asymptotic_normal(xcfa[i].R);
+    arma::mat B = opt.dLPU_dS[i].cols(indexes) * Sigma(indexes, indexes) * opt.dLPU_dS[i].cols(indexes).t();
+    arma::mat COV = inv_hessian * B * inv_hessian;
+    opt.se[i] = sqrt(arma::diagvec(COV)/(xcfa[i].nobs-1L));
+  }
+
   Rcpp::List correlation;
   correlation["correlation"] = opt.R;
 
@@ -108,6 +126,9 @@ Rcpp::List cfa(arma::vec parameters,
   cfa["Rhat"] = opt.Rhat;
   cfa["fs"] = opt.fs;
   cfa["parameters"] = opt.parameters;
+  cfa["se"] = opt.se;
+  cfa["hessian"] = opt.hessian;
+  cfa["dLPU_dS"] = opt.dLPU_dS;
 
   Rcpp::List modelInfo;
   modelInfo["cor"] = opt.cor;
@@ -178,6 +199,7 @@ Rcpp::List cfa_test(arma::mat R,
   cfa_manifold->grad(xcfa);
   cfa_manifold->dgrad(xcfa);
   cfa_criterion->H(xcfa);
+  cfa_criterion->H2(xcfa);
 
   Rcpp::List cfa;
   cfa["f"] = xcfa.f;
@@ -196,6 +218,9 @@ Rcpp::List cfa_test(arma::mat R,
   cfa["hphi"] = xcfa.hphi;
   cfa["dpsi_dphi"] = xcfa.dpsi_dphi;
   cfa["hpsi"] = xcfa.hpsi;
+  cfa["dlambda_dS"] = xcfa.dlambda_dS;
+  cfa["dphi_dS"] = xcfa.dphi_dS;
+  cfa["dpsi_dS"] = xcfa.dpsi_dS;
 
   return cfa;
 

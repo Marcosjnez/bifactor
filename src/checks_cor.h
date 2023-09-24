@@ -18,7 +18,7 @@ void check_cor(arguments_cor& x) {
       if(x.estimator == "dwls") {
         x.correlation_result = polyfast(x.X, x.missing, "var", "none", 0.00, 0L, false, x.cores);
         arma::mat W = x.correlation_result["acov"];
-        x.W = 1/W; x.W.diag().zeros();
+        x.W = 1/W; x.W.diag().ones();
       } else {
         x.correlation_result = polyfast(x.X, x.missing, "none", "none", 0.00, 0L, false, x.cores);
       }
@@ -41,7 +41,7 @@ void check_cor(arguments_cor& x) {
           x.correlation_result["std_error"] = "general";
         }
         arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
-        x.W = 1/W; x.W.diag().zeros();
+        x.W = 1/W; x.W.diag().ones();
       }
       x.correlation_result["type"] = "pearson";
       x.correlation_result["correlation"] = x.R;
