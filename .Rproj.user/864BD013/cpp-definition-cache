@@ -159,36 +159,46 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
-                "usr": "c:@F@armijo#I#*I#S0_#d#d#d#d#d#d#",
+                "usr": "c:@F@root_quad#d#d#d#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "armijo(int, int *, int *, double, double, double, double, double, double)",
+                "name": "root_quad(double, double, double)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
                 "line": 16,
-                "column": 15,
+                "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@F@tcg#I#*I#S0_#&$@N@arma@S@Mat>#d#&b#d#$@N@arma@S@Col>#d#d#",
+                "usr": "c:@F@armijo#&I#*I#S1_#d#d#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "tcg(int, int *, int *, arma::mat &, bool &, double, arma::vec, double)",
+                "name": "armijo(int &, int *, int *, double, double)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
-                "line": 66,
+                "line": 26,
                 "column": 6,
                 "hidden": false
             },
             {
-                "usr": "c:auxiliary_efa_optim.h@T@TRN",
-                "kind": 8,
+                "usr": "c:@F@strong_wolfe#&I#*I#S1_#",
+                "kind": 6,
                 "parent_name": "",
-                "name": "TRN",
+                "name": "strong_wolfe(int &, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
-                "line": 146,
-                "column": 72,
+                "line": 54,
+                "column": 6,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@tcg#I#*I#S0_#&$@N@arma@S@Col>#d#&b#d#S2_#d#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "tcg(int, int *, int *, arma::vec &, bool &, double, arma::vec, double)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
+                "line": 124,
+                "column": 6,
                 "hidden": false
             },
             {
@@ -197,8 +207,8 @@
                 "parent_name": "",
                 "name": "ntr(int, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
-                "line": 150,
-                "column": 5,
+                "line": 206,
+                "column": 9,
                 "hidden": false
             },
             {
@@ -207,8 +217,18 @@
                 "parent_name": "",
                 "name": "gd(int, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
-                "line": 295,
-                "column": 5,
+                "line": 354,
+                "column": 9,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@lbfgs#I#*I#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "lbfgs(int, int *, int *)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_efa_optim.h",
+                "line": 411,
+                "column": 9,
                 "hidden": false
             }
         ],
@@ -323,104 +343,13 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-        "file_last_write": 1654036579.0,
-        "definitions": [
-            {
-                "usr": "c:@F@subvector#$@N@std@S@vector>#I#$@N@std@S@allocator>#I#I#I#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "subvector(std::vector<int>, int, int)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 14,
-                "column": 18,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@subvectors#$@N@std@S@vector>#$@N@std@S@vector>#I#$@N@std@S@allocator>#I#$@N@std@S@allocator>#S1_#I#I#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "subvectors(std::vector<std::vector<int>>, int, int)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 22,
-                "column": 31,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@gram#$@N@arma@S@Mat>#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "gram(arma::mat)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 32,
-                "column": 11,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@root_quad#d#d#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "root_quad(double, double, double)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 54,
-                "column": 8,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@armijo#I#*I#S0_#d#d#d#d#d#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "armijo(int, int *, int *, double, double, double, double, double, double)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 66,
-                "column": 18,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@tcg#I#*I#S0_#&$@N@arma@S@Mat>#d#&b#d#$@N@arma@S@Col>#d#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "tcg(int, int *, int *, arma::mat &, bool &, double, arma::vec, double)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 116,
-                "column": 6,
-                "hidden": false
-            },
-            {
-                "usr": "c:auxiliary_rotation_optim.h@T@TRN",
-                "kind": 8,
-                "parent_name": "",
-                "name": "TRN",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 196,
-                "column": 72,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@ntr#I#*I#S0_#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "ntr(int, int *, int *)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 200,
-                "column": 5,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@gd#I#*I#S0_#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "gd(int, int *, int *)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/auxiliary_rotation_optim.h",
-                "line": 345,
-                "column": 5,
-                "hidden": false
-            }
-        ],
+        "file_last_write": 1681321222.0,
+        "definitions": [],
         "hidden": false
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor.h",
-        "file_last_write": 1656362799.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@F@tucker_congruence#$@N@arma@S@Mat>#d#S0_#",
@@ -443,7 +372,7 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@pass_to_efast#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#&I#",
+                "usr": "c:@F@pass_to_efast#I#&I#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "pass_to_efast(Rcpp::List, int &)",
@@ -453,7 +382,7 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@sl#$@N@arma@S@Mat>#d#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S2_#",
+                "usr": "c:@F@sl#$@N@arma@S@Mat>#d#I#I#$@N@Rcpp@S@Nullable>#I#S1_#S1_#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "sl(arma::mat, int, int, Rcpp::Nullable<int>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>)",
@@ -493,32 +422,42 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@GSLiD#$@N@arma@S@Mat>#d#I#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S5_#S5_#d#I#I#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S8_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#S11_#$@N@std@S@allocator>#S11_#S6_#S10_#d#b#",
+                "usr": "c:@F@bifad#$@N@arma@S@Mat>#d#I#I#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#d#I#$@N@Rcpp@S@Nullable>#I#S3_#S3_#S3_#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "GSLiD(arma::mat, int, int, std::string, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, double, int, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<std::vector<arma::uvec>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, double, bool)",
+                "name": "bifad(arma::mat, int, int, int, Rcpp::Nullable<arma::uvec>, double, int, Rcpp::Nullable<int>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, int, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor.h",
                 "line": 512,
                 "column": 12,
                 "hidden": false
             },
             {
-                "usr": "c:@F@botmin#$@N@arma@S@Mat>#d#I#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#d#I#I#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S7_#",
+                "usr": "c:@F@GSLiD#$@N@arma@S@Mat>#d#I#I#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S2_#S2_#d#I#I#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#S1_#S1_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "botmin(arma::mat, int, int, std::string, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::uvec>, double, int, int, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>)",
+                "name": "GSLiD(arma::mat, int, int, int, int, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, double, int, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<arma::uvec>, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor.h",
-                "line": 751,
+                "line": 646,
                 "column": 12,
                 "hidden": false
             },
             {
-                "usr": "c:@F@bifactor#$@N@arma@S@Mat>#d#I#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S1_#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S5_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#S7_#$@N@std@S@allocator>#S7_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#S6_#S5_#I#d#d#I#I#S11_#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S13_#S13_#S13_#b#",
+                "usr": "c:@F@botmin#$@N@arma@S@Mat>#d#I#I#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#d#I#I#S1_#S1_#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "bifactor(arma::mat, int, int, std::string, std::string, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<std::vector<arma::uvec>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<arma::mat>, int, double, double, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, bool)",
+                "name": "botmin(arma::mat, int, int, int, int, Rcpp::Nullable<int>, Rcpp::Nullable<arma::uvec>, double, int, int, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor.h",
-                "line": 843,
+                "line": 880,
+                "column": 12,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@bifactor#$@N@arma@S@Mat>#d#I#I#I#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S2_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "bifactor(arma::mat, int, int, int, int, int, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor.h",
+                "line": 971,
                 "column": 12,
                 "hidden": false
             }
@@ -527,8 +466,19 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor_functions.cpp",
-        "file_last_write": 1654036579.0,
-        "definitions": [],
+        "file_last_write": 1681321222.0,
+        "definitions": [
+            {
+                "usr": "c:bifactor_functions.cpp@8@macro@ARMA_NO_DEBUG",
+                "kind": 9,
+                "parent_name": "",
+                "name": "ARMA_NO_DEBUG",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/bifactor_functions.cpp",
+                "line": 1,
+                "column": 9,
+                "hidden": false
+            }
+        ],
         "hidden": false
     },
     {
@@ -550,102 +500,41 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-        "file_last_write": 1652186111.0,
-        "definitions": [
-            {
-                "usr": "c:@F@contains#$@N@std@S@vector>#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@std@S@allocator>#S1_#S1_#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "contains(std::vector<std::string>, std::string)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 12,
-                "column": 6,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@boot_sample#$@N@arma@S@Mat>#d#b#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "boot_sample(arma::mat, bool)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 24,
-                "column": 11,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@eig_PAF#$@N@arma@S@Mat>#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "eig_PAF(arma::mat)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 60,
-                "column": 11,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@as_character#$@N@arma@S@Col>#d#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "as_character(arma::vec)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 74,
-                "column": 23,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@out_pa#$@N@arma@S@Mat>#i#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#b#b#b#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "out_pa(arma::umat, Rcpp::Nullable<arma::vec>, bool, bool, bool)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 87,
-                "column": 12,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@pa#$@N@arma@S@Mat>#d#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#b#b#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@std@S@allocator>#S5_#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "pa(arma::mat, int, Rcpp::Nullable<arma::vec>, bool, bool, Rcpp::Nullable<std::vector<std::string>>)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 152,
-                "column": 12,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@parallel#$@N@arma@S@Mat>#d#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#b#b#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@std@S@allocator>#S5_#b#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#I#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "parallel(arma::mat, int, Rcpp::Nullable<arma::vec>, bool, bool, Rcpp::Nullable<std::vector<std::string>>, bool, Rcpp::Nullable<Rcpp::List>, int)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 317,
-                "column": 12,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@cv_eigen#$@N@arma@S@Mat>#d#I#b#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#I#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "cv_eigen(arma::mat, int, bool, Rcpp::Nullable<Rcpp::List>, int)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/dimensionality.h",
-                "line": 517,
-                "column": 12,
-                "hidden": false
-            }
-        ],
+        "file_last_write": 1681321222.0,
+        "definitions": [],
         "hidden": false
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
-                "usr": "c:@F@efa#$@N@arma@S@Col>#d#$@N@arma@S@Mat>#d#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#I#d#I#",
+                "usr": "c:@F@extract_efa#&I#*I#S1_#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "efa(arma::vec, arma::mat, int, std::string, int, double, int)",
+                "name": "extract_efa(int &, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa.h",
                 "line": 17,
+                "column": 6,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@efa#$@N@arma@S@Col>#d#$@N@arma@S@Mat>#d#I#I#I#d#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "efa(arma::vec, arma::mat, int, int, int, double, int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa.h",
+                "line": 44,
+                "column": 12,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@efa#I#*I#S0_#I#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "efa(int, int *, int *, int, int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa.h",
+                "line": 203,
                 "column": 12,
                 "hidden": false
             }
@@ -654,15 +543,25 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_checks.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
-                "usr": "c:@F@check_efa#$@N@arma@S@Mat>#d#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#&S2_#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#&I#S6_#&d#",
+                "usr": "c:@F@check_efa#$@N@arma@S@Mat>#d#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#&S2_#$@N@Rcpp@S@Nullable>#I#&I#S5_#&d#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "check_efa(arma::mat, int, Rcpp::Nullable<arma::vec>, arma::vec &, Rcpp::Nullable<Rcpp::List>, int &, int &, double &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_checks.h",
                 "line": 1,
+                "column": 6,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@check_efa#&I#$@N@Rcpp@S@Nullable>#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "check_efa(int &, Rcpp::Nullable<Rcpp::List>)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_checks.h",
+                "line": 36,
                 "column": 6,
                 "hidden": false
             }
@@ -671,7 +570,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@efa_criterion",
@@ -689,7 +588,7 @@
                 "parent_name": "",
                 "name": "minres",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 28,
+                "line": 34,
                 "column": 7,
                 "hidden": false
             },
@@ -699,7 +598,27 @@
                 "parent_name": "minres",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 32,
+                "line": 38,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@minres@F@G#&I#",
+                "kind": 7,
+                "parent_name": "minres",
+                "name": "G(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 50,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@minres@F@dG#&I#",
+                "kind": 7,
+                "parent_name": "minres",
+                "name": "dG(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 59,
                 "column": 8,
                 "hidden": false
             },
@@ -709,7 +628,7 @@
                 "parent_name": "minres",
                 "name": "gLPU(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 43,
+                "line": 65,
                 "column": 8,
                 "hidden": false
             },
@@ -719,7 +638,7 @@
                 "parent_name": "minres",
                 "name": "hLPU(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 45,
+                "line": 69,
                 "column": 8,
                 "hidden": false
             },
@@ -729,7 +648,17 @@
                 "parent_name": "minres",
                 "name": "dgLPU(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 47,
+                "line": 71,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@minres@F@outcomes#&I#",
+                "kind": 7,
+                "parent_name": "minres",
+                "name": "outcomes(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 73,
                 "column": 8,
                 "hidden": false
             },
@@ -739,7 +668,7 @@
                 "parent_name": "",
                 "name": "ml",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 55,
+                "line": 102,
                 "column": 7,
                 "hidden": false
             },
@@ -749,38 +678,78 @@
                 "parent_name": "ml",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 59,
+                "line": 106,
                 "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@S@ml@F@gLP#&I#",
+                "usr": "c:@S@ml@F@G#&I#",
                 "kind": 7,
                 "parent_name": "ml",
-                "name": "gLP(int &)",
+                "name": "G(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 76,
+                "line": 121,
                 "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@S@ml@F@hLP#&I#",
+                "usr": "c:@S@ml@F@dG#&I#",
                 "kind": 7,
                 "parent_name": "ml",
-                "name": "hLP(int &)",
+                "name": "dG(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 78,
+                "line": 132,
                 "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@S@ml@F@dgLP#&I#",
+                "usr": "c:@S@ml@F@gLPU#&I#",
                 "kind": 7,
                 "parent_name": "ml",
-                "name": "dgLP(int &)",
+                "name": "gLPU(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
-                "line": 80,
+                "line": 138,
                 "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@ml@F@hLPU#&I#",
+                "kind": 7,
+                "parent_name": "ml",
+                "name": "hLPU(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 140,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@ml@F@dgLPU#&I#",
+                "kind": 7,
+                "parent_name": "ml",
+                "name": "dgLPU(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 142,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@ml@F@outcomes#&I#",
+                "kind": 7,
+                "parent_name": "ml",
+                "name": "outcomes(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 144,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@choose_efa_criterion#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "choose_efa_criterion(int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_criteria.h",
+                "line": 172,
+                "column": 16,
                 "hidden": false
             }
         ],
@@ -788,7 +757,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_fit.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@F@sdp_cpp#$@N@arma@S@Mat>#d#",
@@ -836,7 +805,7 @@
                 "parent_name": "",
                 "name": "minres_objective(arma::vec, arma::mat, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_fit.h",
-                "line": 156,
+                "line": 157,
                 "column": 8,
                 "hidden": false
             },
@@ -846,17 +815,17 @@
                 "parent_name": "",
                 "name": "minres_gradient(arma::vec, arma::mat, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_fit.h",
-                "line": 189,
+                "line": 190,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@optim_rcpp#$@N@arma@S@Col>#d#$@N@arma@S@Mat>#d#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#I#d#I#",
+                "usr": "c:@F@optim_rcpp#$@N@arma@S@Col>#d#$@N@arma@S@Mat>#d#I#I#I#d#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "optim_rcpp(arma::vec, arma::mat, int, std::string, int, double, int)",
+                "name": "optim_rcpp(arma::vec, arma::mat, int, int, int, double, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_fit.h",
-                "line": 221,
+                "line": 222,
                 "column": 12,
                 "hidden": false
             }
@@ -865,7 +834,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@efa_manifold",
@@ -883,7 +852,7 @@
                 "parent_name": "",
                 "name": "identity",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 32,
+                "line": 34,
                 "column": 7,
                 "hidden": false
             },
@@ -893,7 +862,17 @@
                 "parent_name": "identity",
                 "name": "param(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 36,
+                "line": 38,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@identity@F@dLPU#&I#",
+                "kind": 7,
+                "parent_name": "identity",
+                "name": "dLPU(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 42,
                 "column": 8,
                 "hidden": false
             },
@@ -903,7 +882,7 @@
                 "parent_name": "identity",
                 "name": "grad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 59,
+                "line": 46,
                 "column": 8,
                 "hidden": false
             },
@@ -913,7 +892,7 @@
                 "parent_name": "identity",
                 "name": "dgrad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 67,
+                "line": 50,
                 "column": 8,
                 "hidden": false
             },
@@ -923,7 +902,7 @@
                 "parent_name": "identity",
                 "name": "g_constraints(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 71,
+                "line": 54,
                 "column": 8,
                 "hidden": false
             },
@@ -933,7 +912,7 @@
                 "parent_name": "identity",
                 "name": "proj(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 75,
+                "line": 58,
                 "column": 8,
                 "hidden": false
             },
@@ -943,7 +922,7 @@
                 "parent_name": "identity",
                 "name": "hess(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 79,
+                "line": 64,
                 "column": 8,
                 "hidden": false
             },
@@ -953,8 +932,108 @@
                 "parent_name": "identity",
                 "name": "retr(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
-                "line": 83,
+                "line": 68,
                 "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box",
+                "kind": 2,
+                "parent_name": "",
+                "name": "box",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 76,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@param#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "param(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 80,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@dLPU#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "dLPU(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 84,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@grad#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "grad(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 88,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@dgrad#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "dgrad(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 92,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@g_constraints#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "g_constraints(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 96,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@proj#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "proj(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 100,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@hess#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "hess(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 106,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@box@F@retr#&I#",
+                "kind": 7,
+                "parent_name": "box",
+                "name": "retr(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 110,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@choose_efa_manifold#I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "choose_efa_manifold(int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_manifolds.h",
+                "line": 118,
+                "column": 15,
                 "hidden": false
             }
         ],
@@ -962,7 +1041,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@efa_optim",
@@ -975,52 +1054,72 @@
                 "hidden": false
             },
             {
-                "usr": "c:@S@RGD",
+                "usr": "c:@S@efa_RGD",
                 "kind": 2,
                 "parent_name": "",
-                "name": "RGD",
+                "name": "efa_RGD",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-                "line": 14,
+                "line": 15,
                 "column": 7,
                 "hidden": false
             },
             {
-                "usr": "c:@S@RGD@F@optim#I#*I#S0_#",
+                "usr": "c:@S@efa_RGD@F@optim#I#*I#S0_#",
                 "kind": 7,
-                "parent_name": "RGD",
+                "parent_name": "efa_RGD",
                 "name": "optim(int, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-                "line": 18,
-                "column": 7,
+                "line": 19,
+                "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@S@RNTR",
+                "usr": "c:@S@efa_LBFGS",
                 "kind": 2,
                 "parent_name": "",
-                "name": "RNTR",
+                "name": "efa_LBFGS",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-                "line": 29,
+                "line": 31,
                 "column": 7,
                 "hidden": false
             },
             {
-                "usr": "c:@S@RNTR@F@optim#I#*I#S0_#",
+                "usr": "c:@S@efa_LBFGS@F@optim#I#*I#S0_#",
                 "kind": 7,
-                "parent_name": "RNTR",
+                "parent_name": "efa_LBFGS",
                 "name": "optim(int, int *, int *)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-                "line": 33,
+                "line": 35,
+                "column": 11,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@efa_RNTR",
+                "kind": 2,
+                "parent_name": "",
+                "name": "efa_RNTR",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
+                "line": 47,
                 "column": 7,
                 "hidden": false
             },
             {
-                "usr": "c:@F@choose_optim#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@S@efa_RNTR@F@optim#I#*I#S0_#",
+                "kind": 7,
+                "parent_name": "efa_RNTR",
+                "name": "optim(int, int *, int *)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
+                "line": 51,
+                "column": 11,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@choose_efa_optim#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "choose_optim(std::string)",
+                "name": "choose_efa_optim(int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efa_optim.h",
-                "line": 42,
+                "line": 61,
                 "column": 12,
                 "hidden": false
             }
@@ -1029,7 +1128,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efast.h",
-        "file_last_write": 1656362799.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@F@rotate_efa#I#*I#S0_#I#I#",
@@ -1042,22 +1141,22 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@efast#$@N@arma@S@Mat>#d#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@Rcpp@S@Vector>#VI16#@N@Rcpp@ST>1#T@PreserveStorage#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S6_#S6_#S6_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#S8_#$@N@std@S@allocator>#S8_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#S7_#S1_#S1_#S13_#S13_#S13_#d#d#d#d#I#I#S12_#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S14_#",
+                "usr": "c:@F@efast#$@N@arma@S@Mat>#d#I#I#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S2_#S2_#S2_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "efast(arma::mat, int, std::string, Rcpp::CharacterVector, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<std::vector<arma::uvec>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, std::string, std::string, arma::vec, arma::vec, arma::vec, double, double, double, double, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>)",
+                "name": "efast(arma::mat, int, int, Rcpp::CharacterVector, int, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efast.h",
-                "line": 91,
+                "line": 80,
                 "column": 12,
                 "hidden": false
             },
             {
-                "usr": "c:@F@efast#$@N@arma@S@Mat>#d#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@std@S@vector>#S1_#$@N@std@S@allocator>#S1_#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S7_#S7_#S7_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#S9_#$@N@std@S@allocator>#S9_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#S8_#S1_#S1_#S14_#S14_#S14_#d#d#d#d#I#I#S13_#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S15_#",
+                "usr": "c:@F@efast#$@N@arma@S@Mat>#d#I#I#I#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S2_#S2_#S2_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "efast(arma::mat, int, std::string, std::vector<std::string>, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<std::vector<arma::uvec>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, std::string, std::string, arma::vec, arma::vec, arma::vec, double, double, double, double, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>)",
+                "name": "efast(arma::mat, int, int, int, int, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/efast.h",
-                "line": 284,
+                "line": 313,
                 "column": 12,
                 "hidden": false
             }
@@ -1133,7 +1232,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-        "file_last_write": 1652186111.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@F@gLRhat#$@N@arma@S@Mat>#d#S0_#",
@@ -1146,10 +1245,10 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@gPRhat#$@N@arma@S@Mat>#d#S0_#",
+                "usr": "c:@F@gPRhat#$@N@arma@S@Mat>#d#S0_#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "gPRhat(arma::mat, arma::mat)",
+                "name": "gPRhat(arma::mat, arma::mat, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
                 "line": 35,
                 "column": 11,
@@ -1176,10 +1275,10 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@hessian_Phi#$@N@arma@S@Mat>#d#S0_#",
+                "usr": "c:@F@hessian_Phi#$@N@arma@S@Mat>#d#S0_#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "hessian_Phi(arma::mat, arma::mat)",
+                "name": "hessian_Phi(arma::mat, arma::mat, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
                 "line": 81,
                 "column": 11,
@@ -1196,10 +1295,10 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@hessian_LambdaPhi#$@N@arma@S@Mat>#d#S0_#S0_#$@N@arma@S@Col>#d#",
+                "usr": "c:@F@hessian_LambdaPhi#$@N@arma@S@Mat>#d#S0_#S0_#$@N@arma@S@Col>#d#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "hessian_LambdaPhi(arma::mat, arma::mat, arma::mat, arma::vec)",
+                "name": "hessian_LambdaPhi(arma::mat, arma::mat, arma::mat, arma::vec, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
                 "line": 101,
                 "column": 11,
@@ -1216,20 +1315,20 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@hessian_Phipsi#$@N@arma@S@Mat>#d#S0_#",
+                "usr": "c:@F@hessian_Phipsi#$@N@arma@S@Mat>#d#S0_#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "hessian_Phipsi(arma::mat, arma::mat)",
+                "name": "hessian_Phipsi(arma::mat, arma::mat, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
                 "line": 144,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@hessian_minres#$@N@arma@S@Mat>#d#S0_#S0_#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@hessian_minres#$@N@arma@S@Mat>#d#S0_#S0_#I#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "hessian_minres(arma::mat, arma::mat, arma::mat, std::string)",
+                "name": "hessian_minres(arma::mat, arma::mat, arma::mat, int, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
                 "line": 157,
                 "column": 11,
@@ -1241,57 +1340,57 @@
                 "parent_name": "",
                 "name": "gLS_minres(arma::mat, arma::mat, arma::mat)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 312,
+                "line": 318,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@gPS_minres#$@N@arma@S@Mat>#d#S0_#S0_#",
+                "usr": "c:@F@gPS_minres#$@N@arma@S@Mat>#d#S0_#S0_#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "gPS_minres(arma::mat, arma::mat, arma::mat)",
+                "name": "gPS_minres(arma::mat, arma::mat, arma::mat, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 328,
+                "line": 334,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@gLPS_minres#$@N@arma@S@Mat>#d#S0_#S0_#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@gLPS_minres#$@N@arma@S@Mat>#d#S0_#S0_#I#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "gLPS_minres(arma::mat, arma::mat, arma::mat, std::string)",
+                "name": "gLPS_minres(arma::mat, arma::mat, arma::mat, int, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 343,
+                "line": 350,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@hessian_ml#$@N@arma@S@Mat>#d#S0_#S0_#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@hessian_ml#$@N@arma@S@Mat>#d#S0_#S0_#I#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "hessian_ml(arma::mat, arma::mat, arma::mat, std::string)",
+                "name": "hessian_ml(arma::mat, arma::mat, arma::mat, int, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 396,
+                "line": 405,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@gLPS_ml#$@N@arma@S@Mat>#d#S0_#S0_#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@gLPS_ml#$@N@arma@S@Mat>#d#S0_#S0_#I#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "gLPS_ml(arma::mat, arma::mat, arma::mat, std::string)",
+                "name": "gLPS_ml(arma::mat, arma::mat, arma::mat, int, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 558,
+                "line": 569,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@B#$@N@arma@S@Mat>#d#S0_#S0_#$@N@Rcpp@S@Nullable>#S0_#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S2_#S2_#d#",
+                "usr": "c:@F@B#$@N@arma@S@Mat>#d#S0_#S0_#$@N@arma@S@Col>#I#$@N@Rcpp@S@Nullable>#S0_#I#I#I#d#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "B(arma::mat, arma::mat, arma::mat, Rcpp::Nullable<arma::mat>, std::string, std::string, std::string, double)",
+                "name": "B(arma::mat, arma::mat, arma::mat, arma::uvec, Rcpp::Nullable<arma::mat>, int, int, int, double)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/method_derivatives.h",
-                "line": 622,
+                "line": 634,
                 "column": 11,
                 "hidden": false
             }
@@ -1300,13 +1399,13 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotate.h",
-        "file_last_write": 1656362799.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
-                "usr": "c:@F@rotate#$@N@arma@S@Mat>#d#$@N@Rcpp@S@Vector>#VI16#@N@Rcpp@ST>1#T@PreserveStorage#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#$@N@arma@S@Col>#d#S5_#S5_#d#d#d#d#$@N@Rcpp@S@Nullable>#S0_#S6_#S6_#S6_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#i#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#S8_#$@N@std@S@allocator>#S8_#$@N@Rcpp@S@Nullable>#S5_#S7_#S2_#S2_#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#I#I#",
+                "usr": "c:@F@rotate#$@N@arma@S@Mat>#d#I#I#$@N@arma@S@Col>#d#S1_#S1_#d#d#d#d#$@N@Rcpp@S@Nullable>#S0_#S2_#S2_#S2_#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "rotate(arma::mat, Rcpp::CharacterVector, std::string, arma::vec, arma::vec, arma::vec, double, double, double, double, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, Rcpp::Nullable<std::vector<arma::uvec>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, std::string, std::string, Rcpp::Nullable<Rcpp::List>, int, int)",
+                "name": "rotate(arma::mat, Rcpp::CharacterVector, int, arma::vec, arma::vec, arma::vec, double, double, double, double, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::uvec>, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotate.h",
                 "line": 17,
                 "column": 12,
@@ -1317,7 +1416,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_checks.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@F@check_rotate#&I#I#I#",
@@ -1334,7 +1433,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@rotation_criterion",
@@ -1822,7 +1921,7 @@
                 "parent_name": "simplix_orth",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 456,
+                "line": 457,
                 "column": 8,
                 "hidden": false
             },
@@ -1832,7 +1931,7 @@
                 "parent_name": "simplix_orth",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 468,
+                "line": 469,
                 "column": 8,
                 "hidden": false
             },
@@ -1842,7 +1941,7 @@
                 "parent_name": "simplix_orth",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 474,
+                "line": 475,
                 "column": 8,
                 "hidden": false
             },
@@ -1852,7 +1951,7 @@
                 "parent_name": "",
                 "name": "simplix",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 503,
+                "line": 504,
                 "column": 7,
                 "hidden": false
             },
@@ -1862,7 +1961,7 @@
                 "parent_name": "simplix",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 507,
+                "line": 508,
                 "column": 8,
                 "hidden": false
             },
@@ -1872,7 +1971,7 @@
                 "parent_name": "simplix",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 520,
+                "line": 523,
                 "column": 8,
                 "hidden": false
             },
@@ -1882,7 +1981,7 @@
                 "parent_name": "simplix",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 544,
+                "line": 547,
                 "column": 8,
                 "hidden": false
             },
@@ -1892,7 +1991,57 @@
                 "parent_name": "simplix",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 550,
+                "line": 553,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@clf_l",
+                "kind": 2,
+                "parent_name": "",
+                "name": "clf_l",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 604,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@clf_l@F@F#&I#",
+                "kind": 7,
+                "parent_name": "clf_l",
+                "name": "F(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 608,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@clf_l@F@gLP#&I#",
+                "kind": 7,
+                "parent_name": "clf_l",
+                "name": "gLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 623,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@clf_l@F@hLP#&I#",
+                "kind": 7,
+                "parent_name": "clf_l",
+                "name": "hLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 632,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@clf_l@F@dgLP#&I#",
+                "kind": 7,
+                "parent_name": "clf_l",
+                "name": "dgLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 649,
                 "column": 8,
                 "hidden": false
             },
@@ -1902,7 +2051,7 @@
                 "parent_name": "",
                 "name": "rep_cf",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 601,
+                "line": 664,
                 "column": 7,
                 "hidden": false
             },
@@ -1912,7 +2061,7 @@
                 "parent_name": "rep_cf",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 605,
+                "line": 668,
                 "column": 8,
                 "hidden": false
             },
@@ -1922,7 +2071,7 @@
                 "parent_name": "rep_cf",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 618,
+                "line": 681,
                 "column": 8,
                 "hidden": false
             },
@@ -1932,7 +2081,7 @@
                 "parent_name": "rep_cf",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 627,
+                "line": 690,
                 "column": 8,
                 "hidden": false
             },
@@ -1942,7 +2091,7 @@
                 "parent_name": "rep_cf",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 649,
+                "line": 712,
                 "column": 8,
                 "hidden": false
             },
@@ -1952,7 +2101,7 @@
                 "parent_name": "",
                 "name": "rep_varimax",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 668,
+                "line": 731,
                 "column": 7,
                 "hidden": false
             },
@@ -1962,7 +2111,7 @@
                 "parent_name": "rep_varimax",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 672,
+                "line": 735,
                 "column": 8,
                 "hidden": false
             },
@@ -1972,7 +2121,7 @@
                 "parent_name": "rep_varimax",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 683,
+                "line": 746,
                 "column": 8,
                 "hidden": false
             },
@@ -1982,7 +2131,7 @@
                 "parent_name": "rep_varimax",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 690,
+                "line": 753,
                 "column": 8,
                 "hidden": false
             },
@@ -1992,7 +2141,7 @@
                 "parent_name": "rep_varimax",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 704,
+                "line": 767,
                 "column": 8,
                 "hidden": false
             },
@@ -2002,7 +2151,7 @@
                 "parent_name": "",
                 "name": "rep_varimin",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 719,
+                "line": 782,
                 "column": 7,
                 "hidden": false
             },
@@ -2012,7 +2161,7 @@
                 "parent_name": "rep_varimin",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 723,
+                "line": 786,
                 "column": 8,
                 "hidden": false
             },
@@ -2022,7 +2171,7 @@
                 "parent_name": "rep_varimin",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 734,
+                "line": 797,
                 "column": 8,
                 "hidden": false
             },
@@ -2032,7 +2181,7 @@
                 "parent_name": "rep_varimin",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 744,
+                "line": 807,
                 "column": 8,
                 "hidden": false
             },
@@ -2042,7 +2191,7 @@
                 "parent_name": "rep_varimin",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 758,
+                "line": 821,
                 "column": 8,
                 "hidden": false
             },
@@ -2052,7 +2201,7 @@
                 "parent_name": "",
                 "name": "rep_oblimin",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 773,
+                "line": 836,
                 "column": 7,
                 "hidden": false
             },
@@ -2062,7 +2211,7 @@
                 "parent_name": "rep_oblimin",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 777,
+                "line": 840,
                 "column": 8,
                 "hidden": false
             },
@@ -2072,7 +2221,7 @@
                 "parent_name": "rep_oblimin",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 790,
+                "line": 853,
                 "column": 8,
                 "hidden": false
             },
@@ -2082,7 +2231,7 @@
                 "parent_name": "rep_oblimin",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 797,
+                "line": 860,
                 "column": 8,
                 "hidden": false
             },
@@ -2092,7 +2241,7 @@
                 "parent_name": "rep_oblimin",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 809,
+                "line": 872,
                 "column": 8,
                 "hidden": false
             },
@@ -2102,7 +2251,7 @@
                 "parent_name": "",
                 "name": "rep_geomin",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 824,
+                "line": 887,
                 "column": 7,
                 "hidden": false
             },
@@ -2112,7 +2261,7 @@
                 "parent_name": "rep_geomin",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 828,
+                "line": 891,
                 "column": 8,
                 "hidden": false
             },
@@ -2122,7 +2271,7 @@
                 "parent_name": "rep_geomin",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 843,
+                "line": 906,
                 "column": 8,
                 "hidden": false
             },
@@ -2132,7 +2281,7 @@
                 "parent_name": "rep_geomin",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 857,
+                "line": 920,
                 "column": 8,
                 "hidden": false
             },
@@ -2142,7 +2291,7 @@
                 "parent_name": "rep_geomin",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 880,
+                "line": 943,
                 "column": 8,
                 "hidden": false
             },
@@ -2152,7 +2301,7 @@
                 "parent_name": "",
                 "name": "rep_target",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 903,
+                "line": 966,
                 "column": 7,
                 "hidden": false
             },
@@ -2162,7 +2311,7 @@
                 "parent_name": "rep_target",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 906,
+                "line": 969,
                 "column": 8,
                 "hidden": false
             },
@@ -2172,7 +2321,7 @@
                 "parent_name": "rep_target",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 916,
+                "line": 979,
                 "column": 8,
                 "hidden": false
             },
@@ -2182,7 +2331,7 @@
                 "parent_name": "rep_target",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 924,
+                "line": 987,
                 "column": 8,
                 "hidden": false
             },
@@ -2192,7 +2341,7 @@
                 "parent_name": "rep_target",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 933,
+                "line": 996,
                 "column": 8,
                 "hidden": false
             },
@@ -2202,7 +2351,7 @@
                 "parent_name": "",
                 "name": "rep_xtarget",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 948,
+                "line": 1011,
                 "column": 7,
                 "hidden": false
             },
@@ -2212,7 +2361,7 @@
                 "parent_name": "rep_xtarget",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 952,
+                "line": 1015,
                 "column": 8,
                 "hidden": false
             },
@@ -2222,7 +2371,7 @@
                 "parent_name": "rep_xtarget",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 966,
+                "line": 1029,
                 "column": 8,
                 "hidden": false
             },
@@ -2232,7 +2381,7 @@
                 "parent_name": "rep_xtarget",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 975,
+                "line": 1038,
                 "column": 8,
                 "hidden": false
             },
@@ -2242,7 +2391,7 @@
                 "parent_name": "rep_xtarget",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 987,
+                "line": 1050,
                 "column": 8,
                 "hidden": false
             },
@@ -2252,7 +2401,7 @@
                 "parent_name": "",
                 "name": "rep_equavar",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1003,
+                "line": 1066,
                 "column": 7,
                 "hidden": false
             },
@@ -2262,7 +2411,7 @@
                 "parent_name": "rep_equavar",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1007,
+                "line": 1070,
                 "column": 8,
                 "hidden": false
             },
@@ -2272,7 +2421,7 @@
                 "parent_name": "rep_equavar",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1021,
+                "line": 1084,
                 "column": 8,
                 "hidden": false
             },
@@ -2282,7 +2431,7 @@
                 "parent_name": "rep_equavar",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1035,
+                "line": 1098,
                 "column": 8,
                 "hidden": false
             },
@@ -2292,7 +2441,7 @@
                 "parent_name": "rep_equavar",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1041,
+                "line": 1104,
                 "column": 8,
                 "hidden": false
             },
@@ -2302,7 +2451,7 @@
                 "parent_name": "",
                 "name": "rep_simplix_orth",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1077,
+                "line": 1140,
                 "column": 7,
                 "hidden": false
             },
@@ -2312,7 +2461,7 @@
                 "parent_name": "rep_simplix_orth",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1081,
+                "line": 1144,
                 "column": 8,
                 "hidden": false
             },
@@ -2322,7 +2471,7 @@
                 "parent_name": "rep_simplix_orth",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1097,
+                "line": 1161,
                 "column": 8,
                 "hidden": false
             },
@@ -2332,7 +2481,7 @@
                 "parent_name": "rep_simplix_orth",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1112,
+                "line": 1176,
                 "column": 8,
                 "hidden": false
             },
@@ -2342,7 +2491,7 @@
                 "parent_name": "rep_simplix_orth",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1118,
+                "line": 1182,
                 "column": 8,
                 "hidden": false
             },
@@ -2352,7 +2501,7 @@
                 "parent_name": "",
                 "name": "rep_simplix",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1150,
+                "line": 1214,
                 "column": 7,
                 "hidden": false
             },
@@ -2362,7 +2511,7 @@
                 "parent_name": "rep_simplix",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1154,
+                "line": 1218,
                 "column": 8,
                 "hidden": false
             },
@@ -2372,7 +2521,7 @@
                 "parent_name": "rep_simplix",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1171,
+                "line": 1237,
                 "column": 8,
                 "hidden": false
             },
@@ -2382,7 +2531,7 @@
                 "parent_name": "rep_simplix",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1200,
+                "line": 1266,
                 "column": 8,
                 "hidden": false
             },
@@ -2392,7 +2541,57 @@
                 "parent_name": "rep_simplix",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1206,
+                "line": 1272,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@rep_clf_l",
+                "kind": 2,
+                "parent_name": "",
+                "name": "rep_clf_l",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 1328,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@rep_clf_l@F@F#&I#",
+                "kind": 7,
+                "parent_name": "rep_clf_l",
+                "name": "F(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 1332,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@rep_clf_l@F@gLP#&I#",
+                "kind": 7,
+                "parent_name": "rep_clf_l",
+                "name": "gLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 1350,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@rep_clf_l@F@hLP#&I#",
+                "kind": 7,
+                "parent_name": "rep_clf_l",
+                "name": "hLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 1363,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@rep_clf_l@F@dgLP#&I#",
+                "kind": 7,
+                "parent_name": "rep_clf_l",
+                "name": "dgLP(int &)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
+                "line": 1369,
                 "column": 8,
                 "hidden": false
             },
@@ -2402,7 +2601,7 @@
                 "parent_name": "",
                 "name": "TL",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1262,
+                "line": 1388,
                 "column": 7,
                 "hidden": false
             },
@@ -2412,7 +2611,7 @@
                 "parent_name": "TL",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1266,
+                "line": 1392,
                 "column": 8,
                 "hidden": false
             },
@@ -2422,7 +2621,7 @@
                 "parent_name": "TL",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1285,
+                "line": 1411,
                 "column": 8,
                 "hidden": false
             },
@@ -2432,7 +2631,7 @@
                 "parent_name": "TL",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1319,
+                "line": 1445,
                 "column": 8,
                 "hidden": false
             },
@@ -2442,27 +2641,27 @@
                 "parent_name": "TL",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1325,
+                "line": 1451,
                 "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@F@choose_rep_criterion#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S0_#",
+                "usr": "c:@F@choose_rep_criterion#I#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "choose_rep_criterion(std::string, std::string)",
+                "name": "choose_rep_criterion(int, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1383,
+                "line": 1509,
                 "column": 21,
                 "hidden": false
             },
             {
-                "usr": "c:@F@choose_between_blocks#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@choose_between_blocks#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "choose_between_blocks(std::string)",
+                "name": "choose_between_blocks(int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1444,
+                "line": 1574,
                 "column": 21,
                 "hidden": false
             },
@@ -2472,7 +2671,7 @@
                 "parent_name": "",
                 "name": "mixed",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1462,
+                "line": 1592,
                 "column": 7,
                 "hidden": false
             },
@@ -2482,7 +2681,7 @@
                 "parent_name": "mixed",
                 "name": "F(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1466,
+                "line": 1596,
                 "column": 8,
                 "hidden": false
             },
@@ -2492,7 +2691,7 @@
                 "parent_name": "mixed",
                 "name": "gLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1497,
+                "line": 1627,
                 "column": 8,
                 "hidden": false
             },
@@ -2502,7 +2701,7 @@
                 "parent_name": "mixed",
                 "name": "hLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1528,
+                "line": 1658,
                 "column": 8,
                 "hidden": false
             },
@@ -2512,18 +2711,8 @@
                 "parent_name": "mixed",
                 "name": "dgLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1561,
+                "line": 1691,
                 "column": 8,
-                "hidden": false
-            },
-            {
-                "usr": "c:@F@choose_criterion#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#I#",
-                "kind": 6,
-                "parent_name": "",
-                "name": "choose_criterion(int, std::string, int)",
-                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_criteria.h",
-                "line": 1596,
-                "column": 21,
                 "hidden": false
             }
         ],
@@ -2531,7 +2720,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@rotation_manifold",
@@ -2609,7 +2798,7 @@
                 "parent_name": "orth",
                 "name": "proj(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 83,
+                "line": 88,
                 "column": 8,
                 "hidden": false
             },
@@ -2619,7 +2808,7 @@
                 "parent_name": "orth",
                 "name": "hess(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 89,
+                "line": 94,
                 "column": 8,
                 "hidden": false
             },
@@ -2629,7 +2818,7 @@
                 "parent_name": "orth",
                 "name": "retr(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 99,
+                "line": 104,
                 "column": 8,
                 "hidden": false
             },
@@ -2639,7 +2828,7 @@
                 "parent_name": "",
                 "name": "oblq",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 112,
+                "line": 117,
                 "column": 7,
                 "hidden": false
             },
@@ -2649,7 +2838,7 @@
                 "parent_name": "oblq",
                 "name": "param(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 116,
+                "line": 121,
                 "column": 8,
                 "hidden": false
             },
@@ -2659,7 +2848,7 @@
                 "parent_name": "oblq",
                 "name": "dLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 124,
+                "line": 129,
                 "column": 8,
                 "hidden": false
             },
@@ -2669,7 +2858,7 @@
                 "parent_name": "oblq",
                 "name": "grad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 134,
+                "line": 139,
                 "column": 8,
                 "hidden": false
             },
@@ -2679,7 +2868,7 @@
                 "parent_name": "oblq",
                 "name": "dgrad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 151,
+                "line": 156,
                 "column": 8,
                 "hidden": false
             },
@@ -2689,7 +2878,7 @@
                 "parent_name": "oblq",
                 "name": "g_constraints(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 168,
+                "line": 173,
                 "column": 8,
                 "hidden": false
             },
@@ -2699,7 +2888,7 @@
                 "parent_name": "oblq",
                 "name": "proj(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 202,
+                "line": 217,
                 "column": 8,
                 "hidden": false
             },
@@ -2709,7 +2898,7 @@
                 "parent_name": "oblq",
                 "name": "hess(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 208,
+                "line": 223,
                 "column": 8,
                 "hidden": false
             },
@@ -2719,7 +2908,7 @@
                 "parent_name": "oblq",
                 "name": "retr(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 217,
+                "line": 232,
                 "column": 8,
                 "hidden": false
             },
@@ -2729,7 +2918,7 @@
                 "parent_name": "",
                 "name": "poblq",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 227,
+                "line": 242,
                 "column": 7,
                 "hidden": false
             },
@@ -2739,7 +2928,7 @@
                 "parent_name": "poblq",
                 "name": "param(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 231,
+                "line": 246,
                 "column": 8,
                 "hidden": false
             },
@@ -2749,7 +2938,7 @@
                 "parent_name": "poblq",
                 "name": "dLP(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 239,
+                "line": 254,
                 "column": 8,
                 "hidden": false
             },
@@ -2759,7 +2948,7 @@
                 "parent_name": "poblq",
                 "name": "grad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 249,
+                "line": 264,
                 "column": 8,
                 "hidden": false
             },
@@ -2769,7 +2958,7 @@
                 "parent_name": "poblq",
                 "name": "dgrad(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 266,
+                "line": 281,
                 "column": 8,
                 "hidden": false
             },
@@ -2779,7 +2968,7 @@
                 "parent_name": "poblq",
                 "name": "g_constraints(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 283,
+                "line": 298,
                 "column": 8,
                 "hidden": false
             },
@@ -2789,7 +2978,7 @@
                 "parent_name": "poblq",
                 "name": "proj(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 317,
+                "line": 345,
                 "column": 8,
                 "hidden": false
             },
@@ -2799,7 +2988,7 @@
                 "parent_name": "poblq",
                 "name": "hess(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 332,
+                "line": 361,
                 "column": 8,
                 "hidden": false
             },
@@ -2809,17 +2998,17 @@
                 "parent_name": "poblq",
                 "name": "retr(int &)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 361,
+                "line": 392,
                 "column": 8,
                 "hidden": false
             },
             {
-                "usr": "c:@F@choose_manifold#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@F@choose_manifold#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "choose_manifold(std::string)",
+                "name": "choose_manifold(int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 403,
+                "line": 434,
                 "column": 20,
                 "hidden": false
             },
@@ -2829,7 +3018,7 @@
                 "parent_name": "",
                 "name": "retr_orth(arma::mat)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 426,
+                "line": 457,
                 "column": 11,
                 "hidden": false
             },
@@ -2839,17 +3028,17 @@
                 "parent_name": "",
                 "name": "retr_oblq(arma::mat)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 435,
+                "line": 466,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@retr_poblq#$@N@arma@S@Mat>#d#$@N@arma@S@Col>#i#",
+                "usr": "c:@F@retr_poblq#$@N@arma@S@Mat>#d#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "retr_poblq(arma::mat, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 443,
+                "line": 474,
                 "column": 11,
                 "hidden": false
             },
@@ -2859,7 +3048,7 @@
                 "parent_name": "",
                 "name": "random_orth(int, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 462,
+                "line": 493,
                 "column": 11,
                 "hidden": false
             },
@@ -2869,17 +3058,17 @@
                 "parent_name": "",
                 "name": "random_oblq(int, int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 473,
+                "line": 504,
                 "column": 11,
                 "hidden": false
             },
             {
-                "usr": "c:@F@random_poblq#I#I#$@N@arma@S@Col>#i#",
+                "usr": "c:@F@random_poblq#I#I#$@N@arma@S@Col>#I#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "random_poblq(int, int, arma::uvec)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_manifolds.h",
-                "line": 482,
+                "line": 513,
                 "column": 11,
                 "hidden": false
             }
@@ -2888,7 +3077,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@rotation_optim",
@@ -2941,12 +3130,52 @@
                 "hidden": false
             },
             {
-                "usr": "c:@F@choose_optim#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#",
+                "usr": "c:@S@BFGS",
+                "kind": 2,
+                "parent_name": "",
+                "name": "BFGS",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
+                "line": 44,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@BFGS@F@optim#I#*I#S0_#",
+                "kind": 7,
+                "parent_name": "BFGS",
+                "name": "optim(int, int *, int *)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
+                "line": 48,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@LBFGS",
+                "kind": 2,
+                "parent_name": "",
+                "name": "LBFGS",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
+                "line": 59,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@S@LBFGS@F@optim#I#*I#S0_#",
+                "kind": 7,
+                "parent_name": "LBFGS",
+                "name": "optim(int, int *, int *)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
+                "line": 63,
+                "column": 7,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@choose_optim#I#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "choose_optim(std::string)",
+                "name": "choose_optim(int)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/rotation_optim.h",
-                "line": 42,
+                "line": 74,
                 "column": 17,
                 "hidden": false
             }
@@ -2955,13 +3184,13 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/se.h",
-        "file_last_write": 1654036579.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
-                "usr": "c:@F@se#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Mat>#d#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#d#",
+                "usr": "c:@F@se#I#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Mat>#d#I#d#",
                 "kind": 6,
                 "parent_name": "",
-                "name": "se(Rcpp::List, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, std::string, double)",
+                "name": "se(Rcpp::List, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, int, double)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/se.h",
                 "line": 15,
                 "column": 12,
@@ -2972,7 +3201,7 @@
     },
     {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-        "file_last_write": 1656362799.0,
+        "file_last_write": 1681321222.0,
         "definitions": [
             {
                 "usr": "c:@S@arguments_rotate",
@@ -2990,7 +3219,7 @@
                 "parent_name": "",
                 "name": "args",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-                "line": 67,
+                "line": 71,
                 "column": 3,
                 "hidden": false
             },
@@ -3000,7 +3229,7 @@
                 "parent_name": "",
                 "name": "arguments_efast",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-                "line": 69,
+                "line": 73,
                 "column": 16,
                 "hidden": false
             },
@@ -3010,7 +3239,7 @@
                 "parent_name": "",
                 "name": "args_efast",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-                "line": 91,
+                "line": 95,
                 "column": 3,
                 "hidden": false
             },
@@ -3020,7 +3249,7 @@
                 "parent_name": "",
                 "name": "arguments_efa",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-                "line": 93,
+                "line": 97,
                 "column": 16,
                 "hidden": false
             },
@@ -3030,8 +3259,28 @@
                 "parent_name": "",
                 "name": "args_efa",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
-                "line": 102,
+                "line": 120,
                 "column": 3,
+                "hidden": false
+            },
+            {
+                "usr": "c:structures.h@T@efa_NTR",
+                "kind": 8,
+                "parent_name": "",
+                "name": "efa_NTR",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
+                "line": 122,
+                "column": 72,
+                "hidden": false
+            },
+            {
+                "usr": "c:structures.h@T@NTR",
+                "kind": 8,
+                "parent_name": "",
+                "name": "NTR",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/structures.h",
+                "line": 124,
+                "column": 72,
                 "hidden": false
             }
         ],
