@@ -1,9 +1,17 @@
 #' @title
 #' Confirmatory factor analysis.
 #' @export
-cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
+cfast <- function(data, target, targetphi = NULL, targetpsi = NULL, cor = "pearson",
                   estimator = "uls", missing = "pairwise.complete.cases",
-                  nobs = NULL, control = NULL) {
+                  nobs = NULL, group = NULL, invariance = "metric",
+                  control = NULL, positive = FALSE) {
+
+  # cor = "pearson"; estimator = "uls";
+  # missing = "pairwise.complete.cases"
+  # nobs = 500; control = NULL;
+  # X <- S
+  # positive = TRUE
+  # group = NULL; invariance = "metric"
 
   # S is a list of correlation matrices (one for each group)
   # target is a list of matrices for the loadings indicating the parameters
@@ -16,14 +24,87 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
   # The targets must be fully specified, that is, every entry in a target
   # must contain either a character or a numeric value
 
-  n <- length(X) # Number of groups
+  if(is.matrix(target)) {
+    target1 <- target
+    target <- list()
+    target[[1]] <- target1
+  }
+
+  if(is.null(targetphi)) {
+    for(i in 1:n) {
+      q <- ncol(target[[i]])
+      targetphi[[i]] <- diag(q)
+    }
+  } else if(is.matrix(targetphi)) {
+    targetphi1 <- targetphi
+    targetphi <- list()
+    targetphi[[1]] <- targetphi1
+  }
+
+  if(is.null(targetpsi)) {
+    for(i in 1:n) {
+      p <- nrow(target[[i]])
+      targetpsi[[i]] <- matrix(0, p, p)
+      diag(targetpsi[[i]]) <- paste(i, "psi", 1:p, sep = "")
+    }
+  } else if(is.matrix(targetpsi)) {
+    targetpsi1 <- targetpsi
+    targetpsi <- list()
+    targetpsi[[1]] <- targetpsi1
+  }
+
+  if(is.data.frame(data) & !is.null(group)) {
+
+    groups <- unique(data$group)
+    n <- length(groups)
+    if(n == 1L) stop("Group invariance is not possible with only one group")
+    data1 <- data
+    data <- list()
+    remove <- which(colnames(data1) == "group")
+
+    for(i in 1:n) {
+      data[[i]] <- as.matrix(data1[data1$group == groups[i], -remove])
+      nobs <- vector(length = n)
+      nobs[i] <- nrows(data[[i]])
+    }
+
+    if(invariance == "metric") {
+      for(i in 1:n) {
+        target[[i]] = target[[1]]
+      }
+    } else if(invariance == "scalar") {
+      for(i in 1:n) {
+        target[[i]] = target[[1]]
+      }
+    } else if(invariance == "residual") {
+      for(i in 1:n) {
+        target[[i]] = target[[1]]
+        targetpsi[[i]] = targetpsi[[1]]
+      }
+    } else {
+      stop("Unkown invariance")
+    }
+
+  }
+
+  n <- length(data) # Number of groups
   p <- q <- vector(length = n) # Number of variables (p) and factors (q) in each group
   Lambda <- Phi <- Psi <-
     indexes_lambda <- indexes_phi <- indexes_psi <-
     indexes_target <- indexes_targetphi <- indexes_targetpsi <-
     lambda_hat <- phi_hat <- psi_hat <- uniquenesses_hat <-
-    R <- Rhat <- residuals <- list()
+    R <- Rhat <- residuals <- fill_Phi_Target <- free_indices_phi <- list()
   indexes_factorvars <- indexes_uniquenesses <- c()
+  original_targetphi <- targetphi
+
+  if(positive) {
+    for(i in 1:n) {
+      fill_Phi_Target[[i]] <- which(is.na(suppressWarnings(as.numeric(targetphi[[i]]))))
+      length_phi <- prod(dim(targetphi[[i]]))
+      targetphi[[i]] <- matrix(paste(i, "proj", 1:length_phi, sep = ""),
+                               nrow(targetphi[[i]]), ncol(targetphi[[i]]))
+    }
+  }
 
   # Find the unique elements in all the targets:
   uniques <- unique(unlist(c(target, targetphi, targetpsi)))
@@ -39,10 +120,16 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
 
     p[i] <- nrow(target[[i]]) # Number of variables in group i
     q[i] <- ncol(target[[i]]) # Number of factors in group i
+    free_indices_phi[[i]] <- integer(0)
 
     # Find which elements in the targets correspond to a parameter:
     indexes_target[[i]] <- which(target[[i]] %in% parameter_vector) # Which lambdas are estimated in group i
-    indexes_targetphi[[i]] <- which(targetphi[[i]] %in% parameter_vector & lower.tri(targetphi[[i]], diag = TRUE)) # Which phis are estimated in group i
+    if(positive) {
+      indexes_targetphi[[i]] <- which(targetphi[[i]] %in% parameter_vector) # Which phis are estimated in group i
+      free_indices_phi[[i]] <- which(is.na(suppressWarnings(as.numeric(diag(original_targetphi[[i]])))))
+    } else {
+      indexes_targetphi[[i]] <- which(targetphi[[i]] %in% parameter_vector & lower.tri(targetphi[[i]], diag = TRUE)) # Which phis are estimated in group i
+    }
     indexes_targetpsi[[i]] <- which(targetpsi[[i]] %in% parameter_vector & lower.tri(targetpsi[[i]], diag = TRUE)) # Which psis are estimated in group i
 
     # Get the indexes for the factor variances:
@@ -97,6 +184,7 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
     lambda_hat[[i]][indexes_fixtarget] <- fixed_vector[indexes_fixlambda]
     # non-specified elements in phi are zero if off-diagonal and 1 if diagonal:
     phi_hat[[i]] <- matrix(0, q[i], q[i]); #diag(phi_hat[[i]]) <- 1
+    if(positive) phi_hat[[i]][fill_Phi_Target[[i]]] <- 1
     phi_hat[[i]][indexes_fixtargetphi] <- fixed_vector[indexes_fixphi]
     # non-specified elements in psi are zero if off-diagonal and estimated if diagonal:
     psi_hat[[i]] <- matrix(0, p[i], p[i])
@@ -108,10 +196,10 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
 
     # Initial lambda and uniqueness values based on the eigendecomposition of
     # the reduced correlation matrix:
-    if(nrow(X[[i]]) == ncol(X[[i]])) {
-      S <- X[[i]]
+    if(nrow(data[[i]]) == ncol(data[[i]])) {
+      S <- data[[i]]
     } else {
-      S <- cor(X[[i]])
+      S <- cor(data[[i]])
     }
     u <- 1/diag(solve(S))
     diag(S) <- u
@@ -152,7 +240,19 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
     x <- init #c(stats::runif(lambda_p), rep(0.5, phi_p), rep(0.5, psi_p))
   }
 
-  fit <- cfa(parameters = x, X = X, nfactors = q, nobs = rep(100, n),
+  if(positive) {
+    projection = "positive"
+  } else {
+    projection <- "id"
+  }
+
+  if(length(cor) == 1L) cor <- rep(cor, n)
+  if(length(estimator) == 1L) estimator <- rep(estimator, n)
+  if(length(projection) == 1L) projection <- rep(projection, n)
+  if(length(missing) == 1L) missing <- rep(missing, n)
+  if(length(nobs) == 1L) nobs <- rep(nobs, n)
+
+  fit <- cfa(parameters = x, X = data, nfactors = q, nobs = nobs,
              lambda = lambda_hat, phi = phi_hat, psi = psi_hat,
              lambda_indexes = indexes_lambda,
              phi_indexes = indexes_phi,
@@ -160,10 +260,15 @@ cfast <- function(X, target, targetphi, targetpsi, cor = "pearson",
              target_indexes = indexes_target,
              targetphi_indexes = indexes_targetphi,
              targetpsi_indexes = indexes_targetpsi,
-             cor = rep(cor, n), estimator = rep(estimator, n),
-             projection = rep("id", n),
+             free_indices_phi = free_indices_phi,
+             cor = cor, estimator = estimator,
+             projection = projection,
              missing = rep(missing, n),
              control = control)
+  # c(fit$cfa$parameters)[indexes_phi[[1]]]
+  # fit$cfa$phi
+  # fit$cfa$f
+  # fit$cfa$iterations
 
   # Arrange the parameter estimates in the lambda, phi, and psi matrices:
   for(i in 1:n) {

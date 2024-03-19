@@ -1,3 +1,4 @@
+#' @export
 tetrad_fit_index <- function(SampleCov, ImpliedCov) {
   ## Get all the possible four-tuple of variables
   possibilities <- combn(1:ncol(SampleCov), 4)

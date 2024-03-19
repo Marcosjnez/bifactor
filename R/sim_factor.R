@@ -435,7 +435,7 @@ cudeck <- function(R, lambda, Phi, Psi,
   # Generate random error:
 
   m <- p+1
-  U <- replicate(p, stats::runif(m, 0, 1))
+  U <- replicate(p, stats::runif(m, 1, 1))
   A1 <- t(U) %*% U
   sq <- diag(1/sqrt(diag(A1)))
   A2 <- sq %*% A1 %*% sq

@@ -129,7 +129,7 @@ retr_oblq <- function(X) {
 #'
 #' @usage
 #'
-#' retr_poblq(X, oblq_factors)
+#' retr_poblq(X, oblq_factors, PhiTarget)
 #'
 #' @param X A matrix.
 #' @param oblq_factors A vector with the number of factors for each oblique block. E.g.: c(2, 4) means that there are two blocks of oblique factors: one with 2 factors and another with 4 factors. Everything else is orthogonal.
@@ -143,11 +143,11 @@ retr_oblq <- function(X) {
 #' @examples
 #'
 #' X <- replicate(8, rnorm(8))
-#' retr_poblq(X, c(2, 3, 3))
+#' retr_poblq(X, oblq_factors = c(2, 3, 3))
 #'
 #' @export
-retr_poblq <- function(X, oblq_factors) {
-  .Call(`_bifactor_retr_poblq`, X, oblq_factors)
+retr_poblq <- function(X, oblq_factors = NULL, PhiTarget = NULL) {
+  .Call(`_bifactor_retr_poblq`, X, oblq_factors, PhiTarget)
 }
 
 #' @title

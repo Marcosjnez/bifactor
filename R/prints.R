@@ -45,7 +45,7 @@ print.efa <- function(x, nobs = NULL, ...) {
     cat("\n","Corrected HQ = ", round(fit$information["HQ", 2], 1), "\n", sep="")
   }
   # Loadings
-  cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
+  cat("Standardized loadings (pattern matrix)\n", sep = ""); print(round(lambda, 2))
   invisible(NULL)
 
 }
@@ -98,7 +98,7 @@ print.bifactor <- function(x, nobs = NULL, ...) {
     cat("\n","Corrected HQ = ", round(fit$information["HQ", 2], 1), "\n", sep="")
   }
   # Loadings
-  cat("Standardized loadings (pattern matrix)\n", sep=""); print(round(lambda, 2))
+  cat("Standardized loadings (pattern matrix)\n", sep = ""); print(round(lambda, 2))
   invisible(NULL)
 
 }
