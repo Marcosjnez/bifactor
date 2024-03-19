@@ -76,7 +76,9 @@ arma::mat retr_orth(arma::mat X);
 arma::mat retr_oblq(arma::mat X);
 
 // [[Rcpp::export]]
-arma::mat retr_poblq(arma::mat X, arma::uvec oblq_factors);
+arma::mat retr_poblq(arma::mat X,
+                     Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
+                     Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue);
 
 // [[Rcpp::export]]
 Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
@@ -222,9 +224,34 @@ Rcpp::List cfa(arma::vec parameters,
                std::vector<arma::uvec> target_indexes,
                std::vector<arma::uvec> targetphi_indexes,
                std::vector<arma::uvec> targetpsi_indexes,
+               std::vector<arma::uvec> free_indices_phi,
                Rcpp::CharacterVector cor = Rcpp::CharacterVector::create("pearson"),
                Rcpp::CharacterVector estimator = Rcpp::CharacterVector::create("uls"),
                Rcpp::CharacterVector projection = Rcpp::CharacterVector::create("id"),
                Rcpp::CharacterVector missing = Rcpp::CharacterVector::create("pairwise.complete.cases"),
                int random_starts = 1L, int cores = 1L,
                Rcpp::Nullable<Rcpp::List> control = R_NilValue);
+
+// [[Rcpp::export]]
+Rcpp::NumericVector calculate_fourtuple_tetrads(Rcpp::NumericMatrix X) {
+  Rcpp::NumericVector cors(6);
+  Rcpp::NumericVector cors_prods(3);
+  Rcpp::NumericVector tau(3);
+
+  cors[0] = X(1, 0);
+  cors[1] = X(2, 0);
+  cors[2] = X(3, 0);
+  cors[3] = X(2, 1);
+  cors[4] = X(3, 1);
+  cors[5] = X(3, 2);
+
+  cors_prods[0] = cors[0] * cors[5]; // rho_12 * rho_34
+  cors_prods[1] = cors[1] * cors[4]; // rho_13 * rho_24
+  cors_prods[2] = cors[2] * cors[3]; // rho_14 * rho_23
+
+  tau[0] = cors_prods[0] - cors_prods[1]; // tau1
+  tau[1] = cors_prods[1] - cors_prods[2]; // tau2
+  tau[2] = cors_prods[2] - cors_prods[0]; // tau3
+
+  return tau;
+}
