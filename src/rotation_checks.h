@@ -11,6 +11,10 @@
 
 void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
+  if (x.nullable_PhiTarget.isNotNull()) {
+    x.Phi_Target = Rcpp::as<arma::mat>(x.nullable_PhiTarget);
+  }
+
   // Create a list of column indexes for each block of factors:
 
   if(x.nullable_blocks.isNotNull()) {
@@ -131,6 +135,17 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
       Q.elem(set_to_zero).ones();
       x.loblq_indexes = arma::find(Q == 0);
 
+      if(!x.Phi_Target.is_empty()) {
+        // Select the indexes for the duplicated oblique entries
+        arma::mat Phi_Target = x.Phi_Target;
+        Phi_Target.diag() += 10;
+        x.oblq_indexes = arma::find(Phi_Target == 1);
+        Phi_Target.elem(set_to_zero).ones();
+        x.orth_indexes = arma::find(Phi_Target == 0);
+        Q.elem(set_to_zero).zeros();
+        x.loblq_indexes = arma::find(Phi_Target == 1);
+      }
+
       // These indexes will be used to set to zero the oblique entries in the
       // A matrix in poblq projection and to extract the rotation constraints
 
@@ -142,7 +157,8 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
 
   std::vector<std::string> all_rotations = {"cf", "oblimin", "geomin", "target",
                                             "xtarget", "varimax", "varimin",
-                                            "equavar", "simplix", "clfl", "invar", "none"};
+                                            "equavar", "simplix", "clfl", "invar",
+                                            "geomin", "none"};
 
   // Check for invalid rotations:
   for (auto i: x.rotations) {
@@ -267,6 +283,13 @@ void check_rotate(arguments_rotate& x, int random_starts, int cores) {
     // Resize the constant vector so that it has the same length as the number of blocks.
     // Put each element of the original vector in the position corresponding to the geomin block:
     x.epsilon = new_k(x.rotations, "geomin", x.epsilon);
+
+  }
+
+  // GEOMIN 2.0 ROTATION
+  if(std::find(x.rotations.begin(), x.rotations.end(), "geomin2") != x.rotations.end()) {
+
+    x.epsilones = random_orth(x.q, 1);
 
   }
 

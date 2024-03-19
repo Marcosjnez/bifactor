@@ -36,6 +36,8 @@ typedef struct arguments_rotate{
   gC1, gC, glogC, glogCN, gexplogCN, exp_lCN, gL1, gL2, I, I1, I2, Ng,
   dxtL, dxt_L2s, dmudL, dc2dL, dmudP, dc2dP, LtLxI, dxtP, expmu, expmmu, dir;
 
+  arma::vec epsilones, ge;
+
   arma::vec Lvec;
   arma::uvec lower, larger;
   std::vector<arma::uvec> loweri, largeri;
@@ -66,6 +68,12 @@ typedef struct arguments_rotate{
 
   Rcpp::Nullable<arma::mat> nullable_indexes1, nullable_indexes2;
   arma::mat indexes1, indexes2;
+
+  double k0 = 0;
+  arma::mat gmat, glambda, gphi, dglambda, dgphi, dlambda, dphi, hlambda,
+  hessian, dLPU_dS;
+  arma::vec parameters, dparameters, gradient, dgradient;
+  std::string estimator = "cf";
 
 } args;
 
@@ -119,6 +127,15 @@ typedef struct arguments_efa{
   nullable_second_efa, nullable_init;
   Rcpp::List correlation_result;
 
+  arma::mat hessian, psi, lambda_phi, W_residuals, W_residuals_lambda,
+  dlambda_dRhat_W, lambda_phit_kron_Ip, hlambda, dphi_dRhat, dpsi_dRhat, hphi,
+  hpsi, dphi_dRhat_W, Iq, dlambda_dphi, dlambda_dpsi, dpsi_dphi, Ip,
+  dpsi_dRhat_W, Rhat_inv, Ri_res_Ri;
+  arma::vec w;
+  arma::uvec lambda_indexes, target_indexes, phi_indexes, targetphi_indexes,
+  psi_indexes, targetpsi_indexes, indexes_q, indexes_diag_q, indexes_diag_p;
+
+
 } args_efa;
 
 typedef struct arguments_cor{
@@ -169,14 +186,18 @@ typedef struct arguments_cfa{
   arma::uvec indexes_diag_q, indexes_diag_p, indexes_diag_q2, indexes_p, indexes_q;
   arma::uvec target_positive;
 
+  // Partially oblique in CFA
+  arma::mat T, dT, gT, dgT, Phi_Target, A;
+  arma::uvec oblq_indexes, free_indices_phi, T_indexes, targetT_indexes;
+  bool positive = false;
+
   // Manifold stuff:
   arma::vec g, dg, rg, dH;
-  arma::mat T, dT, gP, dgP, dP;
 
   // Optim stuff:
   arma::vec dir;
   double c1 = 10e-04, c2 = 0.5, rho = 0.5, eps = 1e-05, ng = 1, ss = 1, inprod = 1;
-  int M = 5L, armijo_maxit = 10L, iteration = 0L, maxit = 1000L,
+  int m = 5L, armijo_maxit = 10L, iteration = 0L, maxit = 1000L,
     random_starts= 1L, cores = 1L;
   std::string search = "back";
   bool convergence = false;
@@ -202,6 +223,15 @@ typedef struct arguments_cfa{
   nullable_second_efa, nullable_init;
   Rcpp::List correlation_result;
 
+  // positive
+  arma::mat U, dU, dgU;
+  arma::uvec psi_oblq_indexes, free_indices_psi;
+  arma::mat Psi_Target, AU;
+
+  // rotation
+  arma::mat L2, N, M, L2N, ML2, f1, f2, gmat;
+  double k;
+
 } args_cfa;
 
 typedef struct arguments_optim{
@@ -215,9 +245,9 @@ typedef struct arguments_optim{
   std::string search = "back";
   bool convergence = false;
   arma::vec parameters, dparameters, gradient, dgradient, g, dg, rg, dH, dir;
-  arma::mat hessian;
+  arma::mat hessian, B;
   std::vector<arma::mat> dLPU_dS;
-  std::vector<arma::vec> se;
+  arma::vec se;
 
   // Checks:
   Rcpp::Nullable<Rcpp::List> nullable_control = R_NilValue;
@@ -227,9 +257,11 @@ typedef struct arguments_optim{
   // Output:
   Rcpp::List lambda, phi, psi, Rhat, residuals, R;
   std::vector<double> fs;
-  int df = 0L, df_null = 0L;
+  int df = 0L, df_null = 0L, total_nobs = 0L;
   std::vector<int> nobs, p, q;
   Rcpp::CharacterVector cor, estimator, projection;
+  std::vector<arma::mat> Phi_Target;
+  std::vector<arma::uvec> oblq_indexes;
 
 } args_opt;
 

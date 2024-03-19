@@ -26,7 +26,7 @@ public:
 };
 
 /*
- * GLS / DWLS / ULS
+ * DWLS / ULS
  */
 
 class cfa_dwls: public cfa_criterion {
@@ -54,18 +54,12 @@ public:
     x.gpsi = -2*x.W_residuals;
     x.gpsi.diag() *= 0.5;
 
-    // std::vector<arma::uvec> list_targetindices = {x.target_indexes, x.targetphi_indexes, x.targetpsi_indexes};
-    // FIX arma::uvec target_indices = cum_indices(list_targetindices);
-    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
-    // arma::uvec indices = list_to_vector(list_indices);
-    // arma::vec gL = arma::vectorise(x.glambda);
-    // arma::vec gP = arma::vectorise(x.gphi);
-    // arma::vec gU = arma::vectorise(x.gpsi);
-    // arma::vec gparameters = arma::join_cols(gL, gP, gU);
-    // x.gradient(indices) += gparameters(target_indices);
-
     x.gradient(x.lambda_indexes) += x.glambda.elem(x.target_indexes);
-    x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    // if(x.positive) {
+    //   x.gradient(x.T_indexes) += x.gphi.elem(x.targetT_indexes);
+    // } else {
+      x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    // }
     x.gradient(x.psi_indexes) += x.gpsi.elem(x.targetpsi_indexes);
 
   }
@@ -91,7 +85,11 @@ public:
     x.dgpsi.diag() *= 0.5;
 
     x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
-    x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    // if(x.positive) {
+    //   x.dgradient(x.T_indexes) += x.dgphi.elem(x.targetT_indexes);
+    // } else {
+      x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    // }
     x.dgradient(x.psi_indexes) += x.dgpsi.elem(x.targetpsi_indexes);
 
   }
@@ -167,20 +165,6 @@ public:
      * dlambda_dpsi.t()   dpsi_dphi      hpsi
      */
 
-    // arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
-    // arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
-    // arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
-    // // x.hessian = arma::join_rows(col1, col2, col3);
-    // arma::mat hessian = arma::join_rows(col1, col2, col3);
-    //
-    // std::vector<arma::uvec> list_targetindices = {x.target_indexes,
-    //                                               x.p*x.q + x.targetphi_indexes,
-    //                                               x.p*x.q + 0.5*x.q*(x.q+1L) + x.targetpsi_indexes};
-    // arma::uvec target_indices = list_to_vector(list_targetindices);
-    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
-    // arma::uvec indices = list_to_vector(list_indices);
-    // x.hessian(indices, indices) += hessian(target_indices, target_indices);
-
   }
 
   void H2(arguments_cfa& x) {
@@ -212,16 +196,6 @@ public:
     x.dpsi_dS = g; //(x.psi_indexes, x.S_indexes);
     x.dLPU_dS.rows(x.psi_indexes) += x.dpsi_dS.rows(x.targetpsi_indexes);
 
-    // std::vector<arma::uvec> list_targetindices = {x.target_indexes,
-    //                                               x.p*x.q + x.targetphi_indexes,
-    //                                               x.p*x.q + 0.5*x.q*(x.q+1L) + x.targetpsi_indexes};
-    // arma::uvec target_indices = list_to_vector(list_targetindices);
-    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
-    // arma::uvec indices = list_to_vector(list_indices);
-    //
-    // arma::mat dLPU_dS = arma::join_cols(x.dlambda_dS, x.dphi_dS, x.dpsi_dS);
-    // x.dLPU_dS.rows(indices) += dLPU_dS.rows(target_indices);
-
   }
 
   void outcomes(arguments_cfa& x) {
@@ -234,7 +208,7 @@ public:
 };
 
 /*
- * GLS / DWLS / ULS
+ * ML
  */
 
 class cfa_ml: public cfa_criterion {
@@ -276,7 +250,11 @@ public:
     x.gpsi = dRhat_invdU + dlogdetRhatdU;
 
     x.gradient(x.lambda_indexes) += x.glambda.elem(x.target_indexes);
-    x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    // if(x.positive) {
+    //   x.gradient(x.T_indexes) += x.gphi.elem(x.targetT_indexes);
+    // } else {
+      x.gradient(x.phi_indexes) += x.gphi.elem(x.targetphi_indexes);
+    // }
     x.gradient(x.psi_indexes) += x.gpsi.elem(x.targetpsi_indexes);
 
   }
@@ -286,7 +264,6 @@ public:
     x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
 
     // dglambda:
-    x.Ri_res_Ri = 2*x.Rhat_inv * -x.residuals * x.Rhat_inv;
     arma::mat dRhat = x.dlambda * x.lambda_phi.t() + x.lambda_phi * x.dlambda.t();
     arma::mat dresiduals = -dRhat;
     arma::mat dRhat_inv = -x.Rhat_inv * -dresiduals * x.Rhat_inv;
@@ -313,7 +290,11 @@ public:
     x.dgpsi = ddlogdetRhat + ddRhat_inv;
 
     x.dgradient(x.lambda_indexes) += x.dglambda.elem(x.target_indexes);
-    x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    // if(x.positive) {
+    //   x.dgradient(x.T_indexes) += x.dgphi.elem(x.targetT_indexes);
+    // } else {
+      x.dgradient(x.phi_indexes) += x.dgphi.elem(x.targetphi_indexes);
+    // }
     x.dgradient(x.psi_indexes) += x.dgpsi.elem(x.targetpsi_indexes);
 
   }
@@ -383,20 +364,6 @@ public:
      * dambda_dpsi.t()   dpsi_dphi      hpsi
      */
 
-    // arma::mat col1 = arma::join_cols(x.hlambda, x.dlambda_dphi.t(), x.dlambda_dpsi.t());
-    // arma::mat col2 = arma::join_cols(x.dlambda_dphi, x.hphi, x.dpsi_dphi);
-    // arma::mat col3 = arma::join_cols(x.dlambda_dpsi, x.dpsi_dphi.t(), x.hpsi);
-    // // x.hessian = arma::join_rows(col1, col2, col3);
-    // arma::mat hessian = arma::join_rows(col1, col2, col3);
-    //
-    // std::vector<arma::uvec> list_targetindices = {x.target_indexes,
-    //                                               x.p*x.q + x.targetphi_indexes,
-    //                                               x.p*x.q + 0.5*x.q*(x.q+1L) + x.targetpsi_indexes};
-    // arma::uvec target_indices = list_to_vector(list_targetindices);
-    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
-    // arma::uvec indices = list_to_vector(list_indices);
-    // x.hessian(indices, indices) += hessian(target_indices, target_indices);
-
   }
 
   void H2(arguments_cfa& x) {
@@ -426,16 +393,6 @@ public:
     x.dpsi_dS = h; //(x.psi_indexes, x.S_indexes);
     x.dLPU_dS.rows(x.psi_indexes) += x.dpsi_dS.rows(x.targetpsi_indexes);
 
-    // std::vector<arma::uvec> list_targetindices = {x.target_indexes,
-    //                                               x.p*x.q + x.targetphi_indexes,
-    //                                               x.p*x.q + 0.5*x.q*(x.q+1L) + x.targetpsi_indexes};
-    // arma::uvec target_indices = list_to_vector(list_targetindices);
-    // std::vector<arma::uvec> list_indices = {x.lambda_indexes, x.phi_indexes, x.psi_indexes};
-    // arma::uvec indices = list_to_vector(list_indices);
-    //
-    // arma::mat dLPU_dS = arma::join_cols(x.dlambda_dS, x.dphi_dS, x.dpsi_dS);
-    // x.dLPU_dS.rows(indices) += dLPU_dS.rows(target_indices);
-
   }
 
   void outcomes(arguments_cfa& x) {
@@ -447,181 +404,7 @@ public:
 
 };
 
-/*
- * ULS
- */
-
-class efa_uls: public cfa_criterion {
-
-public:
-
-  void F(arguments_cfa& x) {
-
-    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
-    x.reduced_R = x.R - arma::diagmat(x.psi2);
-    // x.reduced_R = x.R - arma::diagmat(x.psi);
-    eig_sym(x.eigval, x.eigvec, x.reduced_R);
-    arma::vec e = x.eigval(arma::span(0, x.p - x.q - 1));
-
-    x.f = 0.5*arma::accu(e % e);
-
-  }
-
-  void G(arguments_cfa& x) {
-
-    arma::vec e_values = x.eigval(arma::span(0, x.p - x.q - 1));
-    arma::mat e_vectors = x.eigvec(arma::span::all, arma::span(0, x.p - x.q - 1));
-    x.g_psi2 = -arma::diagvec(e_vectors * arma::diagmat(e_values) * e_vectors.t());
-
-  }
-
-  void dG(arguments_cfa& x) {
-    Rcpp::stop("uls estimator not available with this optimization algorithm");
-  }
-
-  void H(arguments_cfa& x) {}
-
-  void H2(arguments_cfa& x) {}
-
-  void outcomes(arguments_cfa& x) {
-
-    arma::vec eigval;
-    arma::mat eigvec;
-    eig_sym(eigval, eigvec, x.reduced_R);
-
-    arma::vec eigval2 = reverse(eigval);
-    arma::mat eigvec2 = reverse(eigvec, 1);
-
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, x.q-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, x.q-1));
-    for(int i=0; i < x.q; ++i) {
-      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
-    }
-    arma::mat D = arma::diagmat(sqrt(eigenvalues));
-
-    x.lambda = A * D;
-    x.Rhat = x.lambda * x.lambda.t();
-    x.uniquenesses = 1 - arma::diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
-    x.Rhat.diag() = x.R.diag();
-
-  };
-
-};
-
-/*
- * ml
- */
-
-class efa_ml: public cfa_criterion {
-
-public:
-
-  void F(arguments_cfa& x) {
-
-    // x.psi2 = 0.5*(x.lower + x.upper) + 0.5*abs(x.upper - x.lower) % sin(x.psi);
-    x.sqrt_psi = sqrt(x.psi2);
-    // x.sqrt_psi = sqrt(x.psi);
-    arma::mat sc = arma::diagmat(1/x.sqrt_psi);
-    x.reduced_R = sc * x.R * sc;
-    eig_sym(x.eigval, x.eigvec, x.reduced_R);
-    arma::vec e = x.eigval(arma::span(0, x.p - x.q - 1));
-
-    // double objective = -arma::accu(log(e) + 1/e - 1);
-    x.f = -(arma::accu(log(e) - e) + x.p - x.q);
-
-  }
-
-  void G(arguments_cfa& x) {
-
-    arma::mat A = x.eigvec(arma::span::all, arma::span(x.p-x.q, x.p-1));
-    arma::vec eigenvalues = x.eigval(arma::span(x.p-x.q, x.p-1));
-    // x.g = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi)/x.psi;
-    x.g_psi2 = ((A % A) * (eigenvalues - 1) + 1 - arma::diagvec(x.R)/x.psi2)/x.psi2;
-
-  }
-
-  void dG(arguments_cfa& x) {
-    Rcpp::stop("ml estimator not available with this optimization algorithm");
-  }
-
-  void H(arguments_cfa& x) {
-  }
-
-  void H2(arguments_cfa& x) {
-  }
-
-  void outcomes(arguments_cfa& x) {
-
-    arma::vec eigval;
-    arma::mat eigvec;
-    eig_sym(eigval, eigvec, x.reduced_R);
-
-    arma::vec eigval2 = reverse(eigval);
-    arma::mat eigvec2 = reverse(eigvec, 1);
-
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, x.q-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, x.q-1)) - 1;
-    for(int i=0; i < x.q; ++i) {
-      if(eigenvalues[i] < 0) eigenvalues[i] = 0;
-    }
-    arma::mat D = diagmat(sqrt(eigenvalues));
-    arma::mat w = A * D;
-
-    x.lambda = diagmat(x.sqrt_psi) * w;
-    x.Rhat = x.lambda * x.lambda.t();
-    x.uniquenesses = 1 - diagvec(x.Rhat);// x.R.diag() - arma::diagvec(x.Rhat) FIX
-    x.Rhat.diag() = x.R.diag();
-
-  };
-
-};
-
-/*
- * DWLS
- */
-
-class efa_dwls: public cfa_criterion {
-
-public:
-
-  void F(arguments_cfa& x) {
-
-    // W is a matrix with the inverse variance of the polychoric correlations
-    // Only the variance, not the covariances, are considered in W
-    x.Rhat = x.lambda * x.lambda.t();// + arma::diagmat(x.uniquenesses);
-    // x.Rhat.diag().ones();
-    x.residuals = x.R - x.Rhat;
-    x.f = 0.5*arma::accu(x.residuals % x.residuals % x.W);
-
-  }
-
-  void G(arguments_cfa& x) {
-
-    x.gL = -2*(x.residuals % x.W) * x.lambda; // * x.Phi;
-    // arma::mat DW_res = x.residuals % x.DW;
-    // x.gU = -arma::diagvec(DW_res);
-
-  }
-
-  void dG(arguments_cfa& x) {
-    Rcpp::stop("dwls estimator not available with this optimization algorithm");
-  }
-
-  void H(arguments_cfa& x) {}
-
-  void H2(arguments_cfa& x) {}
-
-  void outcomes(arguments_cfa& x) {
-
-    x.Rhat = x.lambda * x.lambda.t();
-    x.uniquenesses = 1 - arma::diagvec(x.Rhat); // x.R.diag() - arma::diagvec(x.Rhat) FIX
-    x.Rhat.diag() = x.R.diag();
-
-  };
-
-};
-
-// Choose the cor criteria:
+// Choose the cfa criteria:
 
 cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
@@ -635,21 +418,9 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
     Rcpp::stop("estimator gls not available yet");
 
-  } else if (estimator == "efa_uls") {
-
-    criterion = new efa_uls();
-
   } else if (estimator == "ml") {
 
     criterion = new cfa_ml();
-
-  } else if(estimator == "efa_ml") {
-
-    criterion = new efa_ml();
-
-  } else if(estimator == "efa_dwls") {
-
-    criterion = new efa_dwls();
 
   } else if(estimator == "minrank") {
 
@@ -657,7 +428,7 @@ cfa_criterion* choose_cfa_criterion(std::string estimator) {
 
   } else {
 
-    Rcpp::stop("Available estimators: uls, ml, dwls, and gls");
+    Rcpp::stop("Available estimators: uls, dwls, ml, and gls");
 
   }
 
@@ -793,6 +564,9 @@ public:
       x.p[i] = structs[i].p;
       x.q[i] = structs[i].q;
       x.nobs[i] = structs[i].nobs;
+      // x.Phi_Target[i] = structs[i].Phi_Target;
+      // x.oblq_indexes[i] = structs[i].oblq_indexes;
+      x.total_nobs += x.nobs[i];
 
     }
 
@@ -801,3 +575,245 @@ public:
   }
 
 };
+
+// // Criteria for rotation
+//
+// class rot_criterion {
+//
+// public:
+//
+//   virtual void F(arguments_rotate& x) = 0;
+//
+//   virtual void G(arguments_rotate& x) = 0;
+//
+//   virtual void dG(arguments_rotate& x) = 0;
+//
+//   virtual void H(arguments_rotate& x) = 0;
+//
+//   virtual void H2(arguments_rotate& x) = 0;
+//
+//   virtual void outcomes(arguments_rotate& x) = 0;
+//
+// };
+//
+// /*
+//  * Crawford-Ferguson
+//  */
+//
+// class rot_cf: public rot_criterion {
+//
+// public:
+//
+//   void F(arguments_rotate& x){
+//
+//     if(x.projection == "orth") {
+//       x.L = x.lambda * x.T;
+//     } else {
+//       x.Phi = x.T.t() * x.T;
+//       x.Inv_T = arma::inv(x.T);
+//       x.L = x.lambda * x.Inv_T.t();
+//     }
+//     x.L2 = x.L % x.L;
+//     x.L2N = x.L2 * x.N;
+//     x.ML2 = x.M * x.L2;
+//     double ff1 = (1-x.k0) * arma::accu(x.L2 % x.L2N) / 4;
+//     double ff2 = x.k0 * arma::accu(x.L2 % x.ML2) / 4;
+//
+//     x.f = ff1 + ff2;
+//
+//   }
+//
+//   void G(arguments_rotate& x){
+//
+//     x.f1 = (1-x.k0) * x.lambda % x.L2N;
+//     x.f2 = x.k0 * x.lambda % x.ML2;
+//     x.glambda += x.f1 + x.f2;
+//
+//     if(x.projection == "orth") {
+//       x.gmat = x.lambda.t() * x.glambda;
+//       x.gradient = arma::vectorise(x.gmat);
+//     } else {
+//       x.gmat = -x.Inv_T.t() * x.glambda.t() * x.L;
+//       x.gradient = arma::vectorise(x.gmat);
+//     }
+//
+//   }
+//
+//   void dG(arguments_rotate& x) {
+//
+//     arma::mat dL2 = 2 * x.dlambda % x.lambda;
+//     arma::mat df1 = (1-x.k0) * x.dlambda % x.L2N + (1-x.k0) * x.lambda % (dL2 * x.N);
+//     arma::mat df2 = x.k0 * x.dlambda % x.ML2 + x.k0 * x.lambda % (x.M * dL2);
+//     x.dglambda += df1 + df2;
+//
+//     if(x.projection == "orth") {
+//       x.dgradient = arma::vectorise(x.lambda.t() * x.dglambda);
+//     } else {
+//       x.dgradient = arma::vectorise(-x.gmat * x.Inv_T_dt.t() -
+//         (x.dT * x.Inv_T).t() * x.gmat - (x.dglambda * x.Inv_T).t() * x.L);
+//     }
+//
+//   }
+//
+//   void H(arguments_rotate& x) {
+//
+//     arma::colvec L_vector = arma::vectorise(x.lambda);
+//
+//     arma::mat Ip(x.p, x.p, arma::fill::eye);
+//     arma::mat c1 = arma::kron(x.N.t(), Ip) * arma::diagmat(2*L_vector);
+//     c1.each_col() %= L_vector;
+//     arma::mat c2 = arma::diagmat(arma::vectorise(x.L2 * x.N));
+//     arma::mat gf1 = (1-x.k0) * (c1 + c2);
+//
+//     arma::mat Iq(x.q, x.q, arma::fill::eye);
+//     arma::mat c3 = arma::kron(Iq, x.M) * arma::diagmat(2*L_vector);
+//     c3.each_col() %= L_vector;
+//     arma::mat c4 = arma::diagmat(arma::vectorise(x.M * x.L2));
+//     arma::mat gf2 = x.k0 * (c3 + c4);
+//     x.hlambda = gf1 + gf2;
+//
+//   }
+//
+//   void H2(arguments_rotate& x) {}
+//
+//   void outcomes(arguments_rotate& x) {}
+//
+// };
+//
+// // Choose the cor criteria:
+//
+// rot_criterion* choose_rot_criterion(std::string estimator) {
+//
+//   rot_criterion *criterion;
+//
+//   if(estimator == "cf") {
+//
+//     criterion = new rot_cf();
+//
+//   } else {
+//
+//     Rcpp::stop("Available estimators: cf");
+//
+//   }
+//
+//   return criterion;
+//
+// }
+//
+// class rot_criterion2 {
+//
+// public:
+//
+//   virtual void F(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+//   virtual void G(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+//   virtual void dG(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+//   virtual void H(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+//   virtual void H2(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+//   virtual void outcomes(arguments_optim& x, std::vector<arguments_rotate>& structs) = 0;
+//
+// };
+//
+// class ultimate_rot_criterion: public rot_criterion2 {
+//
+// public:
+//
+//   void F(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     rot_criterion* criterion;
+//     x.f = 0;
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       criterion = choose_rot_criterion(structs[i].estimator);
+//       criterion->F(structs[i]);
+//       x.f += structs[i].f;
+//
+//     }
+//
+//   }
+//
+//   void G(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     rot_criterion* criterion;
+//     x.gradient.set_size(x.parameters.n_elem); x.gradient.zeros();
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       criterion = choose_rot_criterion(structs[i].estimator);
+//       criterion->G(structs[i]);
+//       x.gradient += structs[i].gradient;
+//
+//     }
+//
+//   }
+//
+//   void dG(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     rot_criterion* criterion;
+//     x.dgradient.set_size(x.parameters.n_elem); x.dgradient.zeros();
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       criterion = choose_rot_criterion(structs[i].estimator);
+//       criterion->dG(structs[i]);
+//       x.dgradient += structs[i].dgradient;
+//
+//     }
+//
+//   }
+//
+//   void H(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     rot_criterion* criterion;
+//     x.hessian.set_size(x.parameters.n_elem, x.parameters.n_elem); x.hessian.zeros();
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       criterion = choose_rot_criterion(structs[i].estimator);
+//       criterion->H(structs[i]);
+//       x.hessian += structs[i].hessian;
+//
+//     }
+//
+//   }
+//
+//   void H2(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     rot_criterion* criterion;
+//     x.dLPU_dS.resize(x.nblocks);
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       // x.dLPU_dS[i].set_size(x.parameters.n_elem, structs[i].p*structs[i].p); x.dLPU_dS.zeros();
+//       criterion = choose_rot_criterion(structs[i].estimator);
+//       criterion->H2(structs[i]);
+//       x.dLPU_dS[i] = structs[i].dLPU_dS;
+//
+//     }
+//
+//   }
+//
+//   void outcomes(arguments_optim& x, std::vector<arguments_rotate>& structs) {
+//
+//     x.fs.resize(x.nblocks), x.nobs.resize(x.nblocks), x.p.resize(x.nblocks),
+//     x.q.resize(x.nblocks);
+//
+//     x.projection = resizeChar(x.projection, x.nblocks);
+//
+//     for(int i=0; i < x.nblocks; ++i) {
+//
+//       x.fs[i] = structs[i].f;
+//       x.projection(i) = structs[i].projection;
+//       x.p[i] = structs[i].p;
+//       x.q[i] = structs[i].q;
+//
+//     }
+//
+//   }
+//
+// };

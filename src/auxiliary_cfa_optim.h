@@ -29,6 +29,8 @@ void armijo(arguments_optim& x, std::vector<arguments_cfa>& structs,
     // for(int i=0; i < nblocks; ++i) structs[i].parameters = x.parameters;
     // Projection onto the manifold
     manifold->retr(x, structs);
+    // Rcpp::Rcout<<structs.phi[0]<<std::endl;
+    // Rcpp::Rcout<<structs.T[0]<<std::endl;
     // Parameterization
     manifold->param(x, structs);
     criterion->F(x, structs);
@@ -379,6 +381,8 @@ void bfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
 
   } while (x.iteration < x.maxit);
 
+  x.B = B;
+
 }
 
 // L-BFGS algorithm:
@@ -392,14 +396,19 @@ void lbfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
   double ss_fac = 2, ss_min = 0.1, c1 = 10e-04, c2 = 0.5;
 
   // Parameterization
+  // Rcpp::Rcout<<"param"<<std::endl;
   manifold->param(x, structs); // update x.L, x.Phi and x.Inv_T
+  // Rcpp::Rcout<<"F"<<std::endl;
   criterion->F(x, structs);    // Compute the objective with x.L and x.Phi
   // update the gradient
+  // Rcpp::Rcout<<"G"<<std::endl;
   criterion->G(x, structs);  // Update the gradient wrt x.L and x.Phi
-  // Rcpp::Rcout<<x.gradient<<std::endl;
+  // Rcpp::Rcout<<"grad"<<std::endl;
   manifold->grad(x, structs);  // Update the gradient wrt x.T
+  // Rcpp::Rcout<<"proj"<<std::endl;
   // Riemannian gradient
   manifold->proj(x, structs);  // Update the Riemannian gradient x.rg
+  // Rcpp::Rcout<<"after proj"<<std::endl;
   x.dir = -x.rg;
   x.inprod = arma::accu(-x.dir % x.rg);
   x.ng = std::sqrt(x.inprod);
@@ -412,6 +421,7 @@ void lbfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
   std::vector<double> p(x.maxit), alpha(x.maxit), beta(x.maxit);
 
   x.convergence = false;
+  // Rcpp::Rcout<<"before do"<<std::endl;
 
   do{
 
@@ -471,6 +481,7 @@ void lbfgs(arguments_optim& x, std::vector<arguments_cfa>& structs) {
     }
 
   } while (x.iteration < x.maxit);
+  // Rcpp::Rcout<<"end_optim"<<std::endl;
 
   // cfa_NTR result = std::make_tuple(x.parameters, x.f, x.iteration, x.convergence);
 

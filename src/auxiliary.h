@@ -5,6 +5,21 @@
  *
  */
 
+// [[Rcpp::export]]
+arma::mat diagConc(arma::mat X1, arma::mat X2) {
+
+  int p1 = X1.n_rows;
+  int q1 = X1.n_cols;
+  int p2 = X2.n_rows;
+  int q2 = X2.n_cols;
+  arma::mat augmented(p1+p2, q1+q2, arma::fill::zeros);
+  augmented(arma::span(0, p1-1L), arma::span(0, q1-1L)) = X1;
+  augmented(arma::span(p1, p1+p2-1L), arma::span(q1, q1+q2-1L)) = X2;
+
+  return augmented;
+
+}
+
 Rcpp::List resizeList( const Rcpp::List& x, int n ){
   int oldsize = x.size() ;
   Rcpp::List y(n) ;
@@ -302,6 +317,7 @@ arma::mat lyap_sym(arma::mat Y, arma::mat Q) {
 
 }
 
+// [[Rcpp::export]]
 arma::uvec consecutive(int lower, int upper) {
 
   // Generate a sequence of integers from lower to upper
@@ -397,18 +413,19 @@ std::vector<arma::uvec> vector_to_list4(arma::uvec v){
 
 }
 
-arma::vec orthogonalize(arma::mat X, arma::vec x, int k) {
+// [[Rcpp::export]]
+arma::vec orthogonalize(arma::mat X, arma::vec x) {
 
-  // Make x orthogonal to every column of X
+  // Make x orthogonal to every column of X (X must be orthogonal)
 
-  for(int i=0; i < k; ++i) {
+  for(int i=0; i < X.n_cols; ++i) {
 
     // x -= arma::accu(X.col(i) % x) / arma::accu(X.col(i) % X.col(i)) * X.col(i);
     x -= arma::accu(X.col(i) % x) * X.col(i);
 
   }
 
-  x /= sqrt(arma::accu(x % x));
+  // x /= sqrt(arma::accu(x % x));
 
   return x;
 

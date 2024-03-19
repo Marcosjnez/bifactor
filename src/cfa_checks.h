@@ -21,7 +21,7 @@ void check_cfa(arguments_cfa& x) {
 
   // If the raw data was not provided and the dwls estimator was selected, then
   // compute the normal approximation to the asymptotic correlation matrix:
-  if(x.X.is_square() & (x.estimator == "dwls" | x.estimator == "efa_dwls")) {
+  if(x.X.is_square() & x.estimator == "dwls" & !cfa_control.containsElementNamed("W")) {
     arma::vec asymp_diag;
     if(x.std_error == "normal") {
       asymp_diag = arma::diagvec(asymptotic_normal(x.R));
@@ -58,42 +58,6 @@ void check_cfa(arguments_cfa& x) {
     x.f_null = -x.logdetR;
   }
 
-  // estimator = "efa_dwls" is only available with optim = "gradient" and "L-BFGS"
-  if(x.estimator == "efa_dwls") {
-    // The existence of x.W is checked in checks_cor
-    if(x.optim == "gradient") {
-      Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
-    }
-    x.projection = "dwls";
-    // x.maxit = 10000;
-    x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
-    x.psi = arma::randu(x.lambda_parameters);
-    x.lambda.set_size(x.p, x.q); x.lambda.zeros();
-    x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
-  }
-
-  if(x.estimator == "efa_uls" | x.estimator == "efa_ml") {
-    x.optim = "L-BFGS";
-    x.projection = "box";
-    // Generate initial values for EFA:
-    if (x.nullable_init.isNotNull()) {
-      Rcpp::warning("Initial values not available for the dwls estimator");
-      x.parameters = Rcpp::as<arma::vec>(x.nullable_init);
-    } else { // Check for positive definiteness only if custom init values are not specified
-      if(x.R.is_sympd()) {
-        x.parameters = 1/arma::diagvec(arma::inv_sympd(x.R));
-      } else {
-        x.smoothed = smoothing(x.R, 0.001);
-        x.parameters = 1/arma::diagvec(arma::inv_sympd(x.smoothed));
-      }
-    }
-  }
-
-  if(x.estimator == "efa_dwls") {
-    x.optim = "L-BFGS";
-    x.projection = "dwls";
-  }
-
   if(cfa_control.containsElementNamed("upper")) {
     arma::vec upper = cfa_control["upper"];
     x.upper = upper;
@@ -124,10 +88,21 @@ void check_cfa(arguments_cfa& x) {
   x.indexes_q = arma::trimatl_ind(arma::size(x.phi));
   x.S_indexes = x.indexes_p;
   x.Rhat_inv = x.Ip;
+  x.targetT_indexes = consecutive(0L, x.q*x.q-1L);
+  if(x.projection == "positive") x.positive = false;
 
   x.dlambda.set_size(x.p, x.q); x.dlambda.zeros();
   x.dphi.set_size(x.q, x.q); x.dphi.zeros();
   x.dpsi.set_size(x.p, x.p); x.dpsi.zeros();
+  x.T.set_size(x.q, x.q);
+  x.dT.set_size(x.q, x.q);
+  x.Phi_Target = x.phi;
+  x.oblq_indexes = arma::find(x.Phi_Target == 1);
+
+  x.U.set_size(x.p, x.p);
+  x.dU.set_size(x.p, x.p);
+  x.Psi_Target = x.psi;
+  x.psi_oblq_indexes = arma::find(x.Psi_Target == 1);
 
 }
 

@@ -25,7 +25,7 @@ void check_cor(arguments_cor& x) {
       arma::mat polys = x.correlation_result["correlation"];
       x.R = polys;
     } else if(x.cor == "pearson") {
-      Rcpp::Rcout << "1" << std::endl;
+      // Rcpp::Rcout << "1" << std::endl;
       if(x.X.has_nan()) {
         x.R = pairwise_cor(x.X);
       } else {

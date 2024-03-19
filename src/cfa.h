@@ -18,10 +18,13 @@ Rcpp::List cfa(arma::vec parameters,
                std::vector<arma::uvec> target_indexes,
                std::vector<arma::uvec> targetphi_indexes,
                std::vector<arma::uvec> targetpsi_indexes,
+               std::vector<arma::uvec> free_indices_phi,
+               std::vector<arma::uvec> free_indices_psi,
                Rcpp::CharacterVector char_cor,
                Rcpp::CharacterVector char_estimator,
                Rcpp::CharacterVector char_projection,
                Rcpp::CharacterVector char_missing,
+               std::string se,
                int random_starts, int cores,
                Rcpp::Nullable<Rcpp::List> nullable_control) {
 
@@ -78,6 +81,14 @@ Rcpp::List cfa(arma::vec parameters,
     xcfa[i].target_indexes = target_indexes[i]-1;
     xcfa[i].targetphi_indexes = targetphi_indexes[i]-1;
     xcfa[i].targetpsi_indexes = targetpsi_indexes[i]-1;
+    // Rcpp::stop("1");
+    if(!free_indices_phi[i].is_empty()){
+      xcfa[i].free_indices_phi = free_indices_phi[i]-1;
+    }
+    if(!free_indices_psi[i].is_empty()){
+      xcfa[i].free_indices_psi = free_indices_psi[i]-1;
+    }
+    // Rcpp::Rcout << xcfa[i].free_indices_phi << std::endl;
 
     check_cfa(xcfa[i]);
 
@@ -91,26 +102,45 @@ Rcpp::List cfa(arma::vec parameters,
   check_opt(opt);
   cfa_optim* algorithm = choose_cfa_optim(opt.optim);
 
+  // Optimize:
   algorithm->optim(opt, xcfa);
   cfa_criterion2* cfa_criterion = new ultimate_criterion();
   cfa_criterion->outcomes(opt, xcfa);
 
   // Standard errors:
-  cfa_criterion->H(opt, xcfa);
-  cfa_criterion->H2(opt, xcfa);
-  // Rcpp::List cfa;
-  // cfa["hessian"] = opt.hessian;
-  // cfa["W"] = xcfa[0].W;
-  // return cfa;
-  arma::mat inv_hessian = arma::inv_sympd(opt.hessian);
-  // arma::mat inv_hessian = arma::inv(opt.hessian);
-  opt.se.resize(opt.nblocks);
-  for(int i=0; i < opt.nblocks; ++i) {
-    arma::uvec indexes = trimatl_ind(arma::size(xcfa[i].R), 0);
-    arma::mat Sigma = asymptotic_normal(xcfa[i].R);
-    arma::mat B = opt.dLPU_dS[i].cols(indexes) * Sigma(indexes, indexes) * opt.dLPU_dS[i].cols(indexes).t();
+  if(se == "robust") {
+
+    cfa_criterion->H(opt, xcfa);
+    cfa_criterion->H2(opt, xcfa);
+    arma::mat inv_hessian;
+    if(!opt.hessian.is_sympd()) {
+      arma::vec eigval;
+      arma::mat eigvec;
+      eig_sym(eigval, eigvec, opt.hessian);
+      arma::vec d = arma::clamp(eigval, 0.01, eigval.max());
+      inv_hessian = eigvec * arma::diagmat(1/d) * eigvec.t();
+    } else {
+      inv_hessian = arma::inv_sympd(opt.hessian);
+    }
+    // arma::mat inv_hessian = arma::inv(opt.hessian);
+    arma::uvec indexes = trimatl_ind(arma::size(xcfa[0].R), 0);
+    arma::mat full_Sigma = asymptotic_normal(xcfa[0].R);
+    arma::mat Sigma = full_Sigma(indexes, indexes);
+    arma::mat dLPU_dS = opt.dLPU_dS[0].cols(indexes);
+    for(int i=1; i < opt.nblocks; ++i) {
+      arma::uvec indexes = trimatl_ind(arma::size(xcfa[i].R), 0);
+      arma::mat full_Sigma = asymptotic_normal(xcfa[i].R);
+      Sigma = diagConc(Sigma, full_Sigma(indexes, indexes));
+      dLPU_dS = arma::join_rows(dLPU_dS, opt.dLPU_dS[i].cols(indexes));
+    }
+    arma::mat B = dLPU_dS * Sigma * dLPU_dS.t();
     arma::mat COV = inv_hessian * B * inv_hessian;
-    opt.se[i] = sqrt(arma::diagvec(COV)/(xcfa[i].nobs-1L));
+    double denominator = (opt.total_nobs-1L)/opt.nblocks;
+    opt.se = sqrt(arma::diagvec(COV)/denominator);
+
+  } else if(se == "none") {
+  } else {
+    Rcpp::stop("Unkown method for standard errors");
   }
 
   Rcpp::List correlation;
@@ -127,8 +157,11 @@ Rcpp::List cfa(arma::vec parameters,
   cfa["fs"] = opt.fs;
   cfa["parameters"] = opt.parameters;
   cfa["se"] = opt.se;
-  cfa["hessian"] = opt.hessian;
-  cfa["dLPU_dS"] = opt.dLPU_dS;
+  // cfa["hessian"] = opt.hessian;
+  // cfa["H0"] = opt.B;
+  // cfa["dLPU_dS"] = opt.dLPU_dS;
+  // cfa["Phi_Target"] = opt.Phi_Target;
+  // cfa["oblq_indexes"] = opt.oblq_indexes;
 
   Rcpp::List modelInfo;
   modelInfo["cor"] = opt.cor;
@@ -143,9 +176,11 @@ Rcpp::List cfa(arma::vec parameters,
   modelInfo["lower"] = opt.lower;
   modelInfo["upper"] = opt.upper;
 
+  Rcpp::List rotation;
   Rcpp::List result;
   result["correlation"] = correlation;
   result["cfa"] = cfa;
+  result["rotation"] = rotation;
   result["modelInfo"] = modelInfo;
 
   timer.step("elapsed");
