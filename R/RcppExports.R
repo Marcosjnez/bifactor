@@ -17,6 +17,22 @@ asymptotic_poly <- function(X, R, cores) {
     .Call(`_bifactor_asymptotic_poly`, X, R, cores)
 }
 
+diagConc <- function(X1, X2) {
+    .Call(`_bifactor_diagConc`, X1, X2)
+}
+
+smoothing <- function(X, min_eigval = 0.001) {
+    .Call(`_bifactor_smoothing`, X, min_eigval)
+}
+
+consecutive <- function(lower, upper) {
+    .Call(`_bifactor_consecutive`, lower, upper)
+}
+
+orthogonalize <- function(X, x) {
+    .Call(`_bifactor_orthogonalize`, X, x)
+}
+
 smoothing <- function(X, min_eigval = 0.001) {
     .Call(`_bifactor_smoothing`, X, min_eigval)
 }
@@ -89,8 +105,72 @@ cfa <- function(parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes,
     .Call(`_bifactor_cfa`, parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, cor, estimator, projection, missing, random_starts, cores, control)
 }
 
-cfa_test <- function(parameters, dX, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, char_cor, char_estimator, char_projection, char_missing, random_starts, cores, nullable_init, nullable_control) {
-    .Call(`_bifactor_cfa_test`, parameters, dX, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, char_cor, char_estimator, char_projection, char_missing, random_starts, cores, nullable_init, nullable_control)
+cfa_test <- function(R, lambda, phi, psi, dlambda, dphi, dpsi, W, estimator, projection) {
+    .Call(`_bifactor_cfa_test`, R, lambda, phi, psi, dlambda, dphi, dpsi, W, estimator, projection)
+}
+
+random_orth <- function(p, q) {
+    .Call(`_bifactor_random_orth`, p, q)
+}
+
+random_oblq <- function(p, q) {
+    .Call(`_bifactor_random_oblq`, p, q)
+}
+
+random_poblq <- function(p, q, oblq_factors) {
+    .Call(`_bifactor_random_poblq`, p, q, oblq_factors)
+}
+
+retr_orth <- function(X) {
+    .Call(`_bifactor_retr_orth`, X)
+}
+
+retr_oblq <- function(X) {
+    .Call(`_bifactor_retr_oblq`, X)
+}
+
+retr_poblq <- function(X, oblq_factors = NULL, PhiTarget = NULL) {
+    .Call(`_bifactor_retr_poblq`, X, oblq_factors, PhiTarget)
+}
+
+sl <- function(X, n_generals, n_groups, cor = "pearson", estimator = "uls", missing = "pairwise.complete.cases", nobs = NULL, first_efa = NULL, second_efa = NULL, cores = 1L) {
+    .Call(`_bifactor_sl`, X, n_generals, n_groups, cor, estimator, missing, nobs, first_efa, second_efa, cores)
+}
+
+rotate <- function(lambda, rotation = as.character( c("oblimin")), projection = "oblq", gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, normalization = "none", rot_control = NULL, random_starts = 1L, cores = 1L) {
+    .Call(`_bifactor_rotate`, lambda, rotation, projection, gamma, epsilon, k, w, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, normalization, rot_control, random_starts, cores)
+}
+
+efast <- function(X, nfactors, cor = "pearson", estimator = "uls", rotation = as.character( c("oblimin")), projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, Target = NULL, Weight = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, gamma = 0L, epsilon = as.numeric( c(0.01)), k = 0L, w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL) {
+    .Call(`_bifactor_efast`, X, nfactors, cor, estimator, rotation, projection, missing, nobs, Target, Weight, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, gamma, epsilon, k, w, random_starts, cores, init, efa_control, rot_control)
+}
+
+get_target <- function(loadings, Phi, cutoff = 0) {
+    .Call(`_bifactor_get_target`, loadings, Phi, cutoff)
+}
+
+bifactor <- function(X, n_generals, n_groups, method = "GSLiD", cor = "pearson", estimator = "uls", projection = "oblq", missing = "pairwise.complete.cases", nobs = NULL, PhiTarget = NULL, PhiWeight = NULL, blocks = NULL, block_weights = NULL, oblq_factors = NULL, init_Target = NULL, maxit = 20L, cutoff = 0, normalization = "none", w = 1, random_starts = 1L, cores = 1L, init = NULL, efa_control = NULL, rot_control = NULL, first_efa = NULL, second_efa = NULL, verbose = TRUE) {
+    .Call(`_bifactor_bifactor`, X, n_generals, n_groups, method, cor, estimator, projection, missing, nobs, PhiTarget, PhiWeight, blocks, block_weights, oblq_factors, init_Target, maxit, cutoff, normalization, w, random_starts, cores, init, efa_control, rot_control, first_efa, second_efa, verbose)
+}
+
+asymp_cov <- function(R, X = NULL, eta = 1, type = "normal") {
+    .Call(`_bifactor_asymp_cov`, R, X, eta, type)
+}
+
+se <- function(fit = NULL, nobs = NULL, X = NULL, type = "normal", eta = 1) {
+    .Call(`_bifactor_se`, fit, nobs, X, type, eta)
+}
+
+parallel <- function(X, nboot = 100L, cor = "pearson", missing = "pairwise.complete.cases", quant = NULL, mean = FALSE, replace = FALSE, PA = NULL, hierarchical = FALSE, efa = NULL, cores = 1L) {
+    .Call(`_bifactor_parallel`, X, nboot, cor, missing, quant, mean, replace, PA, hierarchical, efa, cores)
+}
+
+polyfast <- function(data, missing = "pairwise.complete.cases", acov = "none", smooth = "none", min_eigval = 0.001, nboot = 1000L, fit = FALSE, cores = 1L) {
+    .Call(`_bifactor_polyfast`, data, missing, acov, smooth, min_eigval, nboot, fit, cores)
+}
+
+cfa <- function(parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, free_indices_phi, free_indices_psi, cor = as.character( c("pearson")), estimator = as.character( c("uls")), projection = as.character( c("id")), missing = as.character( c("pairwise.complete.cases")), se = "robust", random_starts = 1L, cores = 1L, control = NULL) {
+    .Call(`_bifactor_cfa`, parameters, X, nfactors, nobs, lambda, phi, psi, lambda_indexes, phi_indexes, psi_indexes, target_indexes, targetphi_indexes, targetpsi_indexes, free_indices_phi, free_indices_psi, cor, estimator, projection, missing, se, random_starts, cores, control)
 }
 
 count <- function(X, n, max_X) {
@@ -103,5 +183,9 @@ joint_frequency_table <- function(X, n, max_X, Y, max_Y) {
 
 dbinorm <- function(p, x, y) {
     .Call(`_bifactor_dbinorm`, p, x, y)
+}
+
+calculate_fourtuple_tetrads <- function(X) {
+    .Call(`_bifactor_calculate_fourtuple_tetrads`, X)
 }
 

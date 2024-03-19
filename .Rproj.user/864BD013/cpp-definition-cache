@@ -27,8 +27,25 @@
         "hidden": false
     },
     {
+        "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/GSLiD.h",
+        "file_last_write": 1710881227.0,
+        "definitions": [
+            {
+                "usr": "c:@F@GSLiD#$@N@arma@S@Mat>#d#I#I#$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#S1_#$@N@Rcpp@S@Nullable>#I#$@N@Rcpp@S@Nullable>#S0_#S5_#S5_#d#I#I#I#$@N@Rcpp@S@Nullable>#$@N@arma@S@Col>#d#$@N@Rcpp@S@Nullable>#$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S8_#$@N@Rcpp@S@Nullable>#$@N@std@S@vector>#$@N@std@S@vector>#$@N@arma@S@Col>#i#$@N@std@S@allocator>#S13_#$@N@std@S@allocator>#S12_#S6_#$@N@Rcpp@S@Nullable>#S13_#d#b#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "GSLiD(arma::mat, int, int, std::string, std::string, Rcpp::Nullable<int>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, Rcpp::Nullable<arma::mat>, double, int, int, int, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<Rcpp::List>, Rcpp::Nullable<std::vector<std::vector<arma::uvec>>>, Rcpp::Nullable<arma::vec>, Rcpp::Nullable<arma::uvec>, double, bool)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/GSLiD.h",
+                "line": 1,
+                "column": 12,
+                "hidden": false
+            }
+        ],
+        "hidden": false
+    },
+    {
         "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
-        "file_last_write": 1652186111.0,
+        "file_last_write": 1710881227.0,
         "definitions": [
             {
                 "usr": "c:@F@asymptotic_general#$@N@arma@S@Mat>#d#",
@@ -36,7 +53,7 @@
                 "parent_name": "",
                 "name": "asymptotic_general(arma::mat)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
-                "line": 10,
+                "line": 11,
                 "column": 11,
                 "hidden": false
             },
@@ -46,7 +63,7 @@
                 "parent_name": "",
                 "name": "asymptotic_normal(arma::mat)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
-                "line": 66,
+                "line": 82,
                 "column": 11,
                 "hidden": false
             },
@@ -56,7 +73,17 @@
                 "parent_name": "",
                 "name": "asymptotic_elliptical(arma::mat, double)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
-                "line": 94,
+                "line": 111,
+                "column": 11,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@asymptotic_poly#1$@N@arma@S@Mat>#d#1S0_#1I#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "asymptotic_poly(const arma::mat, const arma::mat, const int)",
+                "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
+                "line": 124,
                 "column": 11,
                 "hidden": false
             },
@@ -66,7 +93,7 @@
                 "parent_name": "",
                 "name": "asymp_cov(arma::mat, Rcpp::Nullable<arma::mat>, double, std::string)",
                 "file": "C:/Users/vrfra/Documents/GitHub/bifactor/src/asymptotic_cov.h",
-                "line": 106,
+                "line": 246,
                 "column": 11,
                 "hidden": false
             }
