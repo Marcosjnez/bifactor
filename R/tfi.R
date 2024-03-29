@@ -16,6 +16,7 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov) {
 
   ## Calculate and return the tetrad fit index
   #TFI <- 1 - mean(sqrt(c(res1[,5:7] - res0[,5:7])^2))
-  TFI <- 1 - mean(abs(c(res1[,5:7] - res0[,5:7])/2))
+  #TFI <- 1 - mean(abs(c(res1[,5:7] - res0[,5:7])/2))
+  TFI <- 1 - mean(abs(c(res1[,5:7] - res0[,5:7])))
   return(TFI)
 }
