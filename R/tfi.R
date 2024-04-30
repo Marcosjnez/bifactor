@@ -15,21 +15,23 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov, type="rmsd") {
   }
 
   ## Calculate and return the tetrad fit index
-  tM <- c(res1[,5:7])
-  er <- tM - c(res0[,5:7])
+  #tM <- c(res1[,5:7])
+  #er <- tM - c(res0[,5:7])
+  tM <- c(scale(c(res1[,5:7])))
+  er <- tM - c(scale(c(res0[,5:7])))
   n <- length(er)
   if(type == "mad") {
-    TFI <- 1 - mean(abs(er))
+    TFI <- mean(abs(er))
   } else if(type == "rmsd") {
-    TFI <- 1 - sqrt(mean(er^2))
-  } else if(type == "exp"){
+    TFI <- sqrt(mean(er^2))
+  } else if(type == "madW"){
     i <- exp(-abs(tM))
     weight <- i/sum(i)
-    TFI <- 1 - sum(weight * abs(er))
-  } else if(type == "sqr"){
+    TFI <- sum(weight * abs(er))
+  } else if(type == "rmsdW"){
     i <- exp(-abs(tM))
     weight <- i/sum(i)
-    TFI <- 1 - sqrt(sum(weight * (er^2)))
+    TFI <- sqrt(sum(weight * (er^2)))
   } else {
     stop("Unkown tetrad type!")
   }
