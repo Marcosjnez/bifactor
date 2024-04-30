@@ -25,11 +25,15 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov, type="rmsd") {
   } else if(type == "er"){
     i <- rank(abs(er))
     weight <- (2*n + 1 - 2*i)/(n^2)
-    TFI <- 1 - sum(weight * er)
+    TFI <- 1 - sum(weight * abs(er))
   } else if(type == "tM"){
     i <- rank(abs(tM))
     weight <- (2*n + 1 - 2*i)/(n^2)
-    TFI <- 1 - sum(weight * er)
+    TFI <- 1 - sum(weight * abs(er))
+  } else if(type == "sqr"){
+    i <- rank(abs(tM))
+    weight <- (2*n + 1 - 2*i)/(n^2)
+    TFI <- 1 - sqrt(sum(weight * (er^2)))
   } else {
     stop("Unkown tetrad type!")
   }
