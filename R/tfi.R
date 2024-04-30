@@ -15,10 +15,8 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov, type="rmsd") {
   }
 
   ## Calculate and return the tetrad fit index
-  #tM <- c(res1[,5:7])
-  #er <- tM - c(res0[,5:7])
-  tM <- c(scale(c(res1[,5:7])))
-  er <- tM - c(scale(c(res0[,5:7])))
+  tM <- atanh(c(res1[,5:7]))
+  er <- tM - atanh(c(res0[,5:7]))
   n <- length(er)
   if(type == "mad") {
     TFI <- mean(abs(er))
