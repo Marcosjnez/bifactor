@@ -1,5 +1,5 @@
 #' @export
-tetrad_fit_index <- function(SampleCov, ImpliedCov, nfac=1, type="rmsd") {
+tetrad_fit_index <- function(SampleCov, ImpliedCov, type="rmsd") {
   ## Get all the possible four-tuple of variables
   possibilities <- combn(1:ncol(SampleCov), 4)
 
@@ -17,11 +17,10 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov, nfac=1, type="rmsd") {
   ## Calculate and return the tetrad fit index
   tM <- atanh(c(res1[,5:7]))
   er <- tM - atanh(c(res0[,5:7]))
-  n <- length(er) * {{nfac*{nfac+1}}/{2*nfac}}
   if(type == "mad") {
-    TFI <- sum(abs(er))/n
+    TFI <- mean(abs(er))
   } else if(type == "rmsd") {
-    TFI <- sqrt(sum(er^2)/n)
+    TFI <- sqrt(mean(er^2))
   } else if(type == "madW"){
     i <- exp(-abs(tM))
     weight <- i/sum(i)
@@ -35,4 +34,3 @@ tetrad_fit_index <- function(SampleCov, ImpliedCov, nfac=1, type="rmsd") {
   }
   return(TFI)
 }
-
