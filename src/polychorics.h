@@ -12,14 +12,16 @@
 std::vector<int> count(const std::vector<int>& X, const int n, const int max_X) {
 
   // Allocate memory space for table
-  std::vector<int> frequency(max_X + 1);
+  std::vector<int> frequency(max_X);
+  // std::vector<int> frequency(max_X + 1);
   // std::vector<int> frequency;
   // frequency.reserve(max_X + 1);
 
   // Populate table
   for (int i = 0; i < n; i++) {
+    if(X[i] < max_X) frequency[X[i]]++;
     // if(!std::isnan(X[i])) frequency[X[i]]++;
-    frequency[X[i]]++;
+    // frequency[X[i]]++;
   }
 
   // Return joint frequency table
