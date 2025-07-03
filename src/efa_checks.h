@@ -59,9 +59,9 @@ void check_efa(arguments_efa& x) {
 
   if(x.estimator == "dwls") {
     // The existence of x.W is checked in checks_cor
-    if(x.optim == "gradient") {
-      Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
-    }
+    // if(x.optim == "gradient") {
+    //   Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
+    // }
     x.optim = "L-BFGS"; // Differentials for efa criteria unavailable
     x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
     x.manifold = "dwls";
@@ -93,7 +93,7 @@ void check_efa(arguments_efa& x) {
   if (x.nullable_init.isNotNull()) {
     Rcpp::warning("Initial values not available for the dwls estimator");
     x.parameters = Rcpp::as<arma::vec>(x.nullable_init);
-  } else { // Check for positive definiteness only if custom init values are not specified
+  } else if(x.estimator != "dwls") { // Check for positive definiteness only if custom init values are not specified
     if(x.R.is_sympd()) {
       x.parameters = 1/arma::diagvec(arma::inv_sympd(x.R));
     } else {

@@ -98,7 +98,7 @@ Rcpp::List rotate(arma::mat lambda, Rcpp::CharacterVector char_rotation,
   x1 = x2[index_minimum];
 
   arma::mat L = std::get<0>(x1);
-  arma::mat Phi = std::get<1>(x1);
+  arma::mat Phi = std::get<1>(x1); Phi.diag().ones();
   if(Phi.is_empty()) {Phi.set_size(x.q, x.q); Phi.eye();}
   arma::mat T = std::get<2>(x1);
   double f = std::get<3>(x1);

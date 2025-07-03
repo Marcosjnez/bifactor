@@ -23,7 +23,9 @@ void extract_efa(arguments_efa& x, efa_manifold *manifold, efa_criterion *criter
   arguments_efa args = x;
   // args.parameters = x.init;
 
+  // Rprintf("26");
   x1 = algorithm->optim(args, manifold, criterion);
+  // Rprintf("28");
 
   x.lambda = std::get<0>(x1);
   x.uniquenesses = std::get<1>(x1);
@@ -41,176 +43,45 @@ void extract_efa(arguments_efa& x, efa_manifold *manifold, efa_criterion *criter
 
 }
 
-Rcpp::List efa(arma::vec psi, arma::mat R, int nfactors, std::string estimator,
-               int efa_max_iter, double efa_factr, int lmm) {
-
-  Rcpp::List result;
-
-  arma::mat w, Rhat;
-  arma::vec uniquenesses;
-
-  int iteration = 0;
-
-  if (estimator == "uls") {
-
-    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, estimator, efa_max_iter, efa_factr, lmm);
-
-    arma::vec psi_temp = optim_result["par"];
-    psi = psi_temp;
-    arma::mat reduced_R = R - arma::diagmat(psi);
-
-    arma::vec eigval;
-    arma::mat eigvec;
-    arma::eig_sym(eigval, eigvec, reduced_R);
-
-    arma::vec eigval2 = reverse(eigval);
-    arma::mat eigvec2 = reverse(eigvec, 1);
-
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
-    for(int i=0; i < nfactors; ++i) {
-      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
-    }
-    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
-
-    w = A * D;
-    arma::mat ww = w * w.t();
-
-    uniquenesses = 1 - arma::diagvec(ww);
-
-    Rhat = ww;
-    Rhat.diag() = R.diag();
-
-    bool convergence = false;
-    int convergence_result = optim_result["convergence"];
-
-    if(convergence_result == 0) convergence = true;
-
-    result["f"] = optim_result["value"];
-    result["convergence"] = convergence;
-
-  } else if (estimator == "ml") {
-
-    Rcpp::List optim_result = optim_rcpp(psi, R, nfactors, estimator, efa_max_iter, efa_factr, lmm);
-    arma::vec psi_temp = optim_result["par"];
-    psi = psi_temp;
-
-    arma::vec sqrt_psi = arma::sqrt(psi);
-    arma::mat sc = arma::diagmat(1/sqrt_psi);
-    arma::mat Sstar = sc * R * sc;
-
-    arma::vec eigval;
-    arma::mat eigvec;
-    arma::eig_sym(eigval, eigvec, Sstar);
-
-    arma::vec eigval2 = arma::reverse(eigval);
-    arma::mat eigvec2 = arma::reverse(eigvec, 1);
-
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1)) - 1;
-    for(int i=0; i < nfactors; ++i) {
-      if(eigenvalues[i] < 0) eigenvalues[i] = 0;
-    }
-    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
-
-    w = A * D;
-    w = arma::diagmat(sqrt_psi) * w;
-    arma::mat ww = w * w.t();
-    uniquenesses = 1 - arma::diagvec(ww);
-
-    Rhat = ww;
-    Rhat.diag() = R.diag();
-
-    bool convergence = false;
-    int convergence_result = optim_result["convergence"];
-
-    if(convergence_result == 0) convergence = true;
-
-    int p = R.n_cols;
-    double value = optim_result["value"];
-    double f = arma::log_det_sympd(Rhat) - arma::log_det_sympd(R) + arma::trace(R * arma::inv_sympd(Rhat)) - p;
-    result["f"] = f;
-    result["convergence"] = convergence;
-
-  } else if (estimator == "pa") {
-
-    Rcpp::List pa_result = principal_axis(psi, R, nfactors, 1e-03, efa_max_iter);
-
-    arma::mat w_temp = pa_result["lambda"];
-    arma::vec uniquenesses_temp = pa_result["uniquenesses"];
-    arma::mat Rhat_temp = pa_result["Rhat"];
-
-    result["f"] = pa_result["f"];
-    result["convergence"] = pa_result["convergence"];
-    w = w_temp;
-    uniquenesses = uniquenesses_temp;
-    Rhat = Rhat_temp;
-
-    result["iterations"] = pa_result["iterations"];
-
-  } else if (estimator == "minrank") {
-
-    arma::vec communalities = sdp_cpp(R);
-
-    psi = 1 - communalities;
-
-    arma::mat reduced_R = R - arma::diagmat(psi);
-
-    arma::vec eigval;
-    arma::mat eigvec;
-    arma::eig_sym(eigval, eigvec, reduced_R);
-
-    arma::vec eigval2 = arma::reverse(eigval);
-    arma::mat eigvec2 = arma::reverse(eigvec, 1);
-
-    arma::mat A = eigvec2(arma::span::all, arma::span(0, nfactors-1));
-    arma::vec eigenvalues = eigval2(arma::span(0, nfactors-1));
-    for(int i=0; i < nfactors; ++i) {
-      if(eigenvalues(i) < 0) eigenvalues(i) = 0;
-    }
-    arma::mat D = arma::diagmat(arma::sqrt(eigenvalues));
-
-    w = A * D;
-    arma::mat ww = w * w.t();
-    uniquenesses = 1 - arma::diagvec(ww);
-
-    Rhat = ww;
-    Rhat.diag() = R.diag();
-
-  } else {
-
-    Rcpp::stop("Unkown estimator");
-
-  }
-
-  bool heywood = arma::any( uniquenesses < 0 );
-
-  // Force average positive lambda in all factors:
-
-  for (int j=0; j < nfactors; ++j) {
-    if (sum(w.col(j)) < 0) {
-      w.col(j)   *= -1;
-    }
-  }
-
-  result["lambda"] = w;
-  result["uniquenesses"] = uniquenesses;
-  result["Rhat"] = Rhat;
-  result["residuals"] = R - Rhat;
-  result["Heywood"] = heywood;
-  result["estimator"] = estimator;
-
-  return result;
-}
-
 Rcpp::List efa(arguments_efa x, efa_manifold* manifold, efa_criterion* criterion,
                int random_starts, int cores) {
 
   Rcpp::List result;
+  // result["R"] = x.R;
+  // result["Rhat"] = x.Rhat;
+  // result["W"] = x.W;
+  // result["lambda"] = x.lambda;
+  // result["init"] = x.init;
+  // result["estimator"] = x.estimator;
+  // result["p"] = x.p;
+  // result["q"] = x.q;
+  // return result;
 
   if(x.estimator == "ml" || x.estimator == "uls" || x.estimator == "dwls") {
 
+    // Rprintf("%g ", 60.00);
+    // Rprintf("R rows %zu ", x.R.n_rows);
+    // Rprintf("R rows %zu ", x.R.n_rows);
+    // Rprintf("lambda rows %zu ", x.lambda.n_rows);
+    // Rprintf("lambda cols %zu ", x.lambda.n_cols);
+    // Rprintf("W rows %zu ", x.W.n_rows);
+    // Rprintf("W cols %zu ", x.W.n_cols);
+    // Rprintf("p %zu ", x.p);
+    // Rprintf("q %zu ", x.q);
+    // Rprintf("lower_tri_ind %zu ", x.lower_tri_ind.n_elem);
+    // Rprintf("parameters %zu ", x.parameters.n_elem);
+
     extract_efa(x, manifold, criterion);
+    // Rprintf("%g ", 62.00);
+    // result["R"] = x.R;
+    // result["Rhat"] = x.Rhat;
+    // result["W"] = x.W;
+    // result["lambda"] = x.lambda;
+    // result["init"] = x.init;
+    // result["estimator"] = x.estimator;
+    // result["p"] = x.p;
+    // result["q"] = x.q;
+    // return result;
 
   } else if(x.estimator == "pa") {
 

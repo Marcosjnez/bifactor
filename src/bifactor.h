@@ -148,6 +148,10 @@ Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
 
     }
 
+    // result["R"] = xefa.R;
+    // result["n_generals"] = n_generals;
+    // result["n_groups"] = n_groups;
+    // return result;
     Rcpp::List GSLiD_result = GSLiD(xefa.R, n_generals, n_groups,
                                     estimator, projection,
                                     nullable_nobs,

@@ -87,7 +87,6 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   modelInfo["k"] = x.k;
   modelInfo["gamma"] = x.gamma;
   modelInfo["epsilon"] = x.epsilon;
-  modelInfo["w"] = x.w;
   modelInfo["normalization"] = x.normalization;
   modelInfo["Target"] = x.nullable_Target;
   modelInfo["Weight"] = x.nullable_Weight;
@@ -115,14 +114,30 @@ Rcpp::List GSLiD(arma::mat R, int n_generals, int n_groups,
   // Select the estimator:
   efa_criterion* efa_criterion = choose_efa_criterion(xefa.estimator);
 
+  Rcpp::List result;
+  // result["R"] = xefa.R;
+  // result["Rhat"] = xefa.Rhat;
+  // result["n_generals"] = n_generals;
+  // result["n_groups"] = n_groups;
+  // result["estimator"] = xefa.estimator;
+  // result["W"] = xefa.W;
+  // result["init"] = xefa.init;
+  // result["p"] = xefa.p;
+  // result["q"] = xefa.q;
+  // return result;
+  // Rprintf("%g ", 128.00);
   Rcpp::List efa_result = efa(xefa, efa_manifold, efa_criterion,
                               xefa.random_starts, xefa.cores);
+  // Rprintf("%g ", 131.00);
+  // return efa_result;
+  // Rf_error("120");
 
   xefa.heywood = efa_result["heywood"];
   arma::mat unrotated_loadings = efa_result["lambda"];
   arma::mat loadings = unrotated_loadings;
 
-  Rcpp::List result, rotation_result;
+  // Rcpp::List result;
+  Rcpp::List rotation_result;
   rotation_result["unrotated_loadings"] = unrotated_loadings;
 
   // Initialize stuff:

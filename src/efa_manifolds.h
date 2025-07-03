@@ -123,7 +123,9 @@ public:
 
   void param(arguments_efa& x) {
 
+    // Rprintf("126");
     x.lambda.elem(x.lower_tri_ind) = x.parameters;
+    // Rprintf("128");
 
   }
 
