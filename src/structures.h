@@ -100,15 +100,15 @@ typedef struct arguments_efa{
   arma::vec u, uniquenesses, eigval, parameters, sqrt_psi, psi2, g_psi2;
   std::string estimator = "uls";
   double efa_factr = 1e07;
-  std::string optim = "gradient", cor = "pearson", missing = "pairwise.complete.cases",
+  std::string optim = "L-BFGS", cor = "pearson", missing = "pairwise.complete.cases",
     std_error = "normal";
   arma::vec lower = {0.005}, upper = {0.995};
   arma::mat rg, dir, dparameters, dH;
-  int iteration, iterations = 0L, maxit = 1000L;
+  int iteration, iterations = 0L, maxit = 10000L;
   bool convergence = false, heywood = false;
   std::string manifold = "box";
   int random_starts = 1L, cores = 1L;
-  double ss = 1, inprod = 1, ng = 1, eps = 1e-05,
+  double ss = 1, inprod = 1, ng = 1, eps = 1e-07,
     c1 = 10e-04, c2 = 0.5, rho = 0.5;
   int M = 5L, armijo_maxit = 10L;
   std::string search = "back";

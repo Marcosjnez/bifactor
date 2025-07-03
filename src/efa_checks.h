@@ -18,7 +18,7 @@ void check_efa(arma::mat R, int nfactors, Rcpp::Nullable<arma::vec> nullable_ini
   if(efa_control.containsElementNamed("maxit") ){
     efa_maxit = efa_control["maxit"];
   } else {
-    efa_maxit = 1e3;
+    efa_maxit = 1e4;
   }
   if(efa_control.containsElementNamed("factr")) {
     efa_factr = efa_control["factr"];
@@ -71,7 +71,8 @@ void check_efa(arguments_efa& x) {
     x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
   }
 
-  if(x.X.is_square() & x.estimator == "dwls") {
+  // if(x.X.is_square() & x.estimator == "dwls") {
+  if(x.estimator == "dwls") {
     arma::vec asymp_diag;
     if(x.std_error == "normal") {
       asymp_diag = arma::diagvec(asymptotic_normal(x.R));
@@ -123,7 +124,7 @@ void check_efa(arguments_efa& x) {
   if(efa_control.containsElementNamed("maxit") ){
     x.maxit = efa_control["maxit"];
   } else {
-    x.maxit = 1e3;
+    x.maxit = 1e4;
   }
 
   if(efa_control.containsElementNamed("upper")) {
