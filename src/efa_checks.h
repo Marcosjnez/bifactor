@@ -43,25 +43,13 @@ void check_efa(arguments_efa& x) {
 
   if(x.p < x.q) Rcpp::stop("Too many factors");
 
-  // Choose custom weight matrix for the dwls estimator:
-  if(efa_control.containsElementNamed("W")) {
-    arma::mat W = efa_control["W"];
-    if(W.n_cols != x.p | W.n_rows != x.p) {
-      Rcpp::stop("W must be a matrix with the same dimensions as the correlation matrix");
-    }
-    x.W = W;
-  }
-
   if(x.estimator == "uls") {
     arma::mat W(x.p, x.p, arma::fill::ones);
     x.W = W;
   }
 
   if(x.estimator == "dwls") {
-    // The existence of x.W is checked in checks_cor
-    // if(x.optim == "gradient") {
-    //   Rcpp::warning("To achive convergence with the estimator = 'dwls' and optim = 'gradient', you may need to increase the number of maximum iterations: efa_control = list(maxit = 100000)");
-    // }
+
     x.optim = "L-BFGS"; // Differentials for efa criteria unavailable
     x.lambda_parameters = x.p * x.q - 0.5*x.q*(x.q-1);
     x.manifold = "dwls";
@@ -69,19 +57,24 @@ void check_efa(arguments_efa& x) {
     x.parameters = arma::randu(x.lambda_parameters);
     x.lambda.set_size(x.p, x.q); x.lambda.zeros();
     x.lower_tri_ind = arma::trimatl_ind(arma::size(x.lambda));
-  }
 
-  // if(x.X.is_square() & x.estimator == "dwls") {
-  if(x.estimator == "dwls") {
-    arma::vec asymp_diag;
-    if(x.std_error == "normal") {
-      asymp_diag = arma::diagvec(asymptotic_normal(x.R));
-      x.correlation_result["std_error"] = "normal";
-    } else {
-      Rcpp::stop("estimator = 'dwls' requires either the raw data or a weight matrix W of the same dimension as the correlation matrix (control = list(W = ...))");
+    // The existence of x.W is checked in checks_cor
+    // Choose custom weight matrix for the dwls estimator:
+    if(efa_control.containsElementNamed("W")) {
+
+      arma::mat W = efa_control["W"];
+      if(W.n_cols != x.p | W.n_rows != x.p) {
+        Rcpp::stop("W must be a matrix with the same dimensions than the correlation matrix");
+      }
+      x.W = W;
+
+    } else if(x.W.is_empty()) {
+
+      arma::mat W(x.p, x.p); W.ones(); W.diag().zeros();
+      x.W = W;
+
     }
-    arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
-    x.W = 1/W; x.W.diag().zeros();
+
   }
 
   if(x.estimator == "gls") {

@@ -42,6 +42,10 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
 
   arguments_efast x1;
 
+  if(x1.estimator == "dwls") {
+    x1.estimator == "uls";
+  }
+
   // Check inputs:
 
   pass_to_efast(first, x1);
@@ -49,6 +53,10 @@ Rcpp::List sl(arma::mat X, int n_generals, int n_groups,
   // Arguments to pass to second efa in SL:
 
   arguments_efast x2;
+
+  if(x2.estimator == "dwls") {
+    x2.estimator == "uls";
+  }
 
   // Check inputs:
 

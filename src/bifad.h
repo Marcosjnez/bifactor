@@ -23,6 +23,9 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
   // Arguments to pass to first efa:
   arguments_efast x1;
   // Check inputs:
+  if(x1.estimator == "dwls") {
+    x1.estimator == "uls";
+  }
   pass_to_efast(first, x1);
 
   // First EFA (group factors):
@@ -53,6 +56,9 @@ Rcpp::List bifad(arma::mat R, int n_generals, int n_groups,
     // Arguments to pass to second efa:
     arguments_efast x2;
     // Check inputs:
+    if(x2.estimator == "dwls") {
+      x2.estimator == "uls";
+    }
     pass_to_efast(second, x2);
 
     // Second EFA (general factors):

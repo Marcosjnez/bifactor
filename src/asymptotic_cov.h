@@ -264,7 +264,7 @@ arma::mat asymp_cov(arma::mat S,
     if(nullable_X.isNotNull()) {
       X = Rcpp::as<arma::mat>(nullable_X);
     } else {
-      Rcpp::stop("The asymptotic covariance matrix of a general correlation matrix requires the raw data");
+      Rcpp::stop("The asymptotic covariance matrix of polychoric correlations matrix requires the raw data");
     }
     asymptotic_cov = asymptotic_poly(X, S, 1L);
   } else{

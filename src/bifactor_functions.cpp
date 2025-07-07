@@ -12,10 +12,10 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 #ifdef _OPENMP
-  #include <omp.h>
+#include <omp.h>
 #else
-  #define omp_get_num_threads() 1
-  #define omp_set_num_threads() 1
+#define omp_get_num_threads() 1
+#define omp_set_num_threads() 1
 #endif
 
 #include <RcppArmadillo.h>
@@ -144,26 +144,26 @@ arma::mat get_target(arma::mat loadings, Rcpp::Nullable<arma::mat> Phi, double c
 
 // [[Rcpp::export]]
 Rcpp::List bifactor(arma::mat X, int n_generals, int n_groups,
-                   std::string method = "GSLiD",
-                   std::string cor = "pearson",
-                   std::string estimator = "uls",
-                   std::string projection = "oblq",
-                   std::string missing = "pairwise.complete.cases",
-                   Rcpp::Nullable<int> nobs = R_NilValue,
-                   Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
-                   Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
-                   Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
-                   Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
-                   Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
-                   Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
-                   int maxit = 20, double cutoff = 0, std::string normalization = "none",
-                   double w = 1, int random_starts = 1, int cores = 1,
-                   Rcpp::Nullable<arma::vec> init = R_NilValue,
-                   Rcpp::Nullable<Rcpp::List> efa_control = R_NilValue,
-                   Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
-                   Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
-                   Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
-                   bool verbose = true);
+                    std::string method = "GSLiD",
+                    std::string cor = "pearson",
+                    std::string estimator = "uls",
+                    std::string projection = "oblq",
+                    std::string missing = "pairwise.complete.cases",
+                    Rcpp::Nullable<int> nobs = R_NilValue,
+                    Rcpp::Nullable<arma::mat> PhiTarget = R_NilValue,
+                    Rcpp::Nullable<arma::mat> PhiWeight = R_NilValue,
+                    Rcpp::Nullable<std::vector<std::vector<arma::uvec>>> blocks = R_NilValue,
+                    Rcpp::Nullable<arma::vec> block_weights = R_NilValue,
+                    Rcpp::Nullable<arma::uvec> oblq_factors = R_NilValue,
+                    Rcpp::Nullable<arma::mat> init_Target = R_NilValue,
+                    int maxit = 20, double cutoff = 0, std::string normalization = "none",
+                    double w = 1, int random_starts = 1, int cores = 1,
+                    Rcpp::Nullable<arma::vec> init = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> efa_control = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> rot_control = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> first_efa = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> second_efa = R_NilValue,
+                    bool verbose = true);
 
 // [[Rcpp::export]]
 arma::mat asymp_cov(arma::mat R,
@@ -186,7 +186,7 @@ Rcpp::List parallel(arma::mat X, int nboot = 100, std::string cor = "pearson",
                     int cores = 1);
 
 // Rcpp::List cv_eigen(arma::mat X, int N = 100, bool hierarchical = false,
-                    // Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
+// Rcpp::Nullable<Rcpp::List> efa = R_NilValue, int cores = 1);
 
 // [[Rcpp::export]]
 Rcpp::List check_deriv(arma::mat L, arma::mat Phi,

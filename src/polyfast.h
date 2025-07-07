@@ -24,25 +24,6 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
   std::vector<std::vector<double>> mvphi(q);
   arma::mat X2 = X;
 
-  // for(size_t i = 0; i < q; ++i) {
-  //   mins[i] = X2.col(i).min();
-  //   X2.col(i) -= mins[i];
-  //   cols[i] = arma::conv_to<std::vector<int>>::from(X2.col(i));
-  //   maxs[i] = *max_element(cols[i].begin(), cols[i].end());
-  //   std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
-  //   mvphi[i] = cumsum(frequencies);
-  //   taus[i] = mvphi[i]; // Cumulative frequencies
-  //   for (size_t j = 0; j < maxs[i]; ++j) {
-  //     mvphi[i][j] /= n;
-  //     taus[i][j] = Qnorm(mvphi[i][j]);
-  //   }
-  //   mvphi[i].push_back(1.0);
-  //   mvphi[i].insert(mvphi[i].begin(), 0.0);
-  //   taus[i].push_back(pos_inf);
-  //   taus[i].insert(taus[i].begin(), neg_inf);
-  //   s[i] = taus[i].size() - 1L;
-  // }
-
   for(size_t i = 0; i < q; ++i) {
 
     mins[i] = X2.col(i).min();
@@ -64,7 +45,7 @@ polyfast_object poly(const arma::mat& X, const std::string smooth, double min_ei
     taus[i].insert(taus[i].begin(), neg_inf);
     s[i] = taus[i].size() - 1L;
   }
-  
+
   arma::mat polys(q, q, arma::fill::eye);
   arma::mat iters(q, q, arma::fill::zeros);
 
@@ -181,13 +162,16 @@ polyfast_object poly_no_cores(const arma::mat& X, const std::string smooth,
   arma::mat X2 = X;
 
   for(size_t i = 0; i < q; ++i) {
+
     mins[i] = X2.col(i).min();
     X2.col(i) -= mins[i];
     cols[i] = arma::conv_to<std::vector<int>>::from(X2.col(i));
     maxs[i] = *max_element(cols[i].begin(), cols[i].end());
-    std::vector<int> frequencies = count(cols[i], n, maxs[i]-1L);
-    mvphi[i] = cumsum(frequencies);
-    taus[i] = mvphi[i]; // Cumulative frequencies
+
+    std::vector<int> frequencies = count(cols[i], n, maxs[i]);
+    mvphi[i] = cumsum(frequencies); // Cumulative frequencies
+    taus[i] = mvphi[i];
+
     for (size_t j = 0; j < maxs[i]; ++j) {
       mvphi[i][j] /= n;
       taus[i][j] = Qnorm(mvphi[i][j]);
@@ -196,7 +180,7 @@ polyfast_object poly_no_cores(const arma::mat& X, const std::string smooth,
     mvphi[i].insert(mvphi[i].begin(), 0.0);
     taus[i].push_back(pos_inf);
     taus[i].insert(taus[i].begin(), neg_inf);
-    s[i] = taus[i].size() -1L;
+    s[i] = taus[i].size() - 1L;
   }
 
   arma::mat polys(q, q, arma::fill::eye);

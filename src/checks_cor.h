@@ -1,54 +1,94 @@
 void check_cor(arguments_cor& x) {
 
-  if(x.X.is_square()) {
+  if(x.estimator == "dwls") { // Weighting
 
-    x.R = x.X;
-    x.correlation_result["correlation"] = x.R;
-    if(x.cor != "poly" & x.cor != "pearson") {
-      Rcpp::stop("Unkown correlation");
-    }
+    if(x.X.is_square()) {
 
-  } else {
+      x.R = x.X;
+      x.correlation_result["correlation"] = x.R;
 
-    x.nobs = x.X.n_rows;
-    missingness(x); // Handle missing values
+      arma::vec asymp_diag;
+      asymp_diag = arma::diagvec(asymptotic_normal(x.R));
+      x.correlation_result["std_error"] = "normal";
+      arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
+      x.W = 1/W; x.W.diag().zeros();
+      // Rcpp::Rcout << "Full data was not provided. The variance of the correlations were estimated assuming the items are normally distributed." << std::endl;
 
-    // ALLOW DWLS for continuous data
-    if(x.cor == "poly") {
-      if(x.estimator == "dwls") {
+    } else {
+
+      x.nobs = x.X.n_rows;
+      missingness(x); // Handle missing values
+
+      if(x.cor == "poly") {
+
         x.correlation_result = polyfast(x.X, x.missing, "var", "none", 0.00, 0L, false, x.cores);
         arma::mat W = x.correlation_result["acov"];
-        x.W = 1/W; x.W.diag().ones();
-      } else {
-        x.correlation_result = polyfast(x.X, x.missing, "none", "none", 0.00, 0L, false, x.cores);
-      }
-      arma::mat polys = x.correlation_result["correlation"];
-      x.R = polys;
-    } else if(x.cor == "pearson") {
-      // Rcpp::Rcout << "1" << std::endl;
-      if(x.X.has_nan()) {
-        x.R = pairwise_cor(x.X);
-      } else {
-        x.R = arma::cor(x.X);
-      }
-      if(x.estimator == "dwls") {
-        arma::vec asymp_diag;
-        if(x.std_error == "normal") {
-          asymp_diag = arma::diagvec(asymptotic_normal(x.R));
-          x.correlation_result["std_error"] = "normal";
+        x.W = 1/W; x.W.diag().zeros();
+        arma::mat polys = x.correlation_result["correlation"];
+        x.R = polys;
+        x.correlation_result["type"] = "poly";
+
+      } else if(x.cor == "pearson") {
+
+        if(x.X.has_nan()) {
+          x.R = pairwise_cor(x.X);
         } else {
-          asymp_diag = arma::diagvec(asymptotic_general(x.X));
-          x.correlation_result["std_error"] = "general";
+          x.R = arma::cor(x.X);
         }
+
+        arma::vec asymp_diag;
+        asymp_diag = arma::diagvec(asymptotic_general(x.X));
+        x.correlation_result["std_error"] = "general";
         arma::mat W = arma::reshape(asymp_diag, x.p, x.p);
-        x.W = 1/W; x.W.diag().ones();
+        x.W = 1/W; x.W.diag().zeros();
+        x.correlation_result["type"] = "pearson";
+
+      } else {
+        Rcpp::stop("Available correlations: 'pearson' and 'poly'.");
       }
-      x.correlation_result["type"] = "pearson";
-      x.correlation_result["correlation"] = x.R;
-    } else {
-      Rcpp::stop("Unkown correlation");
+
     }
+
+  } else { // No weighting
+
+    if(x.X.is_square()) {
+
+      x.R = x.X;
+      x.correlation_result["correlation"] = x.R;
+
+    } else {
+
+      x.nobs = x.X.n_rows;
+      missingness(x); // Handle missing values
+
+      if(x.cor == "poly") {
+
+        x.correlation_result = polyfast(x.X, x.missing, "none", "none", 0.00, 0L, false, x.cores);
+        arma::mat polys = x.correlation_result["correlation"];
+        x.R = polys;
+        x.correlation_result["type"] = "poly";
+
+      } else if(x.cor == "pearson") {
+
+        if(x.X.has_nan()) {
+          x.R = pairwise_cor(x.X);
+        } else {
+          x.R = arma::cor(x.X);
+        }
+        x.correlation_result["type"] = "pearson";
+
+      }  else {
+        Rcpp::stop("Available correlations: 'pearson' and 'poly'.");
+      }
+
+    }
+
+    arma::mat W(x.p, x.p); W.ones(); W.diag().zeros();
+    x.W = W;
 
   }
 
 }
+
+
+
